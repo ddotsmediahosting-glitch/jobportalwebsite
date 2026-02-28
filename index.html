@@ -1,0 +1,55 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1>Job Search Hub</h1>
+      <p>Search posted opportunities and add new job-related hyperlinks.</p>
+      <input id="searchInput" type="search" placeholder="Search by role, company, or location" aria-label="Search jobs" />
+    </header>
+
+    <section class="card">
+      <h2>Post a Job Link</h2>
+      <form id="jobForm" class="job-form">
+        <label>
+          Job Title
+          <input id="title" type="text" required placeholder="Frontend Developer" />
+        </label>
+        <label>
+          Company
+          <input id="company" type="text" required placeholder="Acme Inc." />
+        </label>
+        <label>
+          Location
+          <input id="location" type="text" required placeholder="Remote / New York" />
+        </label>
+        <label>
+          Job URL
+          <input id="url" type="url" required placeholder="https://example.com/jobs/123" />
+        </label>
+        <button type="submit">Post Link</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="jobs-header">
+        <h2>Available Job Links</h2>
+        <span id="jobCount">0 jobs</span>
+      </div>
+      <ul id="jobList" class="job-list"></ul>
+      <p id="emptyState" class="empty">No jobs found. Add one above.</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
