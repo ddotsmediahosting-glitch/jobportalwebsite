@@ -1,4 +1,4 @@
-﻿if (typeof document !== "undefined") {
+if (typeof document !== "undefined") {
   const jobForm = document.getElementById("jobForm");
   const jobList = document.getElementById("jobList");
   const searchInput = document.getElementById("searchInput");
