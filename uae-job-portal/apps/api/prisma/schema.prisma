@@ -1,0 +1,581 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SEEKER
+  EMPLOYER
+  ADMIN
+  SUB_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+enum Emirates {
+  ABU_DHABI
+  DUBAI
+  SHARJAH
+  AJMAN
+  UMM_AL_QUWAIN
+  RAS_AL_KHAIMAH
+  FUJAIRAH
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  INTERNSHIP
+  FREELANCE
+}
+
+enum VisaStatus {
+  PROVIDED
+  TRANSFER_AVAILABLE
+  NOT_PROVIDED
+  NOT_REQUIRED
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING_APPROVAL
+  PUBLISHED
+  PAUSED
+  EXPIRED
+  CLOSED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  VIEWED
+  SHORTLISTED
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubscriptionPlan {
+  FREE
+  STANDARD
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  EXPIRED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportTargetType {
+  JOB
+  EMPLOYER
+  USER
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id               String     @id @default(cuid())
+  email            String     @unique
+  phone            String?
+  passwordHash     String
+  role             UserRole   @default(SEEKER)
+  status           UserStatus @default(PENDING_VERIFICATION)
+  verifiedAt       DateTime?
+  lastLoginAt      DateTime?
+  twoFactorEnabled Boolean    @default(false)
+  emailOtp         String?
+  emailOtpExpiry   DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  refreshTokens       RefreshToken[]
+  seekerProfile       JobSeekerProfile?
+  employerMemberships EmployerMember[]
+  ownedEmployer       Employer?          @relation("EmployerOwner")
+  applications        Application[]
+  savedJobs           SavedJob[]
+  notifications       Notification[]
+  sentReports         Report[]           @relation("ReporterUser")
+  auditActions        AuditLog[]         @relation("AuditActor")
+  messagesFrom        Message[]          @relation("MessageFrom")
+  messagesTo          Message[]          @relation("MessageTo")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─── Seeker profile ───────────────────────────────────────────────────────────
+
+model JobSeekerProfile {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName         String
+  lastName          String
+  headline          String?
+  bio               String?
+  emirate           Emirates?
+  location          String?
+  nationality       String?
+  dateOfBirth       DateTime?
+  gender            String?
+  desiredRole       String?
+  desiredSalaryMin  Int?
+  desiredSalaryMax  Int?
+  desiredWorkModes  WorkMode[]
+  desiredEmirates   Emirates[]
+  yearsOfExperience Int?
+  currentSalary     Int?
+  noticePeriod      String?
+  immediateJoiner   Boolean    @default(false)
+  languages         String[]
+  skills            String[]
+  linkedInUrl       String?
+  portfolioUrl      String?
+  avatarUrl         String?
+  isProfilePublic   Boolean    @default(true)
+
+  resumes        Resume[]
+  education      Education[]
+  experience     WorkExperience[]
+  certifications Certification[]
+  jobAlerts      JobAlert[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resume {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+  isPrimary   Boolean          @default(false)
+  parsedText  String?
+  applications Application[]
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+}
+
+model Education {
+  id           String           @id @default(cuid())
+  profileId    String
+  profile      JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institution  String
+  degree       String
+  fieldOfStudy String?
+  startDate    DateTime
+  endDate      DateTime?
+  current      Boolean          @default(false)
+  description  String?
+  createdAt    DateTime         @default(now())
+}
+
+model WorkExperience {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company     String
+  title       String
+  emirate     Emirates?
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean          @default(false)
+  description String?
+  skills      String[]
+  createdAt   DateTime         @default(now())
+}
+
+model Certification {
+  id            String           @id @default(cuid())
+  profileId     String
+  profile       JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name          String
+  issuingOrg    String
+  issueDate     DateTime?
+  expiryDate    DateTime?
+  credentialUrl String?
+  createdAt     DateTime         @default(now())
+}
+
+// ─── Employers ────────────────────────────────────────────────────────────────
+
+model Employer {
+  id                 String             @id @default(cuid())
+  ownerUserId        String             @unique
+  owner              User               @relation("EmployerOwner", fields: [ownerUserId], references: [id])
+  companyName        String
+  slug               String             @unique
+  industry           String?
+  companySize        String?
+  foundedYear        Int?
+  description        String?
+  website            String?
+  logoUrl            String?
+  coverUrl           String?
+  emirate            Emirates?
+  location           String?
+  tradeLicenseUrl    String?
+  tradeLicenseNumber String?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+  verifiedBy         String?
+  verificationNotes  String?
+  isActive           Boolean            @default(true)
+
+  members      EmployerMember[]
+  jobs         Job[]
+  subscription Subscription?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([verificationStatus])
+}
+
+model EmployerMember {
+  id         String    @id @default(cuid())
+  employerId String
+  employer   Employer  @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       String    @default("RECRUITER")
+  invitedAt  DateTime  @default(now())
+  joinedAt   DateTime?
+
+  @@unique([employerId, userId])
+  @@index([employerId])
+  @@index([userId])
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+model Category {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  parentId   String?
+  parent     Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children   Category[] @relation("CategoryParent")
+  sortOrder  Int        @default(0)
+  isActive   Boolean    @default(true)
+  isFeatured Boolean    @default(false)
+  iconUrl    String?
+  jobs       Job[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+// ─── Jobs ─────────────────────────────────────────────────────────────────────
+
+model Job {
+  id               String         @id @default(cuid())
+  employerId       String
+  employer         Employer       @relation(fields: [employerId], references: [id])
+  categoryId       String
+  category         Category       @relation(fields: [categoryId], references: [id])
+  title            String
+  slug             String         @unique
+  description      String
+  requirements     String?
+  benefits         String?
+  emirate          Emirates
+  location         String?
+  workMode         WorkMode       @default(ONSITE)
+  employmentType   EmploymentType @default(FULL_TIME)
+  visaStatus       VisaStatus     @default(NOT_PROVIDED)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String         @default("AED")
+  salaryNegotiable Boolean        @default(false)
+  experienceMin    Int            @default(0)
+  experienceMax    Int?
+  level            String?
+  skills           String[]
+  languages        String[]
+  status           JobStatus      @default(DRAFT)
+  isFeatured       Boolean        @default(false)
+  isUrgent         Boolean        @default(false)
+  featuredUntil    DateTime?
+  publishedAt      DateTime?
+  expiresAt        DateTime?
+  viewCount        Int            @default(0)
+  applyCount       Int            @default(0)
+  moderationNotes  String?
+
+  tags               JobTag[]
+  screeningQuestions ScreeningQuestion[]
+  applications       Application[]
+  savedBy            SavedJob[]
+  reports            Report[]      @relation("JobReport")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([emirate])
+  @@index([workMode])
+  @@index([employmentType])
+  @@index([publishedAt])
+  @@index([isFeatured])
+}
+
+model Tag {
+  id   String   @id @default(cuid())
+  name String   @unique
+  jobs JobTag[]
+}
+
+model JobTag {
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, tagId])
+}
+
+model ScreeningQuestion {
+  id        String  @id @default(cuid())
+  jobId     String
+  job       Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  question  String
+  type      String
+  options   String[]
+  required  Boolean @default(false)
+  sortOrder Int     @default(0)
+}
+
+// ─── Applications ─────────────────────────────────────────────────────────────
+
+model Application {
+  id            String            @id @default(cuid())
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id])
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  resumeId      String?
+  resume        Resume?           @relation(fields: [resumeId], references: [id])
+  coverLetter   String?
+  answersJson   Json?
+  status        ApplicationStatus @default(SUBMITTED)
+  notes         String?
+  rating        Int?
+  tags          String[]
+  interviewDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, userId])
+  @@index([jobId])
+  @@index([userId])
+  @@index([status])
+}
+
+model SavedJob {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, jobId])
+}
+
+model JobAlert {
+  id         String           @id @default(cuid())
+  profileId  String
+  profile    JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name       String
+  keywords   String?
+  categoryId String?
+  emirate    Emirates?
+  workMode   WorkMode?
+  salaryMin  Int?
+  frequency  String           @default("WEEKLY")
+  isActive   Boolean          @default(true)
+  lastSentAt DateTime?
+  createdAt  DateTime         @default(now())
+}
+
+// ─── Messaging ────────────────────────────────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  threadId   String
+  fromUserId String
+  from       User     @relation("MessageFrom", fields: [fromUserId], references: [id])
+  toUserId   String
+  to         User     @relation("MessageTo", fields: [toUserId], references: [id])
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([threadId])
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  title       String
+  body        String?
+  payloadJson Json?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+model Report {
+  id             String           @id @default(cuid())
+  reporterId     String
+  reporter       User             @relation("ReporterUser", fields: [reporterId], references: [id])
+  targetType     ReportTargetType
+  targetId       String
+  job            Job?             @relation("JobReport", fields: [targetId], references: [id])
+  reason         String
+  details        String?
+  status         ReportStatus     @default(PENDING)
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime         @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  employerId             String             @unique
+  employer               Employer           @relation(fields: [employerId], references: [id])
+  plan                   SubscriptionPlan   @default(FREE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  provider               String             @default("mock")
+  providerSubId          String?
+  jobPostsLimit          Int                @default(3)
+  jobPostsUsed           Int                @default(0)
+  featuredPostsLimit     Int                @default(0)
+  candidateSearchEnabled Boolean            @default(false)
+  currentPeriodStart     DateTime           @default(now())
+  currentPeriodEnd       DateTime?
+  cancelledAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+  actorRole   String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metaJson    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ─── CMS ──────────────────────────────────────────────────────────────────────
+
+model ContentPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  content     String
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
