@@ -22,6 +22,10 @@ const Profile = lazy(() => import('../pages/public/Profile').then((m) => ({ defa
 const MyApplications = lazy(() => import('../pages/public/MyApplications').then((m) => ({ default: m.MyApplications })));
 const SavedJobs = lazy(() => import('../pages/public/SavedJobs').then((m) => ({ default: m.SavedJobs })));
 
+// CV / ATS pages
+const CVAnalyzer = lazy(() => import('../pages/cv/CVAnalyzer').then((m) => ({ default: m.CVAnalyzer })));
+const CVBuilder = lazy(() => import('../pages/cv/CVBuilder').then((m) => ({ default: m.CVBuilder })));
+
 // Employer pages
 const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard').then((m) => ({ default: m.EmployerDashboard })));
 const PostJob = lazy(() => import('../pages/employer/PostJob').then((m) => ({ default: m.PostJob })));
@@ -75,6 +79,8 @@ export function AppRoutes() {
           <Route path="profile" element={<RequireAuth roles={['SEEKER']}><Profile /></RequireAuth>} />
           <Route path="my-applications" element={<RequireAuth roles={['SEEKER']}><MyApplications /></RequireAuth>} />
           <Route path="saved-jobs" element={<RequireAuth roles={['SEEKER']}><SavedJobs /></RequireAuth>} />
+          <Route path="cv-analyzer" element={<RequireAuth><CVAnalyzer /></RequireAuth>} />
+          <Route path="cv-builder" element={<RequireAuth><CVBuilder /></RequireAuth>} />
         </Route>
 
         {/* Employer routes */}

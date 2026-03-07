@@ -20,6 +20,7 @@ import categoriesRouter from './modules/categories/categories.router';
 import adminRouter from './modules/admin/admin.router';
 import billingRouter from './modules/billing/billing.router';
 import notificationsRouter from './modules/notifications/notifications.router';
+import cvRouter from './modules/cv/cv.router';
 import { swaggerSpec } from './swagger';
 
 const app = express();
@@ -82,6 +83,7 @@ app.use(`${v1}/categories`, categoriesRouter);
 app.use(`${v1}/admin`, adminRouter);
 app.use(`${v1}/billing`, billingRouter);
 app.use(`${v1}/notifications`, notificationsRouter);
+app.use(`${v1}/cv`, cvRouter);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found' }));

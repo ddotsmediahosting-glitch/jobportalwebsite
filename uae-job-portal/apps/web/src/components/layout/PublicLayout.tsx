@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, Outlet } from 'react-router-dom';
-import { Menu, X, Bell, User, ChevronDown, LogOut, Briefcase, BookmarkCheck, FileText } from 'lucide-react';
+import { Menu, X, User, ChevronDown, LogOut, Briefcase, BookmarkCheck, FileText, Zap, Wand2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export function PublicLayout() {
@@ -32,6 +32,12 @@ export function PublicLayout() {
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
               <Link to="/jobs" className="hover:text-brand-600 transition-colors">Browse Jobs</Link>
               <Link to="/categories" className="hover:text-brand-600 transition-colors">Categories</Link>
+              <Link to="/cv-analyzer" className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                <Zap size={14} className="text-indigo-500" /> CV Analyzer
+              </Link>
+              <Link to="/cv-builder" className="flex items-center gap-1 hover:text-purple-600 transition-colors">
+                <Wand2 size={14} className="text-purple-500" /> CV Builder
+              </Link>
               <Link to="/pages/about" className="hover:text-brand-600 transition-colors">About</Link>
             </nav>
 
@@ -62,6 +68,13 @@ export function PublicLayout() {
                           </Link>
                           <Link to="/saved-jobs" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                             <BookmarkCheck className="h-4 w-4" /> Saved Jobs
+                          </Link>
+                          <hr className="my-1" />
+                          <Link to="/cv-analyzer" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50">
+                            <Zap className="h-4 w-4" /> ATS CV Analyzer
+                          </Link>
+                          <Link to="/cv-builder" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-purple-700 hover:bg-purple-50">
+                            <Wand2 className="h-4 w-4" /> AI CV Builder
                           </Link>
                         </>
                       )}
@@ -142,7 +155,8 @@ export function PublicLayout() {
               <ul className="space-y-2 text-sm">
                 <li><Link to="/jobs" className="hover:text-white transition-colors">Browse Jobs</Link></li>
                 <li><Link to="/register" className="hover:text-white transition-colors">Create Account</Link></li>
-                <li><Link to="/profile" className="hover:text-white transition-colors">Upload Resume</Link></li>
+                <li><Link to="/cv-analyzer" className="hover:text-white transition-colors">ATS CV Analyzer</Link></li>
+                <li><Link to="/cv-builder" className="hover:text-white transition-colors">AI CV Builder</Link></li>
               </ul>
             </div>
             <div>

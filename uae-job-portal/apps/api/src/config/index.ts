@@ -57,6 +57,11 @@ export const config = {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   },
 
+  ai: {
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+    model: 'claude-sonnet-4-6',
+  },
+
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),

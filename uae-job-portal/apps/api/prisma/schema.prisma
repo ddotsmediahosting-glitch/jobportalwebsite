@@ -134,6 +134,8 @@ model User {
   auditActions        AuditLog[]         @relation("AuditActor")
   messagesFrom        Message[]          @relation("MessageFrom")
   messagesTo          Message[]          @relation("MessageTo")
+  cvProfile           CVProfile?
+  cvAnalyses          CVAnalysis[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -558,6 +560,64 @@ model AuditLog {
 
   @@index([actorUserId])
   @@index([action])
+  @@index([createdAt])
+}
+
+// ─── ATS / CV ─────────────────────────────────────────────────────────────────
+
+model CVProfile {
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title            String?
+  targetRole       String?
+  professionalSummary String?
+  skills           String[]
+  languages        String[]
+  cvDataJson       Json?     // full structured CV data (sections, experience, education)
+
+  analyses CVAnalysis[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model CVAnalysis {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvProfileId String?
+  cvProfile   CVProfile? @relation(fields: [cvProfileId], references: [id])
+
+  jobTitle        String?
+  companyName     String?
+  jobDescription  String?
+  cvText          String   @db.Text
+
+  atsScore        Int
+  keywordMatchScore Int
+  formatScore     Int
+  contentScore    Int
+
+  matchedKeywords  String[]
+  missingKeywords  String[]
+  strengths        String[]
+  weaknesses       String[]
+  suggestionsJson  Json?
+  summary          String?
+
+  coverLetter      String?  @db.Text
+  interviewQsJson  Json?
+
+  aiModel         String   @default("claude-sonnet-4-6")
+  analysisType    String   @default("ats") // ats | skills_gap | optimization
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
   @@index([createdAt])
 }
 
