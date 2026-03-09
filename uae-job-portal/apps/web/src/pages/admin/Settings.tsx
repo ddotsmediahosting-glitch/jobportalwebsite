@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Save, Globe, FileText, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Save, Globe, FileText, Plus, Pencil, Trash2, Share2, ExternalLink } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
-
-interface Setting {
-  key: string;
-  value: string;
-  description?: string;
-}
 
 interface ContentPage {
   id: string;
@@ -23,31 +17,49 @@ interface ContentPage {
   updatedAt: string;
 }
 
-const SETTING_LABELS: Record<string, { label: string; type: 'text' | 'boolean' | 'number' }> = {
-  site_name: { label: 'Site Name', type: 'text' },
-  site_tagline: { label: 'Tagline', type: 'text' },
-  support_email: { label: 'Support Email', type: 'text' },
+const SETTING_LABELS: Record<string, { label: string; type: 'text' | 'boolean' | 'number'; placeholder?: string }> = {
+  site_name: { label: 'Site Name', type: 'text', placeholder: 'Ddotsmedia Jobs' },
+  site_tagline: { label: 'Tagline', type: 'text', placeholder: 'Find your dream job in the UAE' },
+  support_email: { label: 'Support Email', type: 'text', placeholder: 'support@yourdomain.com' },
   jobs_require_approval: { label: 'Jobs Require Approval', type: 'boolean' },
-  max_applications_per_day: { label: 'Max Applications Per Day (per seeker)', type: 'number' },
+  max_applications_per_day: { label: 'Max Applications Per Day (per seeker)', type: 'number', placeholder: '10' },
   maintenance_mode: { label: 'Maintenance Mode', type: 'boolean' },
-  featured_jobs_limit: { label: 'Default Featured Jobs on Homepage', type: 'number' },
+  featured_jobs_limit: { label: 'Default Featured Jobs on Homepage', type: 'number', placeholder: '6' },
 };
+
+interface SocialLink {
+  key: string;
+  label: string;
+  placeholder: string;
+  icon: string;
+  color: string;
+}
+
+const SOCIAL_LINKS: SocialLink[] = [
+  { key: 'social_facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/yourpage',       icon: 'f', color: 'bg-blue-600' },
+  { key: 'social_instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourhandle',    icon: 'in', color: 'bg-pink-500' },
+  { key: 'social_twitter',   label: 'X (Twitter)', placeholder: 'https://x.com/yourhandle',          icon: 'x', color: 'bg-gray-900' },
+  { key: 'social_linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/company/yourco', icon: 'li', color: 'bg-blue-700' },
+  { key: 'social_youtube',   label: 'YouTube',   placeholder: 'https://youtube.com/@yourchannel',    icon: 'yt', color: 'bg-red-600' },
+  { key: 'social_tiktok',    label: 'TikTok',    placeholder: 'https://tiktok.com/@yourhandle',      icon: 'tt', color: 'bg-gray-800' },
+  { key: 'social_whatsapp',  label: 'WhatsApp',  placeholder: 'https://wa.me/971XXXXXXXXX',          icon: 'wa', color: 'bg-green-500' },
+];
 
 export function AdminSettings() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'settings' | 'pages'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'social' | 'pages'>('settings');
   const [pageModal, setPageModal] = useState(false);
   const [editingPage, setEditingPage] = useState<ContentPage | null>(null);
   const [pageForm, setPageForm] = useState({ slug: '', title: '', content: '', isPublished: true });
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['admin-settings'],
-    queryFn: () => api.get('/admin/settings').then((r) => r.data.data as Setting[]),
+    queryFn: () => api.get('/admin/settings').then((r) => r.data.data as Record<string, string>),
   });
 
   const { data: pages, isLoading: pagesLoading } = useQuery({
     queryKey: ['admin-content-pages'],
-    queryFn: () => api.get('/admin/content-pages').then((r) => r.data.data as ContentPage[]),
+    queryFn: () => api.get('/admin/pages').then((r) => r.data.data as ContentPage[]),
     enabled: activeTab === 'pages',
   });
 
@@ -55,23 +67,20 @@ export function AdminSettings() {
 
   React.useEffect(() => {
     if (settings) {
-      const map: Record<string, string> = {};
-      settings.forEach((s) => { map[s.key] = s.value; });
-      setLocalSettings(map);
+      const coerced: Record<string, string> = {};
+      Object.entries(settings).forEach(([k, v]) => { coerced[k] = String(v ?? ''); });
+      setLocalSettings(coerced);
     }
   }, [settings]);
 
   const updateSettingMutation = useMutation({
     mutationFn: ({ key, value }: { key: string; value: string }) => api.put(`/admin/settings/${key}`, { value }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); toast.success('Setting saved.'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); toast.success('Saved.'); },
     onError: (err) => toast.error(getApiError(err)),
   });
 
   const upsertPageMutation = useMutation({
-    mutationFn: (data: typeof pageForm) =>
-      editingPage
-        ? api.put(`/admin/content-pages/${editingPage.id}`, data)
-        : api.post('/admin/content-pages', data),
+    mutationFn: (data: typeof pageForm) => api.put('/admin/pages', data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-content-pages'] });
       toast.success(editingPage ? 'Page updated.' : 'Page created.');
@@ -83,44 +92,51 @@ export function AdminSettings() {
   });
 
   const deletePageMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/admin/content-pages/${id}`),
+    mutationFn: (slug: string) => api.delete(`/admin/pages/${slug}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-content-pages'] }); toast.success('Page deleted.'); },
     onError: (err) => toast.error(getApiError(err)),
   });
 
   if (settingsLoading) return <PageSpinner />;
 
+  const tabs = [
+    { id: 'settings', label: 'Site Settings', icon: <Globe className="h-4 w-4" /> },
+    { id: 'social',   label: 'Social Media',  icon: <Share2 className="h-4 w-4" /> },
+    { id: 'pages',    label: 'Content Pages', icon: <FileText className="h-4 w-4" /> },
+  ] as const;
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">Platform configuration and content management.</p>
+        <p className="text-gray-500 mt-1">Platform configuration, social media and content management.</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        {(['settings', 'pages'] as const).map((tab) => (
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+        {tabs.map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors capitalize ${
-              activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'settings' ? <><Globe className="h-4 w-4 inline mr-1.5" />Site Settings</> : <><FileText className="h-4 w-4 inline mr-1.5" />Content Pages</>}
+            {tab.icon}{tab.label}
           </button>
         ))}
       </div>
 
+      {/* ── Site Settings ─────────────────────────────────────────────────── */}
       {activeTab === 'settings' && (
         <div className="space-y-4">
-          {Object.entries(SETTING_LABELS).map(([key, { label, type }]) => {
+          {Object.entries(SETTING_LABELS).map(([key, { label, type, placeholder }]) => {
             const currentVal = localSettings[key] ?? '';
             return (
               <div key={key} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-900 mb-1">{label}</label>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-sm font-medium text-gray-900 mb-0.5">{label}</label>
                     <p className="text-xs text-gray-400 font-mono">{key}</p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -132,14 +148,15 @@ export function AdminSettings() {
                           checked={currentVal === 'true'}
                           onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: String(e.target.checked) }))}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600" />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600" />
                       </label>
                     ) : (
                       <input
                         type={type === 'number' ? 'number' : 'text'}
                         value={currentVal}
+                        placeholder={placeholder}
                         onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
-                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-52 focus:outline-none focus:ring-2 focus:ring-brand-500"
                       />
                     )}
                     <Button
@@ -159,6 +176,64 @@ export function AdminSettings() {
         </div>
       )}
 
+      {/* ── Social Media ──────────────────────────────────────────────────── */}
+      {activeTab === 'social' && (
+        <div className="space-y-3">
+          <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 text-sm text-brand-700">
+            Add your social media profile URLs. Leave blank to hide a platform from the site footer.
+          </div>
+
+          {SOCIAL_LINKS.map(({ key, label, placeholder, icon, color }) => {
+            const currentVal = localSettings[key] ?? '';
+            return (
+              <div key={key} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  {/* Platform badge */}
+                  <div className={`${color} text-white rounded-lg w-9 h-9 flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-xs font-bold uppercase">{icon}</span>
+                  </div>
+                  <div className="flex-shrink-0 w-24">
+                    <span className="text-sm font-medium text-gray-900">{label}</span>
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <input
+                      type="url"
+                      value={currentVal}
+                      placeholder={placeholder}
+                      onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {currentVal && (
+                      <a
+                        href={currentVal}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg text-brand-500 hover:bg-brand-50"
+                        title="Preview link"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      icon={<Save className="h-3.5 w-3.5" />}
+                      onClick={() => updateSettingMutation.mutate({ key, value: currentVal })}
+                      loading={updateSettingMutation.isPending}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Content Pages ─────────────────────────────────────────────────── */}
       {activeTab === 'pages' && (
         <div>
           <div className="flex justify-end mb-4">
@@ -209,7 +284,7 @@ export function AdminSettings() {
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => { if (confirm('Delete this page?')) deletePageMutation.mutate(page.id); }}
+                            onClick={() => { if (confirm('Delete this page?')) deletePageMutation.mutate(page.slug); }}
                             className="p-1.5 rounded-lg text-red-400 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />

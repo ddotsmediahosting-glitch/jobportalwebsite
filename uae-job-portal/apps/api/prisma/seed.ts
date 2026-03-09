@@ -11,12 +11,13 @@ async function main() {
   const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@uaejobs.local';
   const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'Admin#12345';
 
+  const adminHash = await bcrypt.hash(adminPassword, 12);
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { passwordHash: adminHash, status: UserStatus.ACTIVE, verifiedAt: new Date() },
     create: {
       email: adminEmail,
-      passwordHash: await bcrypt.hash(adminPassword, 12),
+      passwordHash: adminHash,
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
       verifiedAt: new Date(),
@@ -445,17 +446,31 @@ async function main() {
   console.log('✅ Sample jobs seeded');
 
   // ── Site settings ──────────────────────────────────────────────────────────
-  await prisma.siteSettings.upsert({
-    where: { key: 'site_name' },
-    update: {},
-    create: { key: 'site_name', value: 'UAE Jobs Portal' },
-  });
+  const siteSettings = [
+    { key: 'site_name',                value: 'Ddotsmedia Jobs' },
+    { key: 'site_tagline',             value: 'Find your dream job in the UAE' },
+    { key: 'support_email',            value: 'support@ddotsmedia.com' },
+    { key: 'jobs_require_approval',    value: false },
+    { key: 'max_applications_per_day', value: 10 },
+    { key: 'maintenance_mode',         value: false },
+    { key: 'featured_jobs_limit',      value: 6 },
+    // Social media links (empty by default — admin fills them in)
+    { key: 'social_facebook',  value: '' },
+    { key: 'social_instagram', value: '' },
+    { key: 'social_twitter',   value: '' },
+    { key: 'social_linkedin',  value: '' },
+    { key: 'social_youtube',   value: '' },
+    { key: 'social_tiktok',    value: '' },
+    { key: 'social_whatsapp',  value: '' },
+  ];
 
-  await prisma.siteSettings.upsert({
-    where: { key: 'jobs_require_approval' },
-    update: {},
-    create: { key: 'jobs_require_approval', value: false },
-  });
+  for (const s of siteSettings) {
+    await prisma.siteSettings.upsert({
+      where: { key: s.key },
+      update: {},
+      create: { key: s.key, value: s.value },
+    });
+  }
 
   // ── Content pages ──────────────────────────────────────────────────────────
   const pages = [

@@ -16,15 +16,29 @@ const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword').then(
 const ResetPassword = lazy(() => import('../pages/public/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const VerifyEmail = lazy(() => import('../pages/public/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ContentPage = lazy(() => import('../pages/public/ContentPage').then((m) => ({ default: m.ContentPage })));
+const Companies = lazy(() => import('../pages/public/Companies').then((m) => ({ default: m.Companies })));
+const CompanyDetail = lazy(() => import('../pages/public/CompanyDetail').then((m) => ({ default: m.CompanyDetail })));
+const NotificationsPage = lazy(() => import('../pages/public/Notifications').then((m) => ({ default: m.NotificationsPage })));
+const SalaryExplorer = lazy(() => import('../pages/public/SalaryExplorer').then((m) => ({ default: m.SalaryExplorer })));
+const TrendingJobs = lazy(() => import('../pages/public/TrendingJobs').then((m) => ({ default: m.TrendingJobs })));
+const ApplicationTracker = lazy(() => import('../pages/public/ApplicationTracker').then((m) => ({ default: m.ApplicationTracker })));
 
 // Seeker pages
 const Profile = lazy(() => import('../pages/public/Profile').then((m) => ({ default: m.Profile })));
 const MyApplications = lazy(() => import('../pages/public/MyApplications').then((m) => ({ default: m.MyApplications })));
 const SavedJobs = lazy(() => import('../pages/public/SavedJobs').then((m) => ({ default: m.SavedJobs })));
+const JobAlerts = lazy(() => import('../pages/public/JobAlerts').then((m) => ({ default: m.JobAlerts })));
+const PostJobAsUser = lazy(() => import('../pages/public/PostJobAsUser').then((m) => ({ default: m.PostJobAsUser })));
+const MyPosts = lazy(() => import('../pages/public/MyPosts').then((m) => ({ default: m.MyPosts })));
 
 // CV / ATS pages
 const CVAnalyzer = lazy(() => import('../pages/cv/CVAnalyzer').then((m) => ({ default: m.CVAnalyzer })));
 const CVBuilder = lazy(() => import('../pages/cv/CVBuilder').then((m) => ({ default: m.CVBuilder })));
+
+// AI pages
+const CareerAdvisor = lazy(() => import('../pages/ai/CareerAdvisor').then((m) => ({ default: m.CareerAdvisor })));
+const SalaryInsights = lazy(() => import('../pages/ai/SalaryInsights').then((m) => ({ default: m.SalaryInsights })));
+const InterviewPrep = lazy(() => import('../pages/ai/InterviewPrep').then((m) => ({ default: m.InterviewPrep })));
 
 // Employer pages
 const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard').then((m) => ({ default: m.EmployerDashboard })));
@@ -34,16 +48,26 @@ const ApplicationsPipeline = lazy(() => import('../pages/employer/ApplicationsPi
 const CompanyProfile = lazy(() => import('../pages/employer/CompanyProfile').then((m) => ({ default: m.CompanyProfile })));
 const Billing = lazy(() => import('../pages/employer/Billing').then((m) => ({ default: m.Billing })));
 const Team = lazy(() => import('../pages/employer/Team').then((m) => ({ default: m.Team })));
+const EmployerAnalyticsPage = lazy(() => import('../pages/employer/Analytics').then((m) => ({ default: m.EmployerAnalyticsPage })));
+const CandidateSearch = lazy(() => import('../pages/employer/CandidateSearch').then((m) => ({ default: m.CandidateSearch })));
+const InterviewScheduler = lazy(() => import('../pages/employer/InterviewScheduler').then((m) => ({ default: m.InterviewScheduler })));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard').then((m) => ({ default: m.AdminDashboard })));
+const AdminAnalytics = lazy(() => import('../pages/admin/Analytics').then((m) => ({ default: m.AdminAnalytics })));
 const AdminUsers = lazy(() => import('../pages/admin/Users').then((m) => ({ default: m.AdminUsers })));
 const AdminEmployers = lazy(() => import('../pages/admin/Employers').then((m) => ({ default: m.AdminEmployers })));
 const AdminJobs = lazy(() => import('../pages/admin/Jobs').then((m) => ({ default: m.AdminJobs })));
 const AdminCategories = lazy(() => import('../pages/admin/Categories').then((m) => ({ default: m.AdminCategories })));
 const AdminReports = lazy(() => import('../pages/admin/Reports').then((m) => ({ default: m.AdminReports })));
+const AdminSubscriptions = lazy(() => import('../pages/admin/Subscriptions').then((m) => ({ default: m.AdminSubscriptions })));
+const AdminMarketing = lazy(() => import('../pages/admin/Marketing').then((m) => ({ default: m.AdminMarketing })));
+const AdminWhatsAppBot = lazy(() => import('../pages/admin/WhatsAppBot').then((m) => ({ default: m.AdminWhatsAppBot })));
 const AdminAuditLogs = lazy(() => import('../pages/admin/AuditLogs').then((m) => ({ default: m.AdminAuditLogs })));
 const AdminSettings = lazy(() => import('../pages/admin/Settings').then((m) => ({ default: m.AdminSettings })));
+
+// Employer - Social Marketing
+const SocialMarketing = lazy(() => import('../pages/employer/SocialMarketing').then((m) => ({ default: m.SocialMarketing })));
 
 function RequireAuth({ children, roles }: { children: React.ReactElement; roles?: string[] }) {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -79,8 +103,20 @@ export function AppRoutes() {
           <Route path="profile" element={<RequireAuth roles={['SEEKER']}><Profile /></RequireAuth>} />
           <Route path="my-applications" element={<RequireAuth roles={['SEEKER']}><MyApplications /></RequireAuth>} />
           <Route path="saved-jobs" element={<RequireAuth roles={['SEEKER']}><SavedJobs /></RequireAuth>} />
+          <Route path="companies" element={<Companies />} />
+          <Route path="companies/:slug" element={<CompanyDetail />} />
           <Route path="cv-analyzer" element={<RequireAuth><CVAnalyzer /></RequireAuth>} />
           <Route path="cv-builder" element={<RequireAuth><CVBuilder /></RequireAuth>} />
+          <Route path="career-advisor" element={<CareerAdvisor />} />
+          <Route path="salary-insights" element={<SalaryInsights />} />
+          <Route path="interview-prep" element={<InterviewPrep />} />
+          <Route path="job-alerts" element={<RequireAuth roles={['SEEKER']}><JobAlerts /></RequireAuth>} />
+          <Route path="notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
+          <Route path="salary-explorer" element={<SalaryExplorer />} />
+          <Route path="trending" element={<TrendingJobs />} />
+          <Route path="application-tracker" element={<RequireAuth roles={['SEEKER']}><ApplicationTracker /></RequireAuth>} />
+          <Route path="post-job" element={<RequireAuth><PostJobAsUser /></RequireAuth>} />
+          <Route path="my-posts" element={<RequireAuth><MyPosts /></RequireAuth>} />
         </Route>
 
         {/* Employer routes */}
@@ -94,17 +130,25 @@ export function AppRoutes() {
           <Route path="company" element={<CompanyProfile />} />
           <Route path="billing" element={<Billing />} />
           <Route path="team" element={<Team />} />
+          <Route path="social-marketing" element={<SocialMarketing />} />
+          <Route path="analytics" element={<EmployerAnalyticsPage />} />
+          <Route path="candidates" element={<CandidateSearch />} />
+          <Route path="interviews" element={<InterviewScheduler />} />
         </Route>
 
         {/* Admin routes */}
         <Route path="/admin" element={<RequireAuth roles={['ADMIN', 'SUB_ADMIN']}><AdminLayout /></RequireAuth>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="employers" element={<AdminEmployers />} />
           <Route path="jobs" element={<AdminJobs />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="reports" element={<AdminReports />} />
+          <Route path="subscriptions" element={<AdminSubscriptions />} />
+          <Route path="marketing" element={<AdminMarketing />} />
+          <Route path="whatsapp-bot" element={<AdminWhatsAppBot />} />
           <Route path="audit-logs" element={<AdminAuditLogs />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>

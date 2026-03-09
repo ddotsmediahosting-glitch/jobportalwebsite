@@ -39,17 +39,21 @@ export class AuthService {
     if (existing) throw new ConflictError('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + OTP_TTL_MS);
+    // Skip email verification when SMTP is not configured
+    const smtpConfigured = !!(config.email.user && config.email.pass &&
+      !config.email.user.includes('your_') && !config.email.pass.includes('your_'));
+    const otp = smtpConfigured ? generateOtp() : null;
+    const otpExpiry = smtpConfigured ? new Date(Date.now() + OTP_TTL_MS) : null;
 
     const user = await prisma.user.create({
       data: {
         email,
         passwordHash,
         role: role as UserRole,
-        status: UserStatus.PENDING_VERIFICATION,
+        status: smtpConfigured ? UserStatus.PENDING_VERIFICATION : UserStatus.ACTIVE,
         emailOtp: otp,
         emailOtpExpiry: otpExpiry,
+        verifiedAt: smtpConfigured ? null : new Date(),
       },
     });
 
@@ -84,14 +88,16 @@ export class AuthService {
       });
     }
 
-    // Send verification email
-    await emailQueue.add('send-verification', {
-      to: email,
-      subject: 'Verify your UAE Jobs Portal account',
-      html: emailVerificationTemplate(firstName || email, otp),
-    });
+    // Send verification email (skipped when SMTP is not configured)
+    if (smtpConfigured) {
+      await emailQueue.add('send-verification', {
+        to: email,
+        subject: 'Verify your UAE Jobs Portal account',
+        html: emailVerificationTemplate(firstName || email, otp!),
+      });
+    }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return { id: user.id, email: user.email, role: user.role, verified: !smtpConfigured };
   }
 
   async login(email: string, password: string) {

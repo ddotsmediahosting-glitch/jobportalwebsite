@@ -1,0 +1,107 @@
+version: "3.9"
+
+# Production docker-compose — usage:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Prerequisites on the server:
+#   1. Copy .env.production to .env (fill in all values)
+#   2. Run Certbot to get SSL certificate before starting nginx:
+#      docker run --rm -v $(pwd)/certbot/conf:/etc/letsencrypt \
+#        -v $(pwd)/certbot/www:/var/www/certbot \
+#        certbot/certbot certonly --webroot --webroot-path /var/www/certbot \
+#        -d yourdomain.com --email you@email.com --agree-tos
+#   3. Replace DOMAIN_PLACEHOLDER in nginx/nginx.conf with your actual domain
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-uaejobs}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-uaejobs}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+      NODE_ENV: production
+    expose:
+      - "4000"
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health | grep -q '\"status\":\"ok\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL required}
+    restart: always
+    depends_on:
+      - api
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:1.25-alpine
+    restart: always
+    depends_on:
+      - api
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

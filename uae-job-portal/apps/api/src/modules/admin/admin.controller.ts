@@ -11,6 +11,12 @@ export class AdminController {
   }
 
   // Users
+  async createSubAdmin(req: AuthRequest, res: Response) {
+    const { email, password } = req.body;
+    const data = await service.createSubAdmin(req.user!.sub, email, password);
+    res.status(201).json({ success: true, data });
+  }
+
   async listUsers(req: AuthRequest, res: Response) {
     const { page, limit, role, status, q } = req.query as Record<string, string>;
     res.json({ success: true, data: await service.listUsers(+page || 1, +limit || 20, role, status, q) });
@@ -51,13 +57,28 @@ export class AdminController {
 
   // Jobs
   async listJobs(req: AuthRequest, res: Response) {
-    const { page, limit, status, q } = req.query as Record<string, string>;
-    res.json({ success: true, data: await service.listAdminJobs(+page || 1, +limit || 20, status, q) });
+    const { page, limit, status, q, categoryId, emirate, sortBy } = req.query as Record<string, string>;
+    res.json({ success: true, data: await service.listAdminJobs(+page || 1, +limit || 20, status, q, categoryId, emirate, sortBy) });
   }
 
   async moderateJob(req: AuthRequest, res: Response) {
     const { status, notes } = req.body;
     const data = await service.moderateJob(req.user!.sub, req.params.id, status as JobStatus, notes);
+    res.json({ success: true, ...data });
+  }
+
+  async createJob(req: AuthRequest, res: Response) {
+    const data = await service.createJobAsAdmin(req.user!.sub, req.body);
+    res.status(201).json({ success: true, data });
+  }
+
+  async toggleJobFeatured(req: AuthRequest, res: Response) {
+    const data = await service.toggleJobFeatured(req.user!.sub, req.params.id);
+    res.json({ success: true, data });
+  }
+
+  async deleteJob(req: AuthRequest, res: Response) {
+    const data = await service.deleteJobAdmin(req.user!.sub, req.params.id);
     res.json({ success: true, ...data });
   }
 
@@ -106,6 +127,11 @@ export class AdminController {
     res.json({ success: true, data });
   }
 
+  async deleteContentPage(req: AuthRequest, res: Response) {
+    const data = await service.deleteContentPage(req.params.slug);
+    res.json({ success: true, ...data });
+  }
+
   // Subscriptions
   async listSubscriptions(req: AuthRequest, res: Response) {
     const { page, limit } = req.query as Record<string, string>;
@@ -115,5 +141,32 @@ export class AdminController {
   async overrideSubscription(req: AuthRequest, res: Response) {
     const data = await service.overrideSubscription(req.params.employerId, req.body);
     res.json({ success: true, data });
+  }
+
+  // Analytics
+  async getAnalytics(req: AuthRequest, res: Response) {
+    const days = parseInt((req.query.days as string) || '30', 10);
+    res.json({ success: true, data: await service.getAnalytics(days) });
+  }
+
+  // Bulk actions
+  async bulkModerateJobs(req: AuthRequest, res: Response) {
+    const { jobIds, action, notes } = req.body;
+    const data = await service.bulkModerateJobs(req.user!.sub, jobIds, action, notes);
+    res.json({ success: true, ...data });
+  }
+
+  async bulkUpdateUserStatus(req: AuthRequest, res: Response) {
+    const { userIds, status, reason } = req.body;
+    const data = await service.bulkUpdateUserStatus(req.user!.sub, userIds, status, reason);
+    res.json({ success: true, ...data });
+  }
+
+  async exportUsers(req: AuthRequest, res: Response) {
+    const { role, status } = req.query as Record<string, string>;
+    const csv = await service.exportUsers(role, status);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="users.csv"');
+    res.send(csv);
   }
 }

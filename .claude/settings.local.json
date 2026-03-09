@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Bash(findstr \":5173 \\\\|:4000 \")",
+      "Bash(tasklist /FI \"PID eq 7608\" /FO LIST)",
+      "Bash(tasklist /FI \"PID eq 27556\" /FO LIST)",
+      "Bash(tasklist /FI \"PID eq 1320\" /FO LIST)",
+      "Bash(tasklist /FI \"PID eq 7608\")",
+      "Bash(tasklist /FI \"PID eq 27556\")",
+      "Bash(cmd /c \"tasklist /FI \"\"PID eq 7608\"\"\")",
+      "Bash(cmd /c \"netstat -ano | findstr \"\":5173\"\"\")",
+      "Bash(cmd /c \"netstat -ano\")",
+      "Bash(cmd /c \"netstat -ano | findstr LISTENING\")",
+      "Bash(cmd /c \"wmic process where name=''node.exe'' get ProcessId,CommandLine 2>&1\")",
+      "Bash(cmd /c \"wmic process where \"\"name=''node.exe''\"\" get ProcessId,CommandLine\")",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, CPU, MainWindowTitle | Format-Table; Get-NetTCPConnection -LocalPort 5173,4000,3000 -ErrorAction SilentlyContinue | Select-Object LocalPort,OwningProcess,State | Format-Table\")",
+      "Bash(powershell -Command \"Get-Process -Id 7608,5504 -ErrorAction SilentlyContinue | Select-Object Id,Name,Path | Format-List\")",
+      "Bash(powershell -Command \"Get-WmiObject Win32_Process -Filter ''ProcessId=7608 OR ProcessId=5504'' | Select-Object ProcessId,CommandLine | Format-List\")",
+      "Bash(powershell -Command \"Stop-Process -Id 7608,5504 -Force -ErrorAction SilentlyContinue; Write-Host ''Killed old processes''; Start-Sleep -Seconds 1; Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object LocalPort,State\")",
+      "Bash(winget search Ollama)",
+      "Bash(winget install Ollama.Ollama --silent --accept-package-agreements --accept-source-agreements)",
+      "Read(//c/Users/web/AppData/Local/Programs/Ollama/**)",
+      "Read(//c/Users/web/AppData/Local/Ollama/**)",
+      "Read(//c/Users/web/**)",
+      "Bash(npx tsc --version)",
+      "Bash(node --version)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(node -e \"const c=require\\(''crypto''\\);console.log\\(''JWT_SECRET=''+c.randomBytes\\(32\\).toString\\(''hex''\\)\\);console.log\\(''JWT_REFRESH_SECRET=''+c.randomBytes\\(32\\).toString\\(''hex''\\)\\)\")",
+      "Bash(\"c:/Users/web/Desktop/Node apps/jobportal/uae-job-portal/.env\":*)",
+      "Bash(npm install)",
+      "Bash(docker compose exec api npx prisma migrate deploy)",
+      "Bash(docker compose ps)"
+    ]
+  }
+}

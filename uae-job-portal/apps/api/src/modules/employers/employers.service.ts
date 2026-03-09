@@ -156,13 +156,18 @@ export class EmployersService {
     const member = await prisma.employerMember.findFirst({ where: { userId } });
     if (!member) throw new NotFoundError('Employer');
 
-    const [totalJobs, publishedJobs, totalApplications, viewCount] = await Promise.all([
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const since7d  = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000);
+
+    const [totalJobs, publishedJobs, totalApplications, viewCount, newApps7d, newApps30d] = await Promise.all([
       prisma.job.count({ where: { employerId: member.employerId } }),
       prisma.job.count({ where: { employerId: member.employerId, status: 'PUBLISHED' } }),
       prisma.application.count({ where: { job: { employerId: member.employerId } } }),
       prisma.job
         .aggregate({ where: { employerId: member.employerId }, _sum: { viewCount: true } })
         .then((r) => r._sum.viewCount || 0),
+      prisma.application.count({ where: { job: { employerId: member.employerId }, createdAt: { gte: since7d } } }),
+      prisma.application.count({ where: { job: { employerId: member.employerId }, createdAt: { gte: since30d } } }),
     ]);
 
     const applicationsByStatus = await prisma.application.groupBy({
@@ -171,12 +176,46 @@ export class EmployersService {
       _count: true,
     });
 
+    // Per-job stats
+    const topJobs = await prisma.job.findMany({
+      where: { employerId: member.employerId, status: 'PUBLISHED' },
+      select: {
+        id: true, title: true, slug: true, viewCount: true, applyCount: true,
+        publishedAt: true, expiresAt: true,
+        _count: { select: { applications: true } },
+      },
+      orderBy: { viewCount: 'desc' },
+      take: 10,
+    });
+
+    // Daily applications (last 30 days)
+    const dailyRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
+      SELECT DATE_TRUNC('day', a."createdAt") AS day, COUNT(*) AS count
+      FROM "Application" a
+      JOIN "Job" j ON j.id = a."jobId"
+      WHERE j."employerId" = ${member.employerId}
+        AND a."createdAt" >= ${since30d}
+      GROUP BY day ORDER BY day ASC
+    `;
+
+    // Conversion funnel
+    const funnelStatuses = ['SUBMITTED', 'VIEWED', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED'];
+    const funnelCounts = applicationsByStatus.reduce((acc, s) => {
+      acc[s.status] = s._count;
+      return acc;
+    }, {} as Record<string, number>);
+
     return {
       totalJobs,
       publishedJobs,
       totalApplications,
       totalViews: viewCount,
+      newApps7d,
+      newApps30d,
       applicationsByStatus,
+      topJobs,
+      dailyApplications: dailyRaw.map((r) => ({ day: r.day, count: Number(r.count) })),
+      conversionFunnel: funnelStatuses.map((s) => ({ status: s, count: funnelCounts[s] || 0 })),
     };
   }
 }

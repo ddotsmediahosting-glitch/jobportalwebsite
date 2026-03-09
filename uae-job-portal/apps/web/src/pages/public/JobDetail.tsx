@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   MapPin, Briefcase, DollarSign, Clock, Users, Bookmark, BookmarkCheck, ExternalLink, Flag, ChevronLeft,
+  Sparkles, Loader2, TrendingUp,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
@@ -12,10 +13,14 @@ import { Modal } from '../../components/ui/Modal';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
+import { SEOHead, buildJobPostingSchema } from '../../components/SEOHead';
+import { SocialShare } from '../../components/SocialShare';
 import {
   EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, VISA_STATUS_LABELS,
   Emirates, WorkMode, EmploymentType, VisaStatus,
 } from '@uaejobs/shared';
+
+const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://jobs.ddotsmedia.com';
 
 function fmt(n?: number | null) { return n ? n.toLocaleString() : null; }
 
@@ -30,6 +35,12 @@ export function JobDetail() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['job', slug],
     queryFn: () => api.get(`/jobs/${slug}`).then((r) => r.data.data),
+  });
+
+  const { data: matchData, isLoading: matchLoading, refetch: fetchMatch, isFetched: matchFetched } = useQuery({
+    queryKey: ['job-match', data?.id],
+    queryFn: () => api.get(`/ai/match-score/${data!.id}`).then(r => r.data.data),
+    enabled: false,
   });
 
   const { data: resumes } = useQuery({
@@ -67,8 +78,42 @@ export function JobDetail() {
   );
 
   const job = data;
+  const jobUrl = `${BASE_URL}/jobs/${job.slug}`;
+  const salaryText = job.salaryMin && job.salaryMax
+    ? `AED ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}/mo`
+    : null;
+  const metaDesc = job.metaDescription ||
+    `${job.title} at ${job.employer.companyName} in ${EMIRATES_LABELS[job.emirate as Emirates] || job.emirate}, UAE. ${salaryText ? salaryText + '.' : ''} Apply now on DdotsmediaJobs.`;
 
   return (
+    <>
+      <SEOHead
+        title={job.metaTitle || `${job.title} at ${job.employer.companyName}`}
+        description={metaDesc}
+        ogTitle={`${job.title} – ${job.employer.companyName} | DdotsmediaJobs`}
+        ogDescription={metaDesc}
+        ogImage={job.employer.logoUrl || undefined}
+        ogUrl={jobUrl}
+        ogType="article"
+        canonical={jobUrl}
+        jsonLd={buildJobPostingSchema({
+          title: job.title,
+          description: job.description,
+          slug: job.slug,
+          publishedAt: job.publishedAt,
+          expiresAt: job.expiresAt,
+          employmentType: job.employmentType,
+          workMode: job.workMode,
+          emirate: job.emirate,
+          location: job.location,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryCurrency: job.salaryCurrency,
+          skills: job.skills,
+          employer: job.employer,
+          category: job.category,
+        })}
+      />
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link to="/jobs" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-brand-600 mb-6 transition-colors">
         <ChevronLeft className="h-4 w-4" /> Back to Jobs
@@ -89,7 +134,7 @@ export function JobDetail() {
               )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold text-gray-900">{job.title}</h1>
-                <Link to={`/employers/${job.employer.slug}`} className="text-brand-600 text-sm hover:underline">
+                <Link to={`/companies/${job.employer.slug}`} className="text-brand-600 text-sm hover:underline">
                   {job.employer.companyName}
                 </Link>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -180,6 +225,75 @@ export function JobDetail() {
             )}
           </div>
 
+          {/* AI Match Score — seekers only */}
+          {user?.role === 'SEEKER' && (
+            <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={15} className="text-violet-600" />
+                <h3 className="font-semibold text-violet-900 text-sm">AI Match Score</h3>
+              </div>
+              {!matchFetched ? (
+                <div className="text-center">
+                  <p className="text-xs text-violet-700 mb-3">See how well your profile matches this job</p>
+                  <button
+                    onClick={() => fetchMatch()}
+                    disabled={matchLoading}
+                    className="flex items-center gap-2 mx-auto bg-violet-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {matchLoading ? <Loader2 size={13} className="animate-spin" /> : <TrendingUp size={13} />}
+                    {matchLoading ? 'Analyzing...' : 'Check My Match'}
+                  </button>
+                </div>
+              ) : matchData ? (
+                <div>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-3xl font-bold text-violet-900">{matchData.overallScore}</span>
+                    <span className="text-gray-400 text-sm mb-1">/100</span>
+                  </div>
+                  <p className="text-xs font-semibold text-violet-700 mb-2">{matchData.label}</p>
+                  <div className="w-full bg-violet-200 rounded-full h-2 mb-3">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
+                      style={{ width: `${matchData.overallScore}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                    <div className="bg-white/70 rounded-lg p-2 text-center">
+                      <p className="font-bold text-violet-900">{matchData.skillsMatch}%</p>
+                      <p className="text-gray-500">Skills Match</p>
+                    </div>
+                    <div className="bg-white/70 rounded-lg p-2 text-center">
+                      <p className="font-bold text-violet-900">{matchData.experienceMatch}%</p>
+                      <p className="text-gray-500">Experience</p>
+                    </div>
+                  </div>
+                  {matchData.matchingPoints?.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs font-semibold text-green-700 mb-1">Strengths</p>
+                      {matchData.matchingPoints.slice(0, 2).map((p: string, i: number) => (
+                        <p key={i} className="text-xs text-gray-600">✓ {p}</p>
+                      ))}
+                    </div>
+                  )}
+                  {matchData.gaps?.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs font-semibold text-red-600 mb-1">Gaps</p>
+                      {matchData.gaps.slice(0, 2).map((g: string, i: number) => (
+                        <p key={i} className="text-xs text-gray-600">✗ {g}</p>
+                      ))}
+                    </div>
+                  )}
+                  {matchData.advice && (
+                    <p className="text-xs text-violet-700 bg-violet-100 rounded-lg p-2 italic">{matchData.advice}</p>
+                  )}
+                  <button onClick={() => fetchMatch()} className="mt-2 text-xs text-violet-500 hover:underline">Refresh</button>
+                </div>
+              ) : (
+                <p className="text-xs text-red-500">Could not load match score. Complete your profile first.</p>
+              )}
+            </div>
+          )}
+
           {/* Job details */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm">Job Details</h3>
@@ -208,6 +322,17 @@ export function JobDetail() {
               </div>
             </div>
           )}
+
+          {/* Social share */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <SocialShare
+              jobId={job.id}
+              url={jobUrl}
+              title={`${job.title} at ${job.employer.companyName} – ${EMIRATES_LABELS[job.emirate as Emirates] || job.emirate}, UAE`}
+              description={metaDesc}
+              utmCampaign="job-detail-share"
+            />
+          </div>
         </div>
       </div>
 
@@ -255,5 +380,6 @@ export function JobDetail() {
         </div>
       </Modal>
     </div>
+    </>
   );
 }

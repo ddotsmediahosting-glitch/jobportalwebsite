@@ -1,11 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { config } from '../config';
+import { AppError } from '../middleware/errorHandler';
 
 export const anthropic = new Anthropic({
-  apiKey: config.ai.anthropicApiKey,
+  apiKey: config.ai.anthropicApiKey || 'placeholder',
 });
 
+function assertApiKey() {
+  const key = config.ai.anthropicApiKey;
+  if (!key || key.length < 20 || key.startsWith('sk-ant-your') || key.includes('your-key')) {
+    throw new AppError(503, 'AI features are not available. Please configure ANTHROPIC_API_KEY in your environment settings.');
+  }
+}
+
 export async function callClaude(prompt: string, systemPrompt?: string): Promise<string> {
+  assertApiKey();
   const message = await anthropic.messages.create({
     model: config.ai.model,
     max_tokens: 4096,
@@ -272,6 +281,299 @@ Return JSON:
 }`;
 
   return callClaudeJSON<OptimizationResult>(prompt, system);
+}
+
+// ─── Job Description Writer ────────────────────────────────────────────────────
+
+export interface JobDescriptionResult {
+  title: string;
+  summary: string;
+  responsibilities: string[];
+  requirements: string[];
+  niceToHave: string[];
+  benefits: string[];
+  skills: string[];
+  seoKeywords: string[];
+  suggestedSalaryMin: number;
+  suggestedSalaryMax: number;
+  suggestedExperienceMin: number;
+  suggestedExperienceMax: number;
+  suggestedEmploymentType: string;
+  suggestedWorkMode: string;
+  suggestedLevel: string;
+}
+
+export async function generateJobDescription(
+  role: string,
+  industry: string,
+  keyRequirements: string,
+  companyName: string,
+  emirate: string,
+  workMode: string,
+  experienceYears: string
+): Promise<JobDescriptionResult> {
+  const system = `You are a senior HR consultant and job description specialist for the UAE job market.
+You write compelling, inclusive, ATS-optimized job descriptions that attract top talent.`;
+
+  const prompt = `Write a complete, professional job description and suggest realistic job parameters for the UAE market.
+
+ROLE: ${role}
+COMPANY: ${companyName}
+INDUSTRY: ${industry}
+LOCATION: ${emirate}, UAE
+WORK MODE: ${workMode}
+EXPERIENCE REQUIRED: ${experienceYears}
+KEY REQUIREMENTS: ${keyRequirements}
+
+Return JSON:
+{
+  "title": "<optimized job title>",
+  "summary": "<2-3 sentence engaging role overview>",
+  "responsibilities": ["<8-10 specific action-verb-led responsibilities>"],
+  "requirements": ["<5-7 must-have qualifications>"],
+  "niceToHave": ["<3-5 preferred qualifications>"],
+  "benefits": ["<5-7 UAE-relevant benefits e.g. visa, health insurance, housing allowance>"],
+  "skills": ["<10-15 key skills for ATS>"],
+  "seoKeywords": ["<10 high-value UAE job search keywords>"],
+  "suggestedSalaryMin": <realistic minimum monthly salary in AED as integer>,
+  "suggestedSalaryMax": <realistic maximum monthly salary in AED as integer>,
+  "suggestedExperienceMin": <minimum years of experience as integer>,
+  "suggestedExperienceMax": <maximum years of experience as integer>,
+  "suggestedEmploymentType": "<one of: FULL_TIME, PART_TIME, CONTRACT, TEMPORARY, INTERNSHIP, FREELANCE>",
+  "suggestedWorkMode": "<one of: ONSITE, HYBRID, REMOTE>",
+  "suggestedLevel": "<one of: Junior, Mid-level, Senior, Lead, Manager, Director, Executive>"
+}`;
+
+  return callClaudeJSON<JobDescriptionResult>(prompt, system);
+}
+
+// ─── Application Screener ──────────────────────────────────────────────────────
+
+export interface ScreenedCandidate {
+  applicationId: string;
+  candidateName: string;
+  fitScore: number;
+  fitLabel: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+  matchingStrengths: string[];
+  gaps: string[];
+  recommendation: string;
+  priority: 'shortlist' | 'review' | 'reject';
+}
+
+export async function screenApplications(
+  jobTitle: string,
+  jobDescription: string,
+  candidates: Array<{ applicationId: string; candidateName: string; coverLetter?: string; skills: string[]; headline?: string; yearsOfExperience?: number }>
+): Promise<ScreenedCandidate[]> {
+  const system = `You are an expert talent acquisition specialist for the UAE job market. Screen candidates objectively.`;
+
+  const candidateList = candidates.map((c, i) =>
+    `[${i + 1}] ID: ${c.applicationId}\nName: ${c.candidateName}\nExp: ${c.yearsOfExperience ?? '?'} yrs\nHeadline: ${c.headline || '-'}\nSkills: ${c.skills.join(', ') || '-'}\nCover Letter: ${c.coverLetter ? c.coverLetter.substring(0, 200) : 'None'}`
+  ).join('\n\n');
+
+  const prompt = `Screen these ${candidates.length} candidates for: ${jobTitle}
+
+JOB DESCRIPTION:
+${jobDescription.substring(0, 1200)}
+
+CANDIDATES:
+${candidateList}
+
+Return JSON array — one entry per candidate:
+[
+  {
+    "applicationId": "<id>",
+    "candidateName": "<name>",
+    "fitScore": <0-100>,
+    "fitLabel": "<Excellent|Good|Fair|Poor>",
+    "matchingStrengths": ["<2-3 strengths>"],
+    "gaps": ["<1-3 gaps>"],
+    "recommendation": "<1-2 sentence recommendation>",
+    "priority": "<shortlist|review|reject>"
+  }
+]
+Shortlist=70+, Review=40-69, Reject<40.`;
+
+  return callClaudeJSON<ScreenedCandidate[]>(prompt, system);
+}
+
+// ─── Job Match Score ───────────────────────────────────────────────────────────
+
+export interface JobMatchResult {
+  overallScore: number;
+  label: 'Excellent Match' | 'Good Match' | 'Partial Match' | 'Low Match';
+  skillsMatch: number;
+  experienceMatch: number;
+  matchingPoints: string[];
+  gaps: string[];
+  advice: string;
+}
+
+export async function scoreJobMatch(
+  seekerProfile: { skills: string[]; yearsOfExperience?: number; headline?: string; bio?: string },
+  jobDescription: string,
+  jobTitle: string
+): Promise<JobMatchResult> {
+  const system = `You are a career coach helping job seekers understand how well they match a role. Be honest and encouraging.`;
+
+  const prompt = `How well does this candidate match the job?
+
+JOB: ${jobTitle}
+DESCRIPTION: ${jobDescription.substring(0, 1200)}
+
+CANDIDATE:
+Headline: ${seekerProfile.headline || '-'}
+Experience: ${seekerProfile.yearsOfExperience ?? '?'} years
+Skills: ${seekerProfile.skills.join(', ') || '-'}
+Bio: ${seekerProfile.bio ? seekerProfile.bio.substring(0, 200) : '-'}
+
+Return JSON:
+{
+  "overallScore": <0-100>,
+  "label": "<Excellent Match|Good Match|Partial Match|Low Match>",
+  "skillsMatch": <0-100>,
+  "experienceMatch": <0-100>,
+  "matchingPoints": ["<3-4 specific fit reasons>"],
+  "gaps": ["<2-3 specific gaps>"],
+  "advice": "<1-2 sentences of actionable advice>"
+}
+Excellent=80+, Good=60-79, Partial=40-59, Low<40.`;
+
+  return callClaudeJSON<JobMatchResult>(prompt, system);
+}
+
+// ─── Career Advisor Chat ───────────────────────────────────────────────────────
+
+export async function chatWithCareerAdvisor(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  userContext?: { skills?: string[]; yearsOfExperience?: number; headline?: string }
+): Promise<string> {
+  assertApiKey();
+  const contextStr = userContext?.skills?.length
+    ? `\nUser: ${userContext.headline || 'job seeker'}, ${userContext.yearsOfExperience ?? '?'} yrs exp, skills: ${userContext.skills.slice(0, 8).join(', ')}`
+    : '';
+
+  const system = `You are an expert career advisor specializing in the UAE and MENA job market.
+Help with career advice, job search, CV tips, interview prep, salary negotiation, and professional development.
+Be warm, practical, and specific. Give actionable advice under 280 words unless asked for more.${contextStr}`;
+
+  const response = await anthropic.messages.create({
+    model: config.ai.model,
+    max_tokens: 1024,
+    system,
+    messages: messages.map(m => ({ role: m.role, content: m.content })),
+  });
+
+  const block = response.content[0];
+  if (block.type !== 'text') throw new Error('Unexpected response type');
+  return block.text;
+}
+
+// ─── Salary Insights ──────────────────────────────────────────────────────────
+
+export interface SalaryInsightsResult {
+  role: string;
+  emirate: string;
+  industry: string;
+  salaryMin: number;
+  salaryMax: number;
+  salaryMedian: number;
+  currency: string;
+  topPayingCompanies: string[];
+  topPayingIndustries: string[];
+  topPayingEmirates: string[];
+  inDemandSkills: string[];
+  salaryFactors: Array<{ factor: string; impact: 'positive' | 'negative'; description: string }>;
+  marketOutlook: string;
+  negotiationTips: string[];
+}
+
+export async function getSalaryInsights(
+  role: string,
+  industry: string,
+  emirate: string,
+  yearsOfExperience: number
+): Promise<SalaryInsightsResult> {
+  const system = `You are a UAE compensation and benefits specialist with deep knowledge of salary benchmarks across all sectors and emirates. Provide accurate, up-to-date salary data for the UAE job market as of 2024-2025.`;
+
+  const prompt = `Provide comprehensive salary insights for the following role in the UAE.
+
+ROLE: ${role}
+INDUSTRY: ${industry}
+EMIRATE: ${emirate}
+YEARS OF EXPERIENCE: ${yearsOfExperience}
+
+Return detailed salary benchmark data as JSON:
+{
+  "role": "${role}",
+  "emirate": "${emirate}",
+  "industry": "${industry}",
+  "salaryMin": <minimum monthly salary in AED>,
+  "salaryMax": <maximum monthly salary in AED>,
+  "salaryMedian": <median/typical monthly salary in AED>,
+  "currency": "AED",
+  "topPayingCompanies": ["<5 types of companies or specific well-known employers that pay top salaries for this role>"],
+  "topPayingIndustries": ["<3-4 industries with highest pay for this role>"],
+  "topPayingEmirates": ["<top 3 emirates ordered by pay for this role>"],
+  "inDemandSkills": ["<8-10 skills that command higher salaries for this role>"],
+  "salaryFactors": [
+    { "factor": "<factor name>", "impact": "<positive|negative>", "description": "<how this affects salary>" }
+  ],
+  "marketOutlook": "<2-3 sentences on job market demand and salary trends for this role in UAE>",
+  "negotiationTips": ["<4-5 specific salary negotiation tips for UAE job market>"]
+}`;
+
+  return callClaudeJSON<SalaryInsightsResult>(prompt, system);
+}
+
+// ─── Standalone Interview Prep ─────────────────────────────────────────────────
+
+export interface InterviewPrepResult {
+  questions: Array<{
+    question: string;
+    category: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    tip: string;
+    sampleAnswer: string;
+  }>;
+  interviewTips: string[];
+  commonMistakes: string[];
+  questionsToAsk: string[];
+}
+
+export async function generateInterviewPrep(
+  role: string,
+  industry: string,
+  yearsOfExperience: number,
+  specificFocus?: string
+): Promise<InterviewPrepResult> {
+  const system = `You are an expert interview coach specializing in the UAE and MENA job market. You help candidates prepare thoroughly for job interviews.`;
+
+  const prompt = `Generate a comprehensive interview preparation guide.
+
+ROLE: ${role}
+INDUSTRY: ${industry}
+EXPERIENCE LEVEL: ${yearsOfExperience} years
+${specificFocus ? `FOCUS AREA: ${specificFocus}` : ''}
+
+Return JSON with this structure:
+{
+  "questions": [
+    {
+      "question": "<interview question>",
+      "category": "<Technical|Behavioral|Situational|Role-specific|Culture fit|UAE-specific>",
+      "difficulty": "<easy|medium|hard>",
+      "tip": "<brief tip on how to answer well>",
+      "sampleAnswer": "<1-2 sentence sample answer framework or STAR method guide>"
+    }
+  ],
+  "interviewTips": ["<6-8 specific tips for interviewing at UAE companies>"],
+  "commonMistakes": ["<4-5 common mistakes candidates make for this role>"],
+  "questionsToAsk": ["<5 smart questions the candidate should ask the interviewer>"]
+}
+Generate 12 questions covering a mix of technical, behavioral, and role-specific questions.`;
+
+  return callClaudeJSON<InterviewPrepResult>(prompt, system);
 }
 
 // ─── Interview Question Generation ────────────────────────────────────────────

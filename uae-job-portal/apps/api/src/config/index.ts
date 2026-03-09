@@ -62,6 +62,13 @@ export const config = {
     model: 'claude-sonnet-4-6',
   },
 
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID || '',
+    authToken: process.env.TWILIO_AUTH_TOKEN || '',
+    whatsappFrom: process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886', // Twilio sandbox default
+    webhookUrl: process.env.TWILIO_WEBHOOK_URL || '',
+  },
+
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),

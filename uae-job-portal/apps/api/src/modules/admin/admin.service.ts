@@ -1,8 +1,11 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError, AppError } from '../../middleware/errorHandler';
-import { UserStatus, VerificationStatus, JobStatus, ReportStatus, Prisma } from '@prisma/client';
+import { UserStatus, VerificationStatus, JobStatus, ReportStatus, Prisma, Emirates, WorkMode, EmploymentType } from '@prisma/client';
 import { auditLog } from '../../middleware/rbac';
 import bcrypt from 'bcryptjs';
+import { cacheDel } from '../../lib/cache';
+
+const HOME_CACHE_KEY = 'home:data';
 
 export class AdminService {
   // ── Dashboard stats ───────────────────────────────────────────────────────────
@@ -116,6 +119,18 @@ export class AdminService {
     return { message: 'Password reset' };
   }
 
+  async createSubAdmin(actorId: string, email: string, password: string) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) throw new AppError(409, 'Email already in use');
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({
+      data: { email, passwordHash, role: 'SUB_ADMIN', status: 'ACTIVE', verifiedAt: new Date() },
+      select: { id: true, email: true, role: true, status: true, createdAt: true },
+    });
+    await auditLog(actorId, 'ADMIN', 'SUB_ADMIN_CREATED', 'User', user.id, { email });
+    return user;
+  }
+
   async deleteUser(actorId: string, userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('User');
@@ -186,21 +201,32 @@ export class AdminService {
 
   // ── Jobs ──────────────────────────────────────────────────────────────────────
 
-  async listAdminJobs(page = 1, limit = 20, status?: string, q?: string) {
+  async listAdminJobs(page = 1, limit = 20, status?: string, q?: string, categoryId?: string, emirate?: string, sortBy?: string) {
     const where: Prisma.JobWhereInput = {};
 
     if (status) where.status = status as JobStatus;
-    if (q) where.title = { contains: q, mode: 'insensitive' };
+    if (q) where.OR = [
+      { title: { contains: q, mode: 'insensitive' } },
+      { employer: { companyName: { contains: q, mode: 'insensitive' } } },
+    ];
+    if (categoryId) where.categoryId = categoryId;
+    if (emirate) where.emirate = emirate as Emirates;
+
+    const orderBy: Prisma.JobOrderByWithRelationInput =
+      sortBy === 'oldest'      ? { createdAt: 'asc' }
+      : sortBy === 'published' ? { publishedAt: 'desc' }
+      : sortBy === 'views'     ? { viewCount: 'desc' }
+      : { createdAt: 'desc' };
 
     const [items, total] = await Promise.all([
       prisma.job.findMany({
         where,
         include: {
           employer: { select: { id: true, companyName: true } },
-          category: { select: { name: true } },
+          category: { select: { id: true, name: true } },
           _count: { select: { applications: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -330,6 +356,13 @@ export class AdminService {
     return page;
   }
 
+  async deleteContentPage(slug: string) {
+    const page = await prisma.contentPage.findUnique({ where: { slug } });
+    if (!page) throw new NotFoundError('Page');
+    await prisma.contentPage.delete({ where: { slug } });
+    return { message: 'Page deleted' };
+  }
+
   // ── Subscriptions overview ─────────────────────────────────────────────────────
 
   async listSubscriptions(page = 1, limit = 20) {
@@ -353,5 +386,225 @@ export class AdminService {
       where: { employerId },
       data: data as Parameters<typeof prisma.subscription.update>[0]['data'],
     });
+  }
+
+  // ── Analytics ──────────────────────────────────────────────────────────────────
+
+  async getAnalytics(days = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    // Daily new users
+    const usersRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
+      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
+      FROM "User"
+      WHERE "createdAt" >= ${since}
+      GROUP BY day ORDER BY day ASC
+    `;
+
+    // Daily new jobs
+    const jobsRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
+      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
+      FROM "Job"
+      WHERE "createdAt" >= ${since}
+      GROUP BY day ORDER BY day ASC
+    `;
+
+    // Daily new applications
+    const appsRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
+      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
+      FROM "Application"
+      WHERE "createdAt" >= ${since}
+      GROUP BY day ORDER BY day ASC
+    `;
+
+    // Job status distribution
+    const jobStatusRaw = await prisma.$queryRaw<{ status: string; count: bigint }[]>`
+      SELECT status, COUNT(*) AS count FROM "Job" GROUP BY status
+    `;
+
+    // Applications by emirate (from job location)
+    const byEmirateRaw = await prisma.$queryRaw<{ location: string; count: bigint }[]>`
+      SELECT j.location, COUNT(a.id) AS count
+      FROM "Application" a
+      JOIN "Job" j ON j.id = a."jobId"
+      WHERE a."createdAt" >= ${since}
+      GROUP BY j.location ORDER BY count DESC LIMIT 10
+    `;
+
+    // Trend: compare last N days vs previous N days
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - days);
+
+    const [currUsers, prevUsers, currJobs, prevJobs, currApps, prevApps] = await Promise.all([
+      prisma.user.count({ where: { createdAt: { gte: since } } }),
+      prisma.user.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
+      prisma.job.count({ where: { createdAt: { gte: since } } }),
+      prisma.job.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
+      prisma.application.count({ where: { createdAt: { gte: since } } }),
+      prisma.application.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
+    ]);
+
+    const trend = (curr: number, prev: number) =>
+      prev === 0 ? null : Math.round(((curr - prev) / prev) * 100);
+
+    return {
+      days,
+      dailyUsers: usersRaw.map((r) => ({ day: r.day, count: Number(r.count) })),
+      dailyJobs: jobsRaw.map((r) => ({ day: r.day, count: Number(r.count) })),
+      dailyApplications: appsRaw.map((r) => ({ day: r.day, count: Number(r.count) })),
+      jobStatusDistribution: jobStatusRaw.map((r) => ({ status: r.status, count: Number(r.count) })),
+      applicationsByEmirate: byEmirateRaw.map((r) => ({ location: r.location, count: Number(r.count) })),
+      trends: {
+        users: { current: currUsers, previous: prevUsers, pct: trend(currUsers, prevUsers) },
+        jobs: { current: currJobs, previous: prevJobs, pct: trend(currJobs, prevJobs) },
+        applications: { current: currApps, previous: prevApps, pct: trend(currApps, prevApps) },
+      },
+    };
+  }
+
+  async createJobAsAdmin(actorId: string, data: {
+    employerId: string; categoryId: string; title: string; description: string;
+    emirate: string; workMode?: string; employmentType?: string; location?: string;
+    salaryMin?: number; salaryMax?: number; skills?: string[]; isFeatured?: boolean;
+  }) {
+    const employer = await prisma.employer.findUnique({ where: { id: data.employerId } });
+    if (!employer) throw new NotFoundError('Employer');
+    const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
+    if (!category) throw new NotFoundError('Category');
+
+    const baseSlug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = `${baseSlug}-${Date.now().toString(36)}`;
+
+    const job = await prisma.job.create({
+      data: {
+        employerId: data.employerId,
+        categoryId: data.categoryId,
+        title: data.title,
+        slug,
+        description: data.description,
+        emirate: data.emirate as Emirates,
+        location: data.location,
+        workMode: (data.workMode || 'ONSITE') as WorkMode,
+        employmentType: (data.employmentType || 'FULL_TIME') as EmploymentType,
+        salaryMin: data.salaryMin,
+        salaryMax: data.salaryMax,
+        skills: data.skills || [],
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        isFeatured: data.isFeatured || false,
+      },
+    });
+
+    await auditLog(actorId, 'ADMIN', 'JOB_CREATED', 'Job', job.id, { title: data.title, employer: employer.companyName });
+    await cacheDel(HOME_CACHE_KEY);
+    return job;
+  }
+
+  async toggleJobFeatured(actorId: string, jobId: string) {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundError('Job');
+    const isFeatured = !job.isFeatured;
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        isFeatured,
+        featuredUntil: isFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+      },
+    });
+    await auditLog(actorId, 'ADMIN', isFeatured ? 'JOB_FEATURED' : 'JOB_UNFEATURED', 'Job', jobId);
+    await cacheDel(HOME_CACHE_KEY);
+    return { isFeatured };
+  }
+
+  async deleteJobAdmin(actorId: string, jobId: string) {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundError('Job');
+    await prisma.job.delete({ where: { id: jobId } });
+    await auditLog(actorId, 'ADMIN', 'JOB_DELETED', 'Job', jobId, { title: job.title });
+    await cacheDel(HOME_CACHE_KEY);
+    return { message: 'Job deleted' };
+  }
+
+  // ── Bulk actions ───────────────────────────────────────────────────────────────
+
+  async bulkModerateJobs(actorId: string, jobIds: string[], action: 'PUBLISHED' | 'REJECTED', notes?: string) {
+    const jobs = await prisma.job.findMany({ where: { id: { in: jobIds } } });
+    if (jobs.length === 0) throw new AppError(400, 'No valid jobs found');
+
+    await prisma.job.updateMany({
+      where: { id: { in: jobIds } },
+      data: {
+        status: action as JobStatus,
+        moderationNotes: notes,
+        ...(action === 'PUBLISHED' ? { publishedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : {}),
+      },
+    });
+
+    // Notify each employer
+    const employerIds = [...new Set(jobs.map((j) => j.employerId))];
+    const employers = await prisma.employer.findMany({ where: { id: { in: employerIds } } });
+    const ownerMap = Object.fromEntries(employers.map((e) => [e.id, e.ownerUserId]));
+
+    await prisma.notification.createMany({
+      data: jobs.map((job) => ({
+        userId: ownerMap[job.employerId],
+        type: `JOB_${action}`,
+        title: `Job ${action === 'PUBLISHED' ? 'Approved' : 'Rejected'}`,
+        body: `Your job "${job.title}" has been ${action.toLowerCase()}.${notes ? ` Note: ${notes}` : ''}`,
+      })),
+      skipDuplicates: true,
+    });
+
+    await auditLog(actorId, 'ADMIN', `BULK_JOB_${action}`, 'Job', jobIds.join(','), { count: jobIds.length, notes });
+
+    return { message: `${jobs.length} jobs ${action.toLowerCase()}`, count: jobs.length };
+  }
+
+  async bulkUpdateUserStatus(actorId: string, userIds: string[], status: UserStatus, reason?: string) {
+    const users = await prisma.user.findMany({ where: { id: { in: userIds }, role: { not: 'ADMIN' } } });
+    if (users.length === 0) throw new AppError(400, 'No valid users found');
+
+    const validIds = users.map((u) => u.id);
+    await prisma.user.updateMany({ where: { id: { in: validIds } }, data: { status } });
+    await auditLog(actorId, 'ADMIN', `BULK_USER_STATUS_${status}`, 'User', validIds.join(','), { count: validIds.length, reason });
+
+    return { message: `${validIds.length} users ${status.toLowerCase()}`, count: validIds.length };
+  }
+
+  async exportUsers(role?: string, status?: string) {
+    const where: Prisma.UserWhereInput = {};
+    if (role) where.role = role as 'SEEKER' | 'EMPLOYER' | 'ADMIN' | 'SUB_ADMIN';
+    if (status) where.status = status as UserStatus;
+
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true, email: true, phone: true, role: true, status: true,
+        createdAt: true, lastLoginAt: true, verifiedAt: true,
+        seekerProfile: { select: { firstName: true, lastName: true } },
+        ownedEmployer: { select: { companyName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10000,
+    });
+
+    const rows = [
+      ['ID', 'Email', 'Name', 'Company', 'Role', 'Status', 'Verified', 'Last Login', 'Joined'].join(','),
+      ...users.map((u) => [
+        u.id,
+        u.email,
+        u.seekerProfile ? `${u.seekerProfile.firstName} ${u.seekerProfile.lastName}` : '',
+        u.ownedEmployer?.companyName || '',
+        u.role,
+        u.status,
+        u.verifiedAt ? u.verifiedAt.toISOString() : '',
+        u.lastLoginAt ? u.lastLoginAt.toISOString() : '',
+        u.createdAt.toISOString(),
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    return rows;
   }
 }

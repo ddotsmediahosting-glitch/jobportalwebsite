@@ -54,7 +54,7 @@ services:
       context: .                          # monorepo root
       dockerfile: apps/web/Dockerfile
       args:
-        VITE_API_URL: http://localhost:4000
+        VITE_API_URL: ""
     restart: unless-stopped
     depends_on:
       - api

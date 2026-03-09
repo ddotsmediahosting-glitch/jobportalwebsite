@@ -72,6 +72,50 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     return;
   }
 
+  // Prisma not-found
+  if ((err as { code?: string }).code === 'P2025') {
+    res.status(404).json({ success: false, error: 'Record not found' });
+    return;
+  }
+
+  // ── Anthropic / AI SDK errors ─────────────────────────────────────────────
+  const anyErr = err as { status?: number; name?: string; message?: string };
+
+  if (anyErr.name === 'AuthenticationError' || anyErr.status === 401) {
+    res.status(503).json({
+      success: false,
+      error: 'AI service is not configured. Please add a valid ANTHROPIC_API_KEY in your .env file.',
+    });
+    return;
+  }
+  if (anyErr.name === 'RateLimitError' || anyErr.status === 429) {
+    res.status(429).json({
+      success: false,
+      error: 'AI rate limit reached. Please wait a moment and try again.',
+    });
+    return;
+  }
+  if (anyErr.status === 529) {
+    res.status(503).json({
+      success: false,
+      error: 'AI service is temporarily overloaded. Please try again in a moment.',
+    });
+    return;
+  }
+  if (
+    anyErr.name === 'APIError' ||
+    anyErr.name === 'APIConnectionError' ||
+    anyErr.name === 'APITimeoutError'
+  ) {
+    console.error('[AI Error]', err);
+    res.status(502).json({
+      success: false,
+      error: 'AI service returned an error. Please try again.',
+      ...(config.env === 'development' ? { detail: anyErr.message } : {}),
+    });
+    return;
+  }
+
   console.error('[Error]', err);
 
   res.status(500).json({

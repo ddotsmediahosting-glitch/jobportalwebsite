@@ -1,0 +1,394 @@
+{
+  "companyInfo": {
+    "name": "Ddotsmedia IT Solutions",
+    "email": "hello@ddotsmedia.com",
+    "phone": "+971 50 000 0000",
+    "whatsapp": "https://wa.me/971500000000",
+    "address": "Dubai, United Arab Emirates",
+    "hours": "Mon-Sat, 9:00 AM - 6:00 PM GST",
+    "socialLinks": [
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com"
+      },
+      {
+        "label": "Instagram",
+        "href": "https://www.instagram.com"
+      },
+      {
+        "label": "X",
+        "href": "https://x.com"
+      }
+    ]
+  },
+  "siteSettings": {
+    "name": "Ddotsmedia IT Solutions",
+    "shortName": "Ddotsmedia",
+    "description": "Ddotsmedia IT Solutions builds web platforms, mobile apps, AI-powered workflows, and cloud-ready digital products for ambitious businesses.",
+    "keywords": [
+      "IT solutions company",
+      "web development agency",
+      "mobile app development",
+      "custom software development",
+      "AI automation services",
+      "cloud solutions"
+    ]
+  },
+  "hero": {
+    "eyebrow": "Modern IT Delivery",
+    "title": "Premium websites, software, and AI workflows for companies that need real business traction.",
+    "description": "Ddotsmedia IT Solutions designs and builds web platforms, mobile apps, brand-grade interfaces, and automation systems that turn digital operations into a growth asset instead of a maintenance burden.",
+    "highlights": [
+      {
+        "title": "Positioning",
+        "value": "High-end tech brand execution"
+      },
+      {
+        "title": "Focus",
+        "value": "Lead generation, SEO, automation"
+      },
+      {
+        "title": "Delivery",
+        "value": "Strategy, design, engineering"
+      }
+    ]
+  },
+  "theme": {
+    "surface": "#4398a0",
+    "surfaceElevated": "rgba(52, 132, 139, 0.86)",
+    "surfaceSoft": "#347d84",
+    "card": "rgba(243, 240, 232, 0.12)",
+    "cardStrong": "rgba(243, 240, 232, 0.18)",
+    "border": "rgba(243, 240, 232, 0.34)",
+    "text": "#f7f4eb",
+    "textMuted": "rgba(247, 244, 235, 0.8)",
+    "primary": "#eed556",
+    "primaryStrong": "#f18c4d",
+    "accent": "#bfd25d",
+    "accentSoft": "#f7d97e",
+    "ink": "#17484d",
+    "danger": "#b84444"
+  },
+  "services": [
+    {
+      "slug": "web-development",
+      "title": "Web Development",
+      "summary": "High-performance websites and platforms designed to convert and scale.",
+      "description": "We design and engineer web products that combine premium UX, reliable architecture, and measurable business performance.",
+      "highlights": [
+        "Next.js architecture",
+        "API integrations",
+        "SEO-ready delivery"
+      ]
+    },
+    {
+      "slug": "mobile-app-development",
+      "title": "Mobile App Development",
+      "summary": "Cross-platform mobile experiences with product-grade design and delivery.",
+      "description": "From business apps to customer platforms, we build mobile products with strong usability and clean backend integration.",
+      "highlights": [
+        "iOS and Android strategy",
+        "Reusable APIs",
+        "Analytics-ready"
+      ]
+    },
+    {
+      "slug": "ui-ux-design",
+      "title": "UI/UX Design",
+      "summary": "Product and interface design focused on clarity, trust, and action.",
+      "description": "We design digital experiences with strong hierarchy, conversion thinking, accessibility, and implementation-ready design systems.",
+      "highlights": [
+        "Design systems",
+        "User journey mapping",
+        "Prototype validation"
+      ]
+    },
+    {
+      "slug": "ecommerce-development",
+      "title": "E-commerce Development",
+      "summary": "Storefronts and buying journeys built for performance and growth.",
+      "description": "We build commerce experiences that reduce friction, improve conversion, and support integrations across payment, logistics, and CRM tools.",
+      "highlights": [
+        "Conversion optimization",
+        "Checkout UX",
+        "Platform integrations"
+      ]
+    },
+    {
+      "slug": "custom-software-development",
+      "title": "Custom Software Development",
+      "summary": "Business systems engineered around your workflow instead of forcing new ones.",
+      "description": "From operations platforms to internal portals, we deliver software that reflects your process, reporting, and team structure.",
+      "highlights": [
+        "Workflow automation",
+        "Admin dashboards",
+        "Role-based access"
+      ]
+    },
+    {
+      "slug": "cloud-solutions",
+      "title": "Cloud Solutions",
+      "summary": "Cloud-ready architecture, migration, deployment, and ongoing support.",
+      "description": "We design infrastructure and delivery pipelines that improve reliability, release speed, and operational visibility.",
+      "highlights": [
+        "Containerization",
+        "CI/CD setup",
+        "Scalable hosting"
+      ]
+    },
+    {
+      "slug": "ai-solutions",
+      "title": "AI Solutions",
+      "summary": "Practical AI automation for lead qualification, support, and operations.",
+      "description": "We integrate AI where it reduces manual effort, speeds decisions, and improves customer experience without overengineering.",
+      "highlights": [
+        "Chat assistants",
+        "Lead scoring",
+        "Workflow automation"
+      ]
+    },
+    {
+      "slug": "seo-digital-marketing",
+      "title": "SEO & Digital Marketing",
+      "summary": "Acquisition systems built on technical SEO, content, and analytics.",
+      "description": "We align site architecture, landing pages, content strategy, and measurement so digital growth does not depend on guesswork.",
+      "highlights": [
+        "Technical SEO",
+        "Content strategy",
+        "Analytics instrumentation"
+      ]
+    },
+    {
+      "slug": "maintenance-support",
+      "title": "Maintenance & Support",
+      "summary": "Ongoing technical support, optimization, and release management.",
+      "description": "We support platforms after launch with monitoring, fixes, enhancements, security updates, and structured improvement cycles.",
+      "highlights": [
+        "Performance reviews",
+        "Release support",
+        "Issue response"
+      ]
+    },
+    {
+      "slug": "it-consulting",
+      "title": "IT Consulting",
+      "summary": "Technology direction and execution plans grounded in business priorities.",
+      "description": "We help leadership teams make better product, architecture, automation, and vendor decisions with clear technical guidance.",
+      "highlights": [
+        "Roadmapping",
+        "Architecture audits",
+        "Delivery planning"
+      ]
+    }
+  ],
+  "engagementModels": [
+    {
+      "title": "Discovery Sprint",
+      "description": "A focused strategy engagement to define scope, architecture, design direction, and execution priorities."
+    },
+    {
+      "title": "Project Delivery",
+      "description": "End-to-end product, website, app, or automation delivery with structured milestones and release planning."
+    },
+    {
+      "title": "Ongoing Partnership",
+      "description": "A retained model for growth improvements, support, experimentation, and technical operations."
+    }
+  ],
+  "portfolioProjects": [
+    {
+      "slug": "enterprise-service-portal",
+      "title": "Enterprise Service Portal",
+      "category": "Custom Software",
+      "summary": "Unified service workflows for a regional operations business.",
+      "outcome": "Reduced internal turnaround time by 38% through streamlined workflows."
+    },
+    {
+      "slug": "direct-to-consumer-commerce",
+      "title": "Direct-to-Consumer Commerce Platform",
+      "category": "E-commerce",
+      "summary": "Conversion-focused storefront with integrated marketing automations.",
+      "outcome": "Lifted online conversion rate with improved UX and automated follow-ups."
+    },
+    {
+      "slug": "healthcare-booking-platform",
+      "title": "Healthcare Booking Platform",
+      "category": "Web Platform",
+      "summary": "Patient booking experience with admin coordination and automated reminders.",
+      "outcome": "Improved booking completion and reduced manual scheduling overhead."
+    },
+    {
+      "slug": "ai-sales-assistant",
+      "title": "AI Sales Assistant",
+      "category": "AI Automation",
+      "summary": "Lead intake assistant that qualifies inquiries and routes them by service intent.",
+      "outcome": "Shortened response time and gave sales teams cleaner lead context."
+    }
+  ],
+  "blogPosts": [
+    {
+      "slug": "ai-automation-for-service-businesses",
+      "title": "AI Automation for Service Businesses: Where It Actually Delivers Value",
+      "excerpt": "A practical look at AI opportunities that improve delivery speed, support quality, and lead handling.",
+      "publishedAt": "2026-03-08",
+      "category": "AI Strategy"
+    },
+    {
+      "slug": "building-seo-ready-business-websites",
+      "title": "Building SEO-Ready Business Websites Without Slowing Product Teams",
+      "excerpt": "Why structured content, technical SEO, and performance architecture should be planned together from the start.",
+      "publishedAt": "2026-03-08",
+      "category": "Web Strategy"
+    },
+    {
+      "slug": "how-to-plan-custom-software-without-wasting-budget",
+      "title": "How to Plan Custom Software Without Wasting Budget",
+      "excerpt": "A practical framework for scoping custom software in a way that reduces rework and improves delivery confidence.",
+      "publishedAt": "2026-03-08",
+      "category": "Product Delivery"
+    }
+  ],
+  "careerOpenings": [
+    {
+      "slug": "frontend-engineer",
+      "title": "Frontend Engineer",
+      "location": "Dubai / Remote",
+      "type": "Full-time",
+      "summary": "Build polished, scalable interfaces for client-facing digital products."
+    },
+    {
+      "slug": "solutions-consultant",
+      "title": "Solutions Consultant",
+      "location": "Dubai",
+      "type": "Full-time",
+      "summary": "Translate business requirements into practical product and platform plans."
+    },
+    {
+      "slug": "growth-marketing-specialist",
+      "title": "Growth Marketing Specialist",
+      "location": "Dubai / Hybrid",
+      "type": "Full-time",
+      "summary": "Drive SEO, landing page, and performance marketing programs for client growth."
+    }
+  ],
+  "faqItems": [
+    {
+      "question": "What industries do you work with?",
+      "answer": "We support service businesses, retail, healthcare, education, real estate, logistics, and companies launching new digital products."
+    },
+    {
+      "question": "Can you handle both design and development?",
+      "answer": "Yes. Our delivery approach combines strategy, UI/UX, frontend engineering, backend development, and launch support."
+    },
+    {
+      "question": "Do you offer AI solutions for business workflows?",
+      "answer": "Yes. We focus on practical AI use cases such as chat support, lead qualification, automation, summaries, and operational assistance."
+    }
+  ],
+  "industries": [
+    "Healthcare",
+    "Retail & E-commerce",
+    "Real Estate",
+    "Education",
+    "Logistics",
+    "Professional Services"
+  ],
+  "testimonials": [
+    {
+      "name": "Operations Director",
+      "company": "Regional Services Group",
+      "quote": "Ddotsmedia brought structure to our digital roadmap and delivered a platform our teams actually adopted."
+    },
+    {
+      "name": "Founder",
+      "company": "Growth Commerce Brand",
+      "quote": "The team combined design clarity, technical depth, and commercial thinking in a way most agencies do not."
+    }
+  ],
+  "companyStats": [
+    {
+      "value": "40+",
+      "label": "projects delivered"
+    },
+    {
+      "value": "12",
+      "label": "core delivery disciplines"
+    },
+    {
+      "value": "4-8 weeks",
+      "label": "typical sprint-to-launch range"
+    },
+    {
+      "value": "24/6",
+      "label": "support-ready operating model"
+    }
+  ],
+  "processSteps": [
+    {
+      "title": "Discover",
+      "description": "We clarify goals, users, constraints, and commercial priorities before design or engineering starts."
+    },
+    {
+      "title": "Design",
+      "description": "We shape the information flow, interface system, and conversion journey with implementation in mind."
+    },
+    {
+      "title": "Build",
+      "description": "We deliver in milestones with clean architecture, QA discipline, and transparent progress updates."
+    },
+    {
+      "title": "Optimize",
+      "description": "We improve performance, SEO, funnel outcomes, and feature quality after launch instead of treating launch as the finish line."
+    }
+  ],
+  "technologies": [
+    "Next.js",
+    "React",
+    "Node.js",
+    "TypeScript",
+    "Tailwind CSS",
+    "PostgreSQL",
+    "Prisma",
+    "Docker",
+    "OpenAI",
+    "AWS",
+    "Vercel",
+    "Cloudflare"
+  ],
+  "whyChooseUs": [
+    {
+      "title": "Business-first engineering",
+      "description": "We balance product quality with growth, operations, and delivery realities instead of optimizing only for code aesthetics."
+    },
+    {
+      "title": "Design that sells",
+      "description": "Our interfaces are structured to increase clarity, trust, and action rather than just look modern in screenshots."
+    },
+    {
+      "title": "AI without gimmicks",
+      "description": "We implement AI where it produces measurable operational value and avoid novelty-driven complexity."
+    },
+    {
+      "title": "Built to scale",
+      "description": "Architecture, SEO, analytics, and deployment are treated as first-class concerns from the start."
+    }
+  ],
+  "industryProblems": [
+    {
+      "industry": "Healthcare",
+      "challenge": "Booking friction, manual coordination, and fragmented communication."
+    },
+    {
+      "industry": "Retail & E-commerce",
+      "challenge": "Conversion leakage, weak retention workflows, and disconnected systems."
+    },
+    {
+      "industry": "Real Estate",
+      "challenge": "Lead follow-up inconsistency and limited digital trust signals."
+    },
+    {
+      "industry": "Education",
+      "challenge": "Admissions communication, student onboarding, and content discoverability."
+    }
+  ]
+}

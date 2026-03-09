@@ -1,0 +1,10 @@
+.git
+.gitignore
+.next
+node_modules
+npm-debug.log
+playwright-report
+test-results
+coverage
+docs
+TODO_MASTER.md

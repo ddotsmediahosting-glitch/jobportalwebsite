@@ -136,6 +136,9 @@ model User {
   messagesTo          Message[]          @relation("MessageTo")
   cvProfile           CVProfile?
   cvAnalyses          CVAnalysis[]
+  whatsappSession     WhatsAppSession?
+  companyReviews      CompanyReview[]   @relation("ReviewAuthor")
+  savedByEmployers    CandidateSave[]   @relation("SavedCandidate")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -285,6 +288,8 @@ model Employer {
   members      EmployerMember[]
   jobs         Job[]
   subscription Subscription?
+  reviews      CompanyReview[]
+  savedCandidates CandidateSave[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -366,12 +371,15 @@ model Job {
   viewCount        Int            @default(0)
   applyCount       Int            @default(0)
   moderationNotes  String?
+  metaTitle        String?
+  metaDescription  String?
 
   tags               JobTag[]
   screeningQuestions ScreeningQuestion[]
   applications       Application[]
   savedBy            SavedJob[]
-  reports            Report[]      @relation("JobReport")
+  reports            Report[]            @relation("JobReport")
+  socialShares       SocialShareClick[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -430,6 +438,9 @@ model Application {
   tags          String[]
   interviewDate DateTime?
 
+  interviewSlots  InterviewSlot[]
+  screeningResult AIScreeningResult?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -437,6 +448,23 @@ model Application {
   @@index([jobId])
   @@index([userId])
   @@index([status])
+}
+
+model AIScreeningResult {
+  id                String      @id @default(cuid())
+  applicationId     String      @unique
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId             String
+  fitScore          Int
+  fitLabel          String
+  priority          String      // shortlist | review | reject
+  matchingStrengths String[]
+  gaps              String[]
+  recommendation    String
+  screenedAt        DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([jobId])
 }
 
 model SavedJob {
@@ -621,6 +649,153 @@ model CVAnalysis {
   @@index([createdAt])
 }
 
+// ─── Social / SEO ─────────────────────────────────────────────────────────────
+
+model SocialShareClick {
+  id          String   @id @default(cuid())
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  platform    String   // linkedin | twitter | facebook | whatsapp | copy | email
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  referrer    String?
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([jobId])
+  @@index([platform])
+  @@index([createdAt])
+}
+
+// ─── WhatsApp Chatbot ─────────────────────────────────────────────────────────
+
+model WhatsAppSession {
+  id          String   @id @default(cuid())
+  phoneNumber String   @unique   // E.164 format, e.g. +971501234567
+  waId        String?            // WhatsApp ID from Twilio
+  profileName String?
+  state       String   @default("idle")  // idle | searching | salary_query | company_query
+  contextJson Json?              // stores temp search results, pagination cursor etc.
+  optedOut    Boolean  @default(false)
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  lastActiveAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([phoneNumber])
+}
+
+model WhatsAppMessage {
+  id          String   @id @default(cuid())
+  sessionId   String?
+  messageSid  String?  @unique   // Twilio message SID
+  from        String
+  to          String
+  body        String   @db.Text
+  direction   String   // inbound | outbound
+  status      String   @default("received") // received | sent | delivered | failed
+  mediaUrl    String?
+  createdAt   DateTime @default(now())
+
+  @@index([from])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// ─── Company Reviews ──────────────────────────────────────────────────────────
+
+model CompanyReview {
+  id           String   @id @default(cuid())
+  employerId   String
+  employer     Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  reviewerId   String
+  reviewer     User     @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: Cascade)
+  title        String
+  pros         String   @db.Text
+  cons         String   @db.Text
+  rating       Int      // 1-5
+  workLifeBalance Int   // 1-5
+  salaryBenefits  Int   // 1-5
+  management      Int   // 1-5
+  careerGrowth    Int   // 1-5
+  jobTitle     String?
+  employmentStatus String @default("CURRENT") // CURRENT | FORMER
+  isAnonymous  Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  helpfulCount Int      @default(0)
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([employerId, reviewerId])
+  @@index([employerId])
+  @@index([status])
+  @@index([rating])
+}
+
+// ─── Salary Data ──────────────────────────────────────────────────────────────
+
+model SalaryData {
+  id             String    @id @default(cuid())
+  jobTitle       String
+  industry       String?
+  emirate        Emirates?
+  experienceMin  Int       @default(0)
+  experienceMax  Int?
+  salaryMin      Int
+  salaryMax      Int
+  currency       String    @default("AED")
+  source         String    @default("user") // user | employer | scrape
+  userId         String?
+  isAnonymous    Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  @@index([jobTitle])
+  @@index([emirate])
+  @@index([industry])
+}
+
+// ─── Candidate Saves (employers save candidates) ──────────────────────────────
+
+model CandidateSave {
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  seekerId   String
+  seeker     User     @relation("SavedCandidate", fields: [seekerId], references: [id], onDelete: Cascade)
+  notes      String?
+  tags       String[]
+  createdAt  DateTime @default(now())
+
+  @@unique([employerId, seekerId])
+  @@index([employerId])
+}
+
+// ─── Interview Slots ──────────────────────────────────────────────────────────
+
+model InterviewSlot {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime
+  durationMins  Int         @default(60)
+  type          String      @default("VIDEO") // VIDEO | PHONE | ONSITE
+  meetingLink   String?
+  location      String?
+  notes         String?
+  status        String      @default("PROPOSED") // PROPOSED | CONFIRMED | CANCELLED | COMPLETED
+  proposedBy    String      // EMPLOYER | SEEKER
+  confirmedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([applicationId])
+  @@index([scheduledAt])
+}
+
 // ─── CMS ──────────────────────────────────────────────────────────────────────
 
 model ContentPage {
@@ -638,4 +813,40 @@ model SiteSettings {
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  content     String
+  coverImage  String?
+  author      String    @default("Admin")
+  category    String    @default("General")
+  tags        String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  readTime    Int?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished, publishedAt])
+}
+
+model UsefulLink {
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  description String?
+  category    String   @default("General")
+  iconUrl     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, isActive])
 }
