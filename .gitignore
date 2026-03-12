@@ -3,8 +3,21 @@ dist
 .env
 .env.*
 !.env.example
+!.env.production.example
 coverage
 .vscode
 .DS_Store
-apps/api/uploads
-apps/web/dist
+backend/uploads
+frontend/dist
+shared/dist
+backend/dist
+
+# Production secrets — never commit
+.env.production
+.env.local
+.env.*.local
+
+# OS / editor artifacts
+Thumbs.db
+*.swp
+*.swo

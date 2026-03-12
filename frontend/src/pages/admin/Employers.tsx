@@ -1,0 +1,236 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { Search, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { api, getApiError } from '../../lib/api';
+import { PageSpinner } from '../../components/ui/Spinner';
+import { Pagination } from '../../components/Pagination';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
+import { VerificationBadge } from '../../components/ui/Badge';
+
+const VERIFICATION_OPTIONS = [
+  { value: '', label: 'All statuses' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'VERIFIED', label: 'Verified' },
+  { value: 'REJECTED', label: 'Rejected' },
+];
+
+interface Employer {
+  id: string;
+  companyName: string;
+  slug: string;
+  verificationStatus: string;
+  industry?: string;
+  emirate?: string;
+  logoUrl?: string;
+  tradeLicenseUrl?: string;
+  createdAt: string;
+  _count?: { jobs: number; members: number };
+  subscription?: { plan: string; status: string };
+}
+
+export function AdminEmployers() {
+  const qc = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [verFilter, setVerFilter] = useState('');
+  const [selected, setSelected] = useState<Employer | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-employers', page, search, verFilter],
+    queryFn: () =>
+      api.get(`/admin/employers?page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}${verFilter ? `&verificationStatus=${verFilter}` : ''}`).then((r) => r.data.data),
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
+      api.patch(`/admin/employers/${id}/verify`, { status, reason }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-employers'] });
+      toast.success('Verification status updated.');
+      setSelected(null);
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Employers</h1>
+        <p className="text-gray-500 mt-1">Review and verify employer profiles.</p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <form
+          onSubmit={(e) => { e.preventDefault(); setSearch(searchInput); setPage(1); }}
+          className="flex gap-2 flex-1 min-w-[200px]"
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search company name..."
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+          <Button type="submit" variant="outline" size="sm">Search</Button>
+        </form>
+        <div className="w-48">
+          <Select value={verFilter} onChange={(e) => { setVerFilter(e.target.value); setPage(1); }} options={VERIFICATION_OPTIONS} />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <PageSpinner />
+      ) : (
+        <>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Company</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 hidden sm:table-cell">Plan</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Verification</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Jobs</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data?.items?.map((emp: Employer) => (
+                  <tr key={emp.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 text-sm font-bold flex-shrink-0 overflow-hidden">
+                          {emp.logoUrl ? <img src={emp.logoUrl} alt="" className="w-full h-full object-cover" /> : emp.companyName[0]}
+                        </div>
+                        <div>
+                          <button onClick={() => setSelected(emp)} className="font-medium text-gray-900 hover:text-brand-600 text-left">
+                            {emp.companyName}
+                          </button>
+                          <p className="text-xs text-gray-400">{emp.industry}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        {emp.subscription?.plan || 'FREE'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <VerificationBadge status={emp.verificationStatus} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
+                      {emp._count?.jobs ?? 0}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        {emp.verificationStatus === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => verifyMutation.mutate({ id: emp.id, status: 'VERIFIED' })}
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50"
+                              title="Verify"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Rejection reason (optional):');
+                                verifyMutation.mutate({ id: emp.id, status: 'REJECTED', reason: reason || undefined });
+                              }}
+                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
+                              title="Reject"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => setSelected(emp)}
+                          className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                          title="View details"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!data?.items?.length && (
+              <div className="text-center py-16 text-gray-400">No employers found.</div>
+            )}
+          </div>
+          <Pagination page={page} totalPages={data?.totalPages} total={data?.total} limit={data?.limit} onPageChange={setPage} />
+        </>
+      )}
+
+      {/* Detail modal */}
+      <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Employer Details" size="lg">
+        {selected && (
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <InfoRow label="Company Name" value={selected.companyName} />
+              <InfoRow label="Industry" value={selected.industry || '—'} />
+              <InfoRow label="Emirate" value={selected.emirate || '—'} />
+              <InfoRow label="Verification" value={selected.verificationStatus} />
+              <InfoRow label="Plan" value={selected.subscription?.plan || 'FREE'} />
+              <InfoRow label="Jobs Posted" value={String(selected._count?.jobs ?? 0)} />
+              <InfoRow label="Team Members" value={String(selected._count?.members ?? 0)} />
+              <InfoRow label="Joined" value={new Date(selected.createdAt).toLocaleDateString()} />
+            </div>
+            {selected.tradeLicenseUrl && (
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Trade License</p>
+                <a href={selected.tradeLicenseUrl} target="_blank" rel="noreferrer"
+                  className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+                  <ExternalLink className="h-3.5 w-3.5" /> View document
+                </a>
+              </div>
+            )}
+            {selected.verificationStatus !== 'VERIFIED' && (
+              <div className="flex gap-2 pt-2 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  onClick={() => verifyMutation.mutate({ id: selected.id, status: 'VERIFIED' })}
+                  loading={verifyMutation.isPending}
+                  icon={<CheckCircle className="h-4 w-4" />}
+                >
+                  Verify
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => {
+                    const reason = prompt('Rejection reason (optional):');
+                    verifyMutation.mutate({ id: selected.id, status: 'REJECTED', reason: reason || undefined });
+                  }}
+                  loading={verifyMutation.isPending}
+                  icon={<XCircle className="h-4 w-4" />}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className="font-medium text-gray-900">{value}</p>
+    </div>
+  );
+}
