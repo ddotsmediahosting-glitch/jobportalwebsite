@@ -57,6 +57,7 @@ services:
       args:
         # Empty = same-origin; nginx proxies /api/ to the api container
         VITE_API_URL: ""
+        VITE_FRONTEND_URL: "https://ddotsmediajobs.com"
     restart: always
     ports:
       - "80:80"

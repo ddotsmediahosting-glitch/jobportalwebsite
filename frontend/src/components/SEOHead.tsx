@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 const SITE_NAME = 'DdotsmediaJobs';
-const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://jobs.ddotsmedia.com';
+const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://ddotsmediajobs.com';
 const DEFAULT_DESC = 'Find the best jobs in UAE – Abu Dhabi, Dubai, Sharjah and all Emirates. Thousands of verified job listings updated daily.';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-default.png`;
 

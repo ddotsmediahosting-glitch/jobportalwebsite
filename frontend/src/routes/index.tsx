@@ -74,6 +74,9 @@ const AdminCommunityPage = lazy(() => import('../pages/admin/Community').then((m
 // Employer - Social Marketing
 const SocialMarketing = lazy(() => import('../pages/employer/SocialMarketing').then((m) => ({ default: m.SocialMarketing })));
 
+// 404
+const NotFound = lazy(() => import('../pages/public/NotFound').then((m) => ({ default: m.NotFound })));
+
 function RequireAuth({ children, roles }: { children: React.ReactElement; roles?: string[] }) {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -163,7 +166,7 @@ export function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
