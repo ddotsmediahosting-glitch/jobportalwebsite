@@ -8,15 +8,26 @@ async function main() {
   console.log('🌱 Starting seed...');
 
   // ── Super Admin ────────────────────────────────────────────────────────────
-  const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@uaejobs.local';
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'Admin#12345';
+  const isProduction = process.env.NODE_ENV === 'production';
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
 
-  const adminHash = await bcrypt.hash(adminPassword, 12);
+  if (!adminEmail || !adminPassword) {
+    if (isProduction) {
+      throw new Error('SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set in production');
+    }
+    console.warn('⚠️  SEED_ADMIN_EMAIL/PASSWORD not set — using local-only dev defaults');
+  }
+
+  const resolvedEmail = adminEmail || 'admin@uaejobs.local';
+  const resolvedPassword = adminPassword || 'Admin#12345';
+
+  const adminHash = await bcrypt.hash(resolvedPassword, 12);
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: resolvedEmail },
     update: { passwordHash: adminHash, status: UserStatus.ACTIVE, verifiedAt: new Date() },
     create: {
-      email: adminEmail,
+      email: resolvedEmail,
       passwordHash: adminHash,
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
