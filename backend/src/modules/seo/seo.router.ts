@@ -3,7 +3,8 @@ import prisma from '../../lib/prisma';
 
 const router = Router();
 
-const BASE_URL = process.env.FRONTEND_URL || 'https://jobs.ddotsmedia.com';
+// FRONTEND_URL may be comma-separated (multiple origins); use only the first as canonical base
+const BASE_URL = (process.env.FRONTEND_URL || 'https://ddotsmediajobs.com').split(',')[0].trim();
 
 // ── Robots.txt ─────────────────────────────────────────────────────────────────
 router.get('/robots.txt', (_req: Request, res: Response) => {

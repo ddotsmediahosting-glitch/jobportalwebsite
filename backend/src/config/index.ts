@@ -21,8 +21,12 @@ export const config = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'dev_jwt_secret_change_in_production',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_in_production',
+    secret: process.env.NODE_ENV === 'production'
+      ? required('JWT_SECRET')
+      : (process.env.JWT_SECRET || 'dev_jwt_secret_change_in_production'),
+    refreshSecret: process.env.NODE_ENV === 'production'
+      ? required('JWT_REFRESH_SECRET')
+      : (process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_in_production'),
     expiresIn: process.env.JWT_EXPIRES_IN || '15m',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
@@ -54,16 +58,11 @@ export const config = {
   },
 
   cors: {
+    // FRONTEND_URL can be a comma-separated list of allowed origins
     origin: (process.env.FRONTEND_URL || 'http://localhost:5173')
       .split(',')
       .map((o) => o.trim())
-      .concat([
-        'http://ddotsmediajobs.com',
-        'https://ddotsmediajobs.com',
-        'http://www.ddotsmediajobs.com',
-        'https://www.ddotsmediajobs.com',
-        'http://194.164.151.202',
-      ]),
+      .filter(Boolean),
   },
 
   ai: {
