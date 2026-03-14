@@ -54,7 +54,16 @@ export const config = {
   },
 
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (process.env.FRONTEND_URL || 'http://localhost:5173')
+      .split(',')
+      .map((o) => o.trim())
+      .concat([
+        'http://ddotsmediajobs.com',
+        'https://ddotsmediajobs.com',
+        'http://www.ddotsmediajobs.com',
+        'https://www.ddotsmediajobs.com',
+        'http://194.164.151.202',
+      ]),
   },
 
   ai: {
