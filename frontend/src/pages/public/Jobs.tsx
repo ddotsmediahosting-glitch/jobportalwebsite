@@ -12,7 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 const FILTER_LABELS: Record<string, string> = {
   q: 'Search', emirate: 'Emirate', workMode: 'Work Mode',
   employmentType: 'Type', salaryMin: 'Min Salary', salaryMax: 'Max Salary',
-  isFeatured: 'Featured',
+  isFeatured: 'Featured', isEmiratization: 'Emiratization',
 };
 
 export function Jobs() {
@@ -81,6 +81,7 @@ export function Jobs() {
     if (key === 'categoryId') return `📁 ${getCategoryName(value)}`;
     if (key === 'subcategoryId') return `↳ ${getSubcategoryName(value)}`;
     if (key === 'isFeatured') return '⭐ Featured only';
+    if (key === 'isEmiratization') return '🇦🇪 Emiratization only';
     return `${FILTER_LABELS[key] ?? key}: ${value}`;
   };
 

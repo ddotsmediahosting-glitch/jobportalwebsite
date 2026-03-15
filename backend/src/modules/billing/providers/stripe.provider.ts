@@ -38,8 +38,8 @@ export class StripeBillingProvider implements IBillingProvider {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: STRIPE_PRICE_IDS[plan], quantity: 1 }],
-      success_url: `${config.cors.origin}/employer/billing?success=1`,
-      cancel_url: `${config.cors.origin}/employer/billing?cancelled=1`,
+      success_url: `${(process.env.FRONTEND_URL || 'https://ddotsmediajobs.com').split(',')[0].trim()}/employer/billing?success=1`,
+      cancel_url: `${(process.env.FRONTEND_URL || 'https://ddotsmediajobs.com').split(',')[0].trim()}/employer/billing?cancelled=1`,
       metadata: { employerId, plan },
     });
 

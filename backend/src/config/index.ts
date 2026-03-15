@@ -70,6 +70,24 @@ export const config = {
     model: 'claude-sonnet-4-6',
   },
 
+  oauth: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/v1/auth/social/google/callback',
+    },
+    linkedin: {
+      clientId: process.env.LINKEDIN_CLIENT_ID || '',
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+      callbackUrl: process.env.LINKEDIN_CALLBACK_URL || 'http://localhost:4000/api/v1/auth/social/linkedin/callback',
+    },
+    facebook: {
+      appId: process.env.FACEBOOK_APP_ID || '',
+      appSecret: process.env.FACEBOOK_APP_SECRET || '',
+      callbackUrl: process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:4000/api/v1/auth/social/facebook/callback',
+    },
+  },
+
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID || '',
     authToken: process.env.TWILIO_AUTH_TOKEN || '',

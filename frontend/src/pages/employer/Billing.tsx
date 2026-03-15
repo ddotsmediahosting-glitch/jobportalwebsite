@@ -85,11 +85,11 @@ export function Billing() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['employer-billing'],
-    queryFn: () => api.get('/employer/billing').then((r) => r.data.data),
+    queryFn: () => api.get('/billing/subscription').then((r) => r.data.data),
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: (plan: string) => api.post('/employer/billing/subscribe', { plan }),
+    mutationFn: (plan: string) => api.post('/billing/subscribe', { plan }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['employer-billing'] });
       if (res.data.data?.checkoutUrl) {
@@ -102,7 +102,7 @@ export function Billing() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => api.post('/employer/billing/cancel'),
+    mutationFn: () => api.post('/billing/cancel'),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employer-billing'] }); toast.success('Subscription cancelled.'); },
     onError: (err) => toast.error(getApiError(err)),
   });

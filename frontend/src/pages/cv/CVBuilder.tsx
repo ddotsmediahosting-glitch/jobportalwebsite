@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
 import {
   User, Briefcase, GraduationCap, Star, Plus, Trash2,
   Wand2, Loader2, ChevronRight, ChevronLeft, Copy, Download,
@@ -149,6 +150,77 @@ export function CVBuilder() {
     lines.push('─'.repeat(40));
     lines.push(gen.suggestedSkills.join(' • '));
     return lines.join('\n');
+  };
+
+  const downloadPDF = (data: BuilderFormData, gen: GeneratedCV) => {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pi = data.personalInfo;
+    const pageW = 210;
+    const margin = 18;
+    const usableW = pageW - margin * 2;
+    let y = 20;
+
+    const addLine = (text: string, size = 10, bold = false, color = '#1a1a1a') => {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setTextColor(color);
+      const lines = doc.splitTextToSize(text, usableW) as string[];
+      lines.forEach((line: string) => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, margin, y);
+        y += size * 0.45;
+      });
+    };
+
+    const addSection = (title: string) => {
+      y += 4;
+      doc.setDrawColor('#6d28d9');
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageW - margin, y);
+      y += 4;
+      addLine(title, 11, true, '#6d28d9');
+      y += 2;
+    };
+
+    // Header
+    addLine(`${pi.firstName} ${pi.lastName}`, 18, true, '#1a1a1a');
+    y += 1;
+    const contactParts = [pi.email, pi.phone, pi.location].filter(Boolean);
+    addLine(contactParts.join('  •  '), 9, false, '#555555');
+    if (pi.linkedIn) addLine(pi.linkedIn, 9, false, '#6d28d9');
+    y += 2;
+
+    // Summary
+    addSection('PROFESSIONAL SUMMARY');
+    addLine(gen.professionalSummary, 10);
+
+    // Experience
+    addSection('WORK EXPERIENCE');
+    gen.enhancedExperience.forEach((exp) => {
+      addLine(`${exp.title} — ${exp.company}`, 10, true);
+      exp.bulletPoints.forEach((bp) => addLine(`• ${bp}`, 9.5));
+      y += 2;
+    });
+
+    // Education
+    addSection('EDUCATION');
+    data.education.forEach((edu) => {
+      const text = `${edu.degree}${edu.field ? ` in ${edu.field}` : ''} — ${edu.institution}${edu.endDate ? `  (${edu.endDate})` : ''}`;
+      addLine(text, 10);
+    });
+
+    // Skills
+    addSection('SKILLS');
+    addLine(gen.suggestedSkills.join('  •  '), 10);
+
+    // Keywords
+    if (gen.atsKeywords.length) {
+      addSection('ATS KEYWORDS');
+      addLine(gen.atsKeywords.join('  •  '), 9.5, false, '#555555');
+    }
+
+    doc.save(`${pi.firstName}_${pi.lastName}_CV.pdf`);
+    toast.success('PDF downloaded!');
   };
 
   const formData = watch();
@@ -482,6 +554,13 @@ export function CVBuilder() {
                         className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm hover:bg-purple-700 transition-all"
                       >
                         <Download size={15} /> Download TXT
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => downloadPDF(formData, generatedCV)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700 transition-all"
+                      >
+                        <Download size={15} /> Download PDF
                       </button>
                       <button
                         type="button"

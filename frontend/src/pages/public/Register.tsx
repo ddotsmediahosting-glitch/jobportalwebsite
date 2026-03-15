@@ -8,6 +8,7 @@ import { registerSchema, RegisterInput } from '@uaejobs/shared';
 import { api, getApiError } from '../../lib/api';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { SocialLoginButtons } from '../../components/SocialLoginButtons';
 
 export function Register() {
   const navigate = useNavigate();
@@ -72,9 +73,9 @@ export function Register() {
           <p className="text-sm text-gray-500 mt-1">Join thousands of professionals in the UAE job market</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-soft p-7">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-soft">
           {/* Role toggle */}
-          <div className="grid grid-cols-2 gap-3 mb-6 p-1 bg-gray-50 rounded-xl">
+          <div className="grid grid-cols-2 gap-3 mb-6 p-1 bg-gray-50 rounded-xl mx-7 mt-7">
             {([
               { r: 'SEEKER' as const, icon: User, label: 'Job Seeker', sub: 'Find your next role' },
               { r: 'EMPLOYER' as const, icon: Building2, label: 'Employer', sub: 'Hire top talent' },
@@ -102,7 +103,20 @@ export function Register() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          {/* Social signup */}
+          <div className="px-7 pt-7">
+            <SocialLoginButtons role={role} label="Sign up" />
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white px-3 text-gray-400">or create account with email</span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-7 pb-7" noValidate>
             {role === 'SEEKER' && (
               <div className="grid grid-cols-2 gap-3">
                 <Input {...register('firstName')} label="First Name" placeholder="Ahmed" error={errors.firstName?.message} required />
@@ -130,7 +144,7 @@ export function Register() {
             </p>
           </form>
 
-          <div className="mt-5 text-center text-sm text-gray-500">
+          <div className="px-7 pb-7 mt-2 text-center text-sm text-gray-500">
             Already have an account?{' '}
             <Link to="/login" className="text-brand-600 font-semibold hover:text-brand-700">Sign in →</Link>
           </div>

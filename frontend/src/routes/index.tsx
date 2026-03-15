@@ -77,6 +77,9 @@ const SocialMarketing = lazy(() => import('../pages/employer/SocialMarketing').t
 // 404
 const NotFound = lazy(() => import('../pages/public/NotFound').then((m) => ({ default: m.NotFound })));
 
+// Social OAuth callback
+const SocialCallback = lazy(() => import('../pages/public/SocialCallback').then((m) => ({ default: m.SocialCallback })));
+
 function RequireAuth({ children, roles }: { children: React.ReactElement; roles?: string[] }) {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -128,6 +131,7 @@ export function AppRoutes() {
           <Route path="whatsapp-groups" element={<WhatsAppGroupsPage />} />
           <Route path="community" element={<CommunityPage />} />
           <Route path="community/:id" element={<CommunityPostPage />} />
+          <Route path="social-callback" element={<SocialCallback />} />
         </Route>
 
         {/* Employer routes */}

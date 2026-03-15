@@ -27,6 +27,7 @@ interface FilterValues {
   employmentType: string;
   salaryMin: string;
   salaryMax: string;
+  isEmiratization: boolean;
 }
 
 interface JobFiltersProps {
@@ -46,6 +47,7 @@ export function JobFilters({ values, onChange, categories = [] }: JobFiltersProp
       employmentType: values.employmentType || '',
       salaryMin: values.salaryMin || '',
       salaryMax: values.salaryMax || '',
+      isEmiratization: values.isEmiratization === 'true',
     },
   });
 
@@ -60,14 +62,19 @@ export function JobFilters({ values, onChange, categories = [] }: JobFiltersProp
   const subcategories = selectedCategory?.children ?? [];
 
   const onSubmit = (data: FilterValues) => {
-    const cleaned = Object.fromEntries(
-      Object.entries(data).filter(([, v]) => v !== '' && v !== undefined)
-    ) as Record<string, string>;
+    const cleaned: Record<string, string> = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (k === 'isEmiratization') {
+        if (v === true) cleaned[k] = 'true';
+      } else if (v !== '' && v !== undefined) {
+        cleaned[k] = String(v);
+      }
+    }
     onChange(cleaned);
   };
 
   const handleClear = () => {
-    reset({ q: '', categoryId: '', subcategoryId: '', emirate: '', workMode: '', employmentType: '', salaryMin: '', salaryMax: '' });
+    reset({ q: '', categoryId: '', subcategoryId: '', emirate: '', workMode: '', employmentType: '', salaryMin: '', salaryMax: '', isEmiratization: false });
     onChange({});
   };
 
@@ -215,6 +222,21 @@ export function JobFilters({ values, onChange, categories = [] }: JobFiltersProp
             <Input {...register('salaryMax')} type="number" placeholder="Max" />
           </div>
         </div>
+
+        {/* Emiratization filter */}
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            {...register('isEmiratization')}
+            className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+          />
+          <div>
+            <span className="text-sm font-medium text-gray-800 group-hover:text-brand-700 transition-colors">
+              🇦🇪 Emiratization only
+            </span>
+            <p className="text-[10px] text-gray-400 leading-tight">UAE nationals preferred roles</p>
+          </div>
+        </label>
 
         <Button type="submit" className="w-full" icon={<Search size={14} />}>
           Apply Filters

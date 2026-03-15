@@ -16,7 +16,7 @@ export class JobsService {
   async listPublicJobs(filters: JobFiltersInput) {
     const {
       q, categoryId, emirate, workMode, employmentType, visaStatus,
-      salaryMin, salaryMax, experienceMin, level, isFeatured,
+      salaryMin, salaryMax, experienceMin, level, isFeatured, isEmiratization,
       page, limit, sortBy,
     } = filters;
 
@@ -54,6 +54,7 @@ export class JobsService {
     if (experienceMin !== undefined) where.experienceMin = { lte: experienceMin };
     if (level) where.level = level;
     if (isFeatured !== undefined) where.isFeatured = isFeatured;
+    if (isEmiratization !== undefined) where.isEmiratization = isEmiratization;
 
     const orderBy: Prisma.JobOrderByWithRelationInput[] =
       sortBy === 'salaryMin'

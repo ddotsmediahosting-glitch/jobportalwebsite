@@ -1,5 +1,6 @@
 import 'express-async-errors';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -12,6 +13,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { defaultLimiter } from './middleware/rateLimiter';
 
 import authRouter from './modules/auth/auth.router';
+import socialRouter from './modules/auth/social.router';
 import usersRouter from './modules/users/users.router';
 import { publicEmployerRouter, employerRouter } from './modules/employers/employers.router';
 import { jobsRouter, employerJobsRouter } from './modules/jobs/jobs.router';
@@ -57,6 +59,7 @@ app.use(cors({
 // ── Parsing ────────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 app.use(compression());
 
 // ── Logging ────────────────────────────────────────────────────────────────────
@@ -121,6 +124,7 @@ app.get('/api/v1/home', async (_req, res) => {
       featuredJobs,
       featuredCategories,
       recentJobs,
+      emiratizationJobs,
     ] = await Promise.all([
       prisma.job.count({ where: { status: 'PUBLISHED' } }),
       prisma.employer.count({ where: { verificationStatus: 'APPROVED' } }),
@@ -159,6 +163,16 @@ app.get('/api/v1/home', async (_req, res) => {
           _count: { select: { applications: true } },
         },
       }),
+      prisma.job.findMany({
+        where: { status: 'PUBLISHED', isEmiratization: true, employer: { verificationStatus: 'APPROVED' } },
+        orderBy: { publishedAt: 'desc' },
+        take: 6,
+        include: {
+          employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true } },
+          category: { select: { id: true, name: true, slug: true } },
+          _count: { select: { applications: true } },
+        },
+      }),
     ]);
 
     // Salary insights by emirate
@@ -175,6 +189,7 @@ app.get('/api/v1/home', async (_req, res) => {
       featuredJobs,
       featuredCategories,
       recentJobs,
+      emiratizationJobs,
       salaryInsights,
     };
   }, 90);
@@ -186,6 +201,7 @@ app.get('/api/v1/home', async (_req, res) => {
 const v1 = '/api/v1';
 
 app.use(`${v1}/auth`, authRouter);
+app.use(`${v1}/auth/social`, socialRouter);
 app.use(`${v1}/seeker`, usersRouter);
 app.use(`${v1}`, publicEmployerRouter);
 app.use(`${v1}/employer`, employerRouter);

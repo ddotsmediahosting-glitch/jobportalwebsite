@@ -104,6 +104,7 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new UnauthorizedError('Invalid email or password');
 
+    if (!user.passwordHash) throw new UnauthorizedError('This account uses social login. Please sign in with Google, LinkedIn, or Facebook.');
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedError('Invalid email or password');
 
@@ -265,6 +266,7 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('User');
 
+    if (!user.passwordHash) throw new AppError(400, 'This account uses social login and has no password.');
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!valid) throw new AppError(400, 'Current password is incorrect');
 
