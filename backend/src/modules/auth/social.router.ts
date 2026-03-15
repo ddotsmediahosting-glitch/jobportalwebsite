@@ -51,6 +51,9 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     const { code, state } = req.query as { code?: string; state?: string };
     if (!code || !state) return redirectWithError(res, 'Missing OAuth parameters');
 
+    const cookieState = req.cookies?.oauth_state;
+    if (!cookieState || cookieState !== state) return redirectWithError(res, 'Invalid OAuth state (CSRF check failed)');
+
     const parsed = parseState(state);
     if (!parsed) return redirectWithError(res, 'Invalid OAuth state');
 
@@ -80,6 +83,9 @@ router.get('/linkedin/callback', async (req: Request, res: Response) => {
     const { code, state } = req.query as { code?: string; state?: string };
     if (!code || !state) return redirectWithError(res, 'Missing OAuth parameters');
 
+    const cookieState = req.cookies?.oauth_state;
+    if (!cookieState || cookieState !== state) return redirectWithError(res, 'Invalid OAuth state (CSRF check failed)');
+
     const parsed = parseState(state);
     if (!parsed) return redirectWithError(res, 'Invalid OAuth state');
 
@@ -108,6 +114,9 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
   try {
     const { code, state } = req.query as { code?: string; state?: string };
     if (!code || !state) return redirectWithError(res, 'Missing OAuth parameters');
+
+    const cookieState = req.cookies?.oauth_state;
+    if (!cookieState || cookieState !== state) return redirectWithError(res, 'Invalid OAuth state (CSRF check failed)');
 
     const parsed = parseState(state);
     if (!parsed) return redirectWithError(res, 'Invalid OAuth state');
