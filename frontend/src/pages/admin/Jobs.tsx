@@ -13,6 +13,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { JobStatusBadge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
+import { FraudCheckButton } from '../../components/FraudCheckButton';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -74,6 +75,7 @@ interface Job {
   employer: { id: string; companyName: string };
   category?: { name: string };
   _count?: { applications: number };
+  fraudRiskLevel?: string | null;
 }
 
 const emptyForm = {
@@ -394,6 +396,7 @@ export function AdminJobs() {
                           <button onClick={() => setPreviewJob(job)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100" title="Preview">
                             <Eye className="h-4 w-4" />
                           </button>
+                          <FraudCheckButton jobId={job.id} existingRiskLevel={job.fraudRiskLevel} compact />
                           <button
                             onClick={() => { if (confirm(`Delete "${job.title}"?`)) deleteMutation.mutate(job.id); }}
                             className="p-1.5 rounded-lg text-red-300 hover:bg-red-50 hover:text-red-500"
@@ -618,36 +621,39 @@ export function AdminJobs() {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-              {previewJob.status === 'PENDING_APPROVAL' && (
-                <>
-                  <Button size="sm" onClick={() => moderateMutation.mutate({ id: previewJob.id, status: 'PUBLISHED' })} loading={moderateMutation.isPending}>
-                    <CheckCircle className="h-4 w-4" /> Approve
-                  </Button>
+            <div className="pt-2 border-t border-gray-100 space-y-3">
+              <FraudCheckButton jobId={previewJob.id} existingRiskLevel={previewJob.fraudRiskLevel} />
+              <div className="flex flex-wrap gap-2">
+                {previewJob.status === 'PENDING_APPROVAL' && (
+                  <>
+                    <Button size="sm" onClick={() => moderateMutation.mutate({ id: previewJob.id, status: 'PUBLISHED' })} loading={moderateMutation.isPending}>
+                      <CheckCircle className="h-4 w-4" /> Approve
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => { setRejectReason(''); setRejectModal({ job: previewJob }); setPreviewJob(null); }}>
+                      <XCircle className="h-4 w-4" /> Reject
+                    </Button>
+                  </>
+                )}
+                {previewJob.status === 'PUBLISHED' && (
                   <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
-                    onClick={() => { setRejectReason(''); setRejectModal({ job: previewJob }); setPreviewJob(null); }}>
-                    <XCircle className="h-4 w-4" /> Reject
+                    onClick={() => moderateMutation.mutate({ id: previewJob.id, status: 'REJECTED' })} loading={moderateMutation.isPending}>
+                    <XCircle className="h-4 w-4" /> Take Down
                   </Button>
-                </>
-              )}
-              {previewJob.status === 'PUBLISHED' && (
-                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => moderateMutation.mutate({ id: previewJob.id, status: 'REJECTED' })} loading={moderateMutation.isPending}>
-                  <XCircle className="h-4 w-4" /> Take Down
+                )}
+                <Button size="sm" variant="outline"
+                  className={previewJob.isFeatured ? 'text-yellow-600 border-yellow-200' : 'text-gray-600'}
+                  onClick={() => { featureMutation.mutate(previewJob.id); setPreviewJob(null); }}>
+                  <Star className="h-4 w-4" fill={previewJob.isFeatured ? 'currentColor' : 'none'} />
+                  {previewJob.isFeatured ? 'Unfeature' : 'Feature'}
                 </Button>
-              )}
-              <Button size="sm" variant="outline"
-                className={previewJob.isFeatured ? 'text-yellow-600 border-yellow-200' : 'text-gray-600'}
-                onClick={() => { featureMutation.mutate(previewJob.id); setPreviewJob(null); }}>
-                <Star className="h-4 w-4" fill={previewJob.isFeatured ? 'currentColor' : 'none'} />
-                {previewJob.isFeatured ? 'Unfeature' : 'Feature'}
-              </Button>
-              {previewJob.slug && (
-                <a href={`/jobs/${previewJob.slug}`} target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:underline ml-auto">
-                  View on site <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              )}
+                {previewJob.slug && (
+                  <a href={`/jobs/${previewJob.slug}`} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:underline ml-auto">
+                    View on site <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         )}

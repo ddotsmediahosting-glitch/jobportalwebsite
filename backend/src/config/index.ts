@@ -63,6 +63,10 @@ export const config = {
       .split(',')
       .map((o) => o.trim())
       .filter(Boolean),
+    // Single canonical URL used for email links (reset password, etc.)
+    // Defaults to WEB_URL, then the first entry in FRONTEND_URL
+    frontendUrl: process.env.WEB_URL ||
+      (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0].trim(),
   },
 
   ai: {

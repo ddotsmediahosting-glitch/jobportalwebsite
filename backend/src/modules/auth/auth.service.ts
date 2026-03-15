@@ -12,6 +12,7 @@ import { emailQueue } from '../../lib/queue';
 import {
   emailVerificationTemplate,
   passwordResetTemplate,
+  checkSmtpAvailable,
 } from '../../lib/email';
 import { config } from '../../config';
 import {
@@ -39,9 +40,8 @@ export class AuthService {
     if (existing) throw new ConflictError('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, 12);
-    // Skip email verification when SMTP is not configured
-    const smtpConfigured = !!(config.email.user && config.email.pass &&
-      !config.email.user.includes('your_') && !config.email.pass.includes('your_'));
+    // Skip email verification when SMTP is not configured or not reachable
+    const smtpConfigured = await checkSmtpAvailable();
     const otp = smtpConfigured ? generateOtp() : null;
     const otpExpiry = smtpConfigured ? new Date(Date.now() + OTP_TTL_MS) : null;
 
@@ -229,7 +229,7 @@ export class AuthService {
       },
     });
 
-    const resetUrl = `${config.cors.origin}/reset-password?token=${token}`;
+    const resetUrl = `${config.cors.frontendUrl}/reset-password?token=${token}`;
 
     await emailQueue.add('forgot-password', {
       to: email,

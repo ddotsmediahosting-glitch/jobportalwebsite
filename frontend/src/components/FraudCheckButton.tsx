@@ -15,6 +15,8 @@ interface FraudResult {
 interface Props {
   jobId: string;
   existingRiskLevel?: string | null;
+  /** Compact mode: shows only the trigger button + risk badge; no inline details panel */
+  compact?: boolean;
 }
 
 function RiskBadge({ level }: { level: string }) {
@@ -33,7 +35,7 @@ function RiskBadge({ level }: { level: string }) {
   );
 }
 
-export function FraudCheckButton({ jobId, existingRiskLevel }: Props) {
+export function FraudCheckButton({ jobId, existingRiskLevel, compact = false }: Props) {
   const [result, setResult] = useState<FraudResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -67,7 +69,7 @@ export function FraudCheckButton({ jobId, existingRiskLevel }: Props) {
         </button>
       </div>
 
-      {showDetails && result && (
+      {!compact && showDetails && result && (
         <div className={`rounded-xl border p-3 text-xs space-y-2 ${
           result.isLikelyFraud ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
         }`}>

@@ -10,6 +10,44 @@ const transporter = nodemailer.createTransport({
     : undefined,
 });
 
+// ─── SMTP health check (cached per process) ────────────────────────────────
+let _smtpAvailable: boolean | null = null;
+
+/**
+ * Returns true only if SMTP credentials are set AND the connection succeeds.
+ * Result is cached for the lifetime of the process — tested once at startup.
+ *
+ * Common failure: Gmail requires an App Password, not the account password.
+ * Plain Gmail passwords have been rejected since May 2022.
+ * Get one at: myaccount.google.com/apppasswords
+ */
+export async function checkSmtpAvailable(): Promise<boolean> {
+  if (_smtpAvailable !== null) return _smtpAvailable;
+
+  const { user, pass } = config.email;
+  if (!user || !pass || user.includes('your_') || pass.includes('your_')) {
+    _smtpAvailable = false;
+    console.log('[Email] SMTP not configured — email verification disabled');
+    return false;
+  }
+
+  try {
+    await transporter.verify();
+    _smtpAvailable = true;
+    console.log('[Email] ✅ SMTP connection verified');
+  } catch (err) {
+    _smtpAvailable = false;
+    console.warn(
+      '[Email] ⚠️  SMTP connection failed — email verification disabled.',
+      '\n         Error:', (err as Error).message,
+      '\n         If using Gmail, use an App Password (not your account password).',
+      '\n         Get one at: myaccount.google.com/apppasswords'
+    );
+  }
+
+  return _smtpAvailable;
+}
+
 export interface EmailOptions {
   to: string;
   subject: string;

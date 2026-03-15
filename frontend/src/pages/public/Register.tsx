@@ -48,11 +48,27 @@ export function Register() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="text-5xl mb-4">📧</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-gray-500 mb-6">We sent a 6-digit verification code to your email. Enter it to activate your account.</p>
-          <Link to="/login" className="text-brand-600 font-medium hover:text-brand-700">
-            Already verified? Sign in →
-          </Link>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account created!</h2>
+          <p className="text-gray-500 mb-2">
+            We're sending a 6-digit verification code to your email address.
+          </p>
+          <p className="text-gray-400 text-sm mb-8">
+            Emails may take a few minutes. You can sign in right away — we'll remind you to verify later.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 bg-brand-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-brand-700 transition-colors"
+            >
+              Sign in to your account →
+            </Link>
+            <Link
+              to="/verify-email"
+              className="text-sm text-brand-600 font-medium hover:text-brand-700 py-2"
+            >
+              Enter verification code instead
+            </Link>
+          </div>
         </div>
       </div>
     );

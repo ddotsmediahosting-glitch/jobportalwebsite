@@ -28,7 +28,11 @@ export function Login() {
     setLoading(true);
     try {
       const userData = await login(data.email, data.password);
-      toast.success('Welcome back!');
+      if (userData.status === 'PENDING_VERIFICATION') {
+        toast('Welcome! Please check your email to verify your account.', { icon: '📧' });
+      } else {
+        toast.success('Welcome back!');
+      }
       // Smart redirect based on role
       if (userData.role === 'ADMIN' || userData.role === 'SUB_ADMIN') {
         navigate('/admin/dashboard', { replace: true });
