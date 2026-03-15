@@ -373,6 +373,11 @@ model Job {
   isFeatured       Boolean        @default(false)
   isUrgent         Boolean        @default(false)
   isEmiratization  Boolean        @default(false)
+  fraudRiskScore    Int?
+  fraudRiskLevel    String?
+  fraudFlags        Json?
+  fraudExplanation  String?
+  fraudCheckedAt    DateTime?
   featuredUntil    DateTime?
   publishedAt      DateTime?
   expiresAt        DateTime?

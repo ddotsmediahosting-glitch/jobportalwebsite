@@ -615,3 +615,304 @@ Return JSON array:
 
   return callClaudeJSON<InterviewQuestion[]>(prompt, system);
 }
+
+// ─── Job Fraud Detection ───────────────────────────────────────────────────────
+
+export interface FraudDetectionResult {
+  riskScore: number;          // 0-100
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  flags: string[];            // specific issues found
+  explanation: string;        // summary of findings
+  recommendation: 'APPROVE' | 'REVIEW' | 'REJECT';
+  isLikelyFraud: boolean;
+}
+
+export async function detectJobFraud(
+  jobTitle: string,
+  description: string,
+  companyName: string,
+  salaryMin: number | null,
+  salaryMax: number | null,
+  contactEmail?: string | null,
+): Promise<FraudDetectionResult> {
+  const system = `You are a fraud detection specialist for an online job portal in the UAE.
+Analyze job postings for red flags including: unrealistic salaries, money laundering, MLM schemes,
+advance fee fraud, personal data harvesting, unrealistic promises, vague descriptions,
+suspicious contact methods, and other deceptive practices.`;
+
+  const prompt = `Analyze this job posting for fraud indicators:
+
+TITLE: ${jobTitle}
+COMPANY: ${companyName}
+SALARY: ${salaryMin ? `AED ${salaryMin}` : 'Not specified'} - ${salaryMax ? `AED ${salaryMax}` : 'Not specified'} per month
+CONTACT EMAIL: ${contactEmail || 'Not provided'}
+
+JOB DESCRIPTION:
+${description.substring(0, 2000)}
+
+UAE Context: Be aware of common UAE job scams like visa fraud, advance fee requests,
+unrealistic commission-only "jobs", data harvesting, and fake luxury employer brands.
+
+Return JSON:
+{
+  "riskScore": <0-100, where 0=no risk, 100=certain fraud>,
+  "riskLevel": "<LOW|MEDIUM|HIGH|CRITICAL>",
+  "flags": ["<specific red flags found, empty array if none>"],
+  "explanation": "<2-3 sentence explanation of findings>",
+  "recommendation": "<APPROVE|REVIEW|REJECT>",
+  "isLikelyFraud": <true if riskScore > 65>
+}
+
+Risk thresholds: LOW=0-25, MEDIUM=26-50, HIGH=51-75, CRITICAL=76-100`;
+
+  return callClaudeJSON<FraudDetectionResult>(prompt, system);
+}
+
+// ─── Personalized Job Recommendations ─────────────────────────────────────────
+
+export interface JobRecommendation {
+  jobId: string;
+  matchScore: number;
+  matchLabel: 'Excellent Match' | 'Good Match' | 'Fair Match';
+  topReasons: string[];
+}
+
+export async function rankJobsForCandidate(
+  candidateProfile: {
+    skills: string[];
+    yearsOfExperience?: number;
+    headline?: string;
+    bio?: string;
+    preferredEmirate?: string;
+    preferredWorkMode?: string;
+  },
+  jobs: Array<{ id: string; title: string; description: string; skills: string[] }>
+): Promise<JobRecommendation[]> {
+  const system = `You are a smart job matching AI. Rank jobs by how well they fit a candidate's profile. Be precise with scores.`;
+
+  const jobsList = jobs.map((j, i) =>
+    `[${i + 1}] ID: ${j.id}\nTitle: ${j.title}\nRequired skills: ${j.skills.join(', ') || 'Not listed'}\nDescription preview: ${j.description.substring(0, 200)}`
+  ).join('\n\n');
+
+  const prompt = `Rank these jobs for this candidate and return match scores.
+
+CANDIDATE:
+Headline: ${candidateProfile.headline || 'Not specified'}
+Experience: ${candidateProfile.yearsOfExperience ?? '?'} years
+Skills: ${candidateProfile.skills.join(', ') || 'Not listed'}
+Bio: ${candidateProfile.bio ? candidateProfile.bio.substring(0, 200) : 'Not provided'}
+Preferred Location: ${candidateProfile.preferredEmirate || 'Any'}
+Preferred Work Mode: ${candidateProfile.preferredWorkMode || 'Any'}
+
+JOBS TO RANK:
+${jobsList}
+
+Return JSON array sorted by matchScore descending:
+[
+  {
+    "jobId": "<job id>",
+    "matchScore": <50-100>,
+    "matchLabel": "<Excellent Match|Good Match|Fair Match>",
+    "topReasons": ["<2-3 specific reasons why this is a good match>"]
+  }
+]
+Excellent=80+, Good=65-79, Fair=50-64. Only include jobs scoring 50+.`;
+
+  return callClaudeJSON<JobRecommendation[]>(prompt, system);
+}
+
+// ─── Trending Skills Analysis ──────────────────────────────────────────────────
+
+export interface TrendingSkill {
+  skill: string;
+  demandCount: number;
+  trend: 'rising' | 'stable' | 'declining';
+  averageSalaryPremium: string;
+  topIndustries: string[];
+  relatedSkills: string[];
+  learningDifficulty: 'beginner' | 'intermediate' | 'advanced';
+  whyTrending: string;
+}
+
+export async function analyzeTrendingSkills(
+  skillFrequency: Record<string, number>,
+  topJobTitles: string[]
+): Promise<TrendingSkill[]> {
+  const system = `You are a UAE tech and job market analyst. Analyze skill demand trends in the UAE job market for 2025.`;
+
+  const topSkills = Object.entries(skillFrequency)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 30)
+    .map(([skill, count]) => `${skill}: ${count} jobs`)
+    .join(', ');
+
+  const prompt = `Analyze these skills from current UAE job postings and provide trend insights.
+
+SKILL FREQUENCY (skill: job count):
+${topSkills}
+
+TOP JOB TITLES REQUIRING THESE SKILLS:
+${topJobTitles.slice(0, 15).join(', ')}
+
+For the top 15 most demanded skills, return trend analysis:
+
+[
+  {
+    "skill": "<skill name>",
+    "demandCount": <number from input>,
+    "trend": "<rising|stable|declining>",
+    "averageSalaryPremium": "<e.g. +15-25% premium>",
+    "topIndustries": ["<3 industries with highest demand>"],
+    "relatedSkills": ["<3 complementary skills>"],
+    "learningDifficulty": "<beginner|intermediate|advanced>",
+    "whyTrending": "<1 sentence explanation>"
+  }
+]
+
+Sort by demandCount descending. Only return the top 15.`;
+
+  return callClaudeJSON<TrendingSkill[]>(prompt, system);
+}
+
+// ─── Profile AI Coach ─────────────────────────────────────────────────────────
+
+export interface ProfileCoachResult {
+  completionScore: number;       // 0-100
+  grade: 'A' | 'B' | 'C' | 'D';
+  strengths: string[];
+  improvements: Array<{
+    section: string;
+    priority: 'critical' | 'high' | 'medium';
+    suggestion: string;
+    impact: string;
+  }>;
+  missingCritical: string[];
+  nextSteps: string[];
+  profileSummary: string;
+}
+
+export async function coachProfile(profile: {
+  firstName?: string;
+  lastName?: string;
+  headline?: string;
+  bio?: string;
+  skills: string[];
+  yearsOfExperience?: number;
+  preferredWorkMode?: string;
+  hasAvatar: boolean;
+  resumeCount: number;
+  educationCount: number;
+  experienceCount: number;
+  certificationCount: number;
+}): Promise<ProfileCoachResult> {
+  const system = `You are a professional career coach specializing in the UAE job market.
+Help job seekers optimize their profiles to get hired faster. Be specific and actionable.`;
+
+  const profileSummary = `
+Name: ${profile.firstName || 'Missing'} ${profile.lastName || 'Missing'}
+Headline: ${profile.headline || 'MISSING - Critical gap'}
+Bio/Summary: ${profile.bio ? `${profile.bio.length} chars` : 'MISSING - Critical gap'}
+Skills: ${profile.skills.length > 0 ? profile.skills.join(', ') : 'MISSING - Critical gap'}
+Experience: ${profile.yearsOfExperience ?? 'Not specified'} years
+Work Mode Preference: ${profile.preferredWorkMode || 'Not set'}
+Profile Photo: ${profile.hasAvatar ? 'Added ✓' : 'Missing ✗'}
+Uploaded Resumes: ${profile.resumeCount}
+Education entries: ${profile.educationCount}
+Work Experience entries: ${profile.experienceCount}
+Certifications: ${profile.certificationCount}
+`.trim();
+
+  const prompt = `Analyze this UAE job seeker's profile and provide coaching:
+
+${profileSummary}
+
+Return JSON:
+{
+  "completionScore": <0-100 based on profile completeness>,
+  "grade": "<A=90+|B=75-89|C=50-74|D<50>",
+  "strengths": ["<2-3 things they've done well>"],
+  "improvements": [
+    {
+      "section": "<Profile section name>",
+      "priority": "<critical|high|medium>",
+      "suggestion": "<specific actionable suggestion>",
+      "impact": "<what improving this will achieve>"
+    }
+  ],
+  "missingCritical": ["<list of critical missing elements>"],
+  "nextSteps": ["<3-4 numbered action items ordered by priority>"],
+  "profileSummary": "<2 sentence overall assessment>"
+}
+
+Score calculation: headline(20pts) + bio(15pts) + skills(20pts) + experience_entries(15pts) + education(10pts) + resume_upload(10pts) + photo(5pts) + certifications(5pts)`;
+
+  return callClaudeJSON<ProfileCoachResult>(prompt, system);
+}
+
+// ─── Employer AI Hiring Insights ──────────────────────────────────────────────
+
+export interface HiringInsightsResult {
+  overallScore: number;
+  insights: Array<{
+    category: string;
+    finding: string;
+    recommendation: string;
+    impact: 'high' | 'medium' | 'low';
+  }>;
+  topPerformingJobTypes: string[];
+  candidateQualityTrends: string;
+  hiringVelocityTip: string;
+  salaryCompetitiveness: string;
+  suggestedImprovements: string[];
+}
+
+export async function generateHiringInsights(employerData: {
+  totalJobs: number;
+  activeJobs: number;
+  totalApplications: number;
+  avgApplicationsPerJob: number;
+  hireRate: number;
+  topJobTitles: string[];
+  avgSalaryOffered: number;
+  avgTimeToFill: number;
+  rejectionRate: number;
+  companyName: string;
+  emirate: string;
+}): Promise<HiringInsightsResult> {
+  const system = `You are an expert talent acquisition consultant for the UAE market.
+Provide actionable hiring insights to help employers attract and hire better candidates faster.`;
+
+  const prompt = `Analyze this employer's hiring metrics and provide strategic insights.
+
+COMPANY: ${employerData.companyName} (${employerData.emirate})
+Total Job Posts: ${employerData.totalJobs}
+Active Jobs: ${employerData.activeJobs}
+Total Applications Received: ${employerData.totalApplications}
+Avg Applications per Job: ${employerData.avgApplicationsPerJob.toFixed(1)}
+Hire Rate: ${(employerData.hireRate * 100).toFixed(1)}%
+Top Job Titles: ${employerData.topJobTitles.slice(0, 5).join(', ')}
+Average Salary Offered: AED ${employerData.avgSalaryOffered.toFixed(0)}/month
+Average Days to Fill: ${employerData.avgTimeToFill} days
+Rejection Rate: ${(employerData.rejectionRate * 100).toFixed(1)}%
+
+Return JSON:
+{
+  "overallScore": <0-100 hiring effectiveness score>,
+  "insights": [
+    {
+      "category": "<e.g. Application Volume|Candidate Quality|Salary|Speed|Job Descriptions>",
+      "finding": "<what the data shows>",
+      "recommendation": "<specific action to take>",
+      "impact": "<high|medium|low>"
+    }
+  ],
+  "topPerformingJobTypes": ["<3 job types that likely perform best based on titles>"],
+  "candidateQualityTrends": "<1-2 sentences on candidate quality based on metrics>",
+  "hiringVelocityTip": "<specific tip to hire faster>",
+  "salaryCompetitiveness": "<assessment of salary competitiveness in UAE market>",
+  "suggestedImprovements": ["<4-5 prioritized improvement suggestions>"]
+}
+Generate 4-5 insights. Be specific and UAE-market relevant.`;
+
+  return callClaudeJSON<HiringInsightsResult>(prompt, system);
+}

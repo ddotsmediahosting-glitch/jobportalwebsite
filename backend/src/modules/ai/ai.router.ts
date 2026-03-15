@@ -7,6 +7,11 @@ import {
   chatWithCareerAdvisor,
   getSalaryInsights,
   generateInterviewPrep,
+  detectJobFraud,
+  rankJobsForCandidate,
+  analyzeTrendingSkills,
+  coachProfile,
+  generateHiringInsights,
 } from '../../lib/ai';
 import { config } from '../../config';
 import prisma from '../../lib/prisma';
@@ -226,6 +231,285 @@ router.post('/interview-prep', async (req: AuthRequest, res: Response) => {
     specificFocus
   );
   res.json({ success: true, data: result });
+});
+
+// ── POST /ai/fraud-check/:jobId  (ADMIN/SUB_ADMIN only) ───────────────────────
+router.post('/fraud-check/:jobId', requireRole('ADMIN', 'SUB_ADMIN'), async (req: AuthRequest, res: Response) => {
+  const { jobId } = req.params;
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: { id: true, title: true, description: true, employer: { select: { companyName: true } }, salaryMin: true, salaryMax: true },
+  });
+  if (!job) {
+    res.status(404).json({ success: false, error: 'Job not found' });
+    return;
+  }
+
+  const result = await detectJobFraud(
+    job.title,
+    job.description,
+    job.employer.companyName,
+    job.salaryMin,
+    job.salaryMax,
+  );
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      fraudRiskScore: result.riskScore,
+      fraudRiskLevel: result.riskLevel,
+      fraudFlags: result.flags,
+      fraudExplanation: result.explanation,
+      fraudCheckedAt: new Date(),
+    },
+  });
+
+  res.json({ success: true, data: result });
+});
+
+// ── GET /ai/fraud-results/:jobId  (ADMIN/SUB_ADMIN only) ──────────────────────
+router.get('/fraud-results/:jobId', requireRole('ADMIN', 'SUB_ADMIN'), async (req: AuthRequest, res: Response) => {
+  const { jobId } = req.params;
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      id: true,
+      title: true,
+      fraudRiskScore: true,
+      fraudRiskLevel: true,
+      fraudFlags: true,
+      fraudExplanation: true,
+      fraudCheckedAt: true,
+    },
+  });
+  if (!job) {
+    res.status(404).json({ success: false, error: 'Job not found' });
+    return;
+  }
+
+  res.json({ success: true, data: job });
+});
+
+// ── GET /ai/recommended-jobs  (SEEKER only) ───────────────────────────────────
+router.get('/recommended-jobs', requireRole('SEEKER'), async (req: AuthRequest, res: Response) => {
+  const { cacheGetOrSet } = await import('../../lib/cache');
+
+  const profile = await prisma.jobSeekerProfile.findUnique({
+    where: { userId: req.user!.sub },
+    select: { skills: true, yearsOfExperience: true, headline: true, bio: true, preferredWorkMode: true },
+  });
+
+  if (!profile || !(profile.skills as string[])?.length) {
+    res.json({ success: true, data: [], message: 'Complete your profile to get personalized recommendations' });
+    return;
+  }
+
+  const cacheKey = `recommendations:${req.user!.sub}`;
+
+  const data = await cacheGetOrSet(cacheKey, async () => {
+    // Fetch recent published jobs (sample for matching)
+    const recentJobs = await prisma.job.findMany({
+      where: {
+        status: 'PUBLISHED',
+        employer: { verificationStatus: 'APPROVED' },
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        skills: true,
+        employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        emirate: true,
+        workMode: true,
+        salaryMin: true,
+        salaryMax: true,
+        _count: { select: { applications: true } },
+      },
+    });
+
+    if (recentJobs.length === 0) return [];
+
+    const rankings = await rankJobsForCandidate(
+      {
+        skills: (profile.skills as string[]) || [],
+        yearsOfExperience: profile.yearsOfExperience || undefined,
+        headline: profile.headline || undefined,
+        bio: profile.bio || undefined,
+        preferredWorkMode: profile.preferredWorkMode || undefined,
+      },
+      recentJobs.map((j) => ({ id: j.id, title: j.title, description: j.description, skills: (j.skills as string[]) || [] }))
+    );
+
+    // Merge match scores back into full job objects
+    return rankings
+      .slice(0, 8)
+      .map((r) => {
+        const job = recentJobs.find((j) => j.id === r.jobId);
+        return job ? { ...job, matchScore: r.matchScore, matchLabel: r.matchLabel, topReasons: r.topReasons } : null;
+      })
+      .filter(Boolean);
+  }, 1800); // cache 30 minutes
+
+  res.json({ success: true, data });
+});
+
+// ── GET /ai/trending-skills  (any authenticated user) ─────────────────────────
+router.get('/trending-skills', async (_req: Request, res: Response) => {
+  const { cacheGetOrSet } = await import('../../lib/cache');
+
+  const data = await cacheGetOrSet('ai:trending-skills', async () => {
+    // Aggregate skills from recent published jobs
+    const recentJobs = await prisma.job.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { publishedAt: 'desc' },
+      take: 200,
+      select: { skills: true, title: true },
+    });
+
+    const skillFreq: Record<string, number> = {};
+    const titleSet = new Set<string>();
+
+    recentJobs.forEach((job) => {
+      titleSet.add(job.title);
+      ((job.skills as string[]) || []).forEach((skill) => {
+        if (skill && skill.length > 1) {
+          skillFreq[skill] = (skillFreq[skill] || 0) + 1;
+        }
+      });
+    });
+
+    if (Object.keys(skillFreq).length === 0) {
+      return [];
+    }
+
+    return analyzeTrendingSkills(skillFreq, Array.from(titleSet));
+  }, 21600); // cache 6 hours
+
+  res.json({ success: true, data });
+});
+
+// ── GET /ai/profile-coach  (SEEKER only) ──────────────────────────────────────
+router.get('/profile-coach', requireRole('SEEKER'), async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.sub;
+
+  const [profile, resumeCount, educationCount, experienceCount, certCount, user] = await Promise.all([
+    prisma.jobSeekerProfile.findUnique({
+      where: { userId },
+      select: { firstName: true, lastName: true, headline: true, bio: true, skills: true, yearsOfExperience: true, preferredWorkMode: true, avatarUrl: true },
+    }),
+    prisma.resume.count({ where: { userId } }),
+    prisma.education.count({ where: { userId } }),
+    prisma.workExperience.count({ where: { userId } }),
+    prisma.certification.count({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } }),
+  ]);
+
+  if (!profile) {
+    res.json({
+      success: true,
+      data: {
+        completionScore: 0,
+        grade: 'D',
+        strengths: [],
+        improvements: [{ section: 'Profile Setup', priority: 'critical', suggestion: 'Create your seeker profile to get started', impact: 'Employers cannot find you without a profile' }],
+        missingCritical: ['Complete profile setup'],
+        nextSteps: ['Go to Profile and fill in your basic information'],
+        profileSummary: 'Profile not yet created. Start by filling in your basic details.',
+      },
+    });
+    return;
+  }
+
+  const result = await coachProfile({
+    firstName: profile.firstName || undefined,
+    lastName: profile.lastName || undefined,
+    headline: profile.headline || undefined,
+    bio: profile.bio || undefined,
+    skills: (profile.skills as string[]) || [],
+    yearsOfExperience: profile.yearsOfExperience || undefined,
+    preferredWorkMode: profile.preferredWorkMode || undefined,
+    hasAvatar: !!(profile.avatarUrl || user?.avatarUrl),
+    resumeCount,
+    educationCount,
+    experienceCount,
+    certificationCount: certCount,
+  });
+
+  res.json({ success: true, data: result });
+});
+
+// ── GET /ai/hiring-insights  (EMPLOYER only) ──────────────────────────────────
+router.get('/hiring-insights', requireRole('EMPLOYER'), async (req: AuthRequest, res: Response) => {
+  const { cacheGetOrSet } = await import('../../lib/cache');
+
+  const employer = await prisma.employer.findFirst({
+    where: { ownerUserId: req.user!.sub },
+    select: { id: true, companyName: true, emirate: true },
+  });
+
+  if (!employer) {
+    res.status(404).json({ success: false, error: 'Employer profile not found' });
+    return;
+  }
+
+  const cacheKey = `hiring-insights:${employer.id}`;
+
+  const data = await cacheGetOrSet(cacheKey, async () => {
+    const [jobs, applications] = await Promise.all([
+      prisma.job.findMany({
+        where: { employer: { id: employer.id } },
+        select: { id: true, title: true, status: true, salaryMin: true, salaryMax: true, publishedAt: true, _count: { select: { applications: true } } },
+        orderBy: { publishedAt: 'desc' },
+        take: 50,
+      }),
+      prisma.application.findMany({
+        where: { job: { employer: { id: employer.id } } },
+        select: { status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+    ]);
+
+    const totalJobs = jobs.length;
+    const activeJobs = jobs.filter((j) => j.status === 'PUBLISHED').length;
+    const totalApplications = applications.length;
+    const avgApplicationsPerJob = totalJobs > 0 ? totalApplications / totalJobs : 0;
+    const hiredCount = applications.filter((a) => a.status === 'HIRED').length;
+    const hireRate = totalApplications > 0 ? hiredCount / totalApplications : 0;
+    const rejectedCount = applications.filter((a) => a.status === 'REJECTED').length;
+    const rejectionRate = totalApplications > 0 ? rejectedCount / totalApplications : 0;
+
+    const salariesWithData = jobs.filter((j) => j.salaryMin || j.salaryMax);
+    const avgSalaryOffered = salariesWithData.length > 0
+      ? salariesWithData.reduce((sum, j) => sum + ((j.salaryMin || 0) + (j.salaryMax || 0)) / 2, 0) / salariesWithData.length
+      : 0;
+
+    const topJobTitles = [...new Set(jobs.map((j) => j.title))];
+
+    // Calculate avg days to fill (published → first hire)
+    const avgTimeToFill = 21; // Default estimate
+
+    return generateHiringInsights({
+      totalJobs,
+      activeJobs,
+      totalApplications,
+      avgApplicationsPerJob,
+      hireRate,
+      topJobTitles,
+      avgSalaryOffered,
+      avgTimeToFill,
+      rejectionRate,
+      companyName: employer.companyName,
+      emirate: employer.emirate || 'Dubai',
+    });
+  }, 3600); // cache 1 hour
+
+  res.json({ success: true, data });
 });
 
 export default router;

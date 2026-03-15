@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Briefcase, Users, CreditCard, Building2, LogOut, Menu, X, Share2, Home, ExternalLink,
-  BarChart3, Search, Calendar,
+  BarChart3, Search, Calendar, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -13,6 +13,7 @@ const nav = [
   { to: '/employer/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/employer/candidates', label: 'Find Candidates', icon: Search },
   { to: '/employer/interviews', label: 'Interviews', icon: Calendar },
+  { to: '/employer/ai-insights', label: 'AI Insights', icon: Sparkles },
   { to: '/employer/social-marketing', label: 'Social Marketing', icon: Share2 },
   { to: '/employer/company', label: 'Company Profile', icon: Building2 },
   { to: '/employer/team', label: 'Team', icon: Users },

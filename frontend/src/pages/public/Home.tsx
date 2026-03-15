@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
+import { RecommendedJobs } from '../../components/RecommendedJobs';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -371,6 +372,7 @@ export function Home() {
 
       {/* ─── Emiratization Jobs ─────────────────────────────────────────── */}
       <EmiratizationSection />
+      <RecommendedJobs />
 
       {/* ─── How it works ───────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-gray-900 via-brand-950 to-gray-900 py-20 px-4 mt-10">

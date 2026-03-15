@@ -39,6 +39,9 @@ const CVBuilder = lazy(() => import('../pages/cv/CVBuilder').then((m) => ({ defa
 const CareerAdvisor = lazy(() => import('../pages/ai/CareerAdvisor').then((m) => ({ default: m.CareerAdvisor })));
 const SalaryInsights = lazy(() => import('../pages/ai/SalaryInsights').then((m) => ({ default: m.SalaryInsights })));
 const InterviewPrep = lazy(() => import('../pages/ai/InterviewPrep').then((m) => ({ default: m.InterviewPrep })));
+const TrendingSkills = lazy(() => import('../pages/ai/TrendingSkills').then((m) => ({ default: m.TrendingSkills })));
+const ProfileCoach = lazy(() => import('../pages/ai/ProfileCoach').then((m) => ({ default: m.ProfileCoach })));
+const EmployerAIInsights = lazy(() => import('../pages/employer/AIInsights').then((m) => ({ default: m.EmployerAIInsights })));
 
 // Employer pages
 const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard').then((m) => ({ default: m.EmployerDashboard })));
@@ -121,6 +124,8 @@ export function AppRoutes() {
           <Route path="career-advisor" element={<CareerAdvisor />} />
           <Route path="salary-insights" element={<SalaryInsights />} />
           <Route path="interview-prep" element={<InterviewPrep />} />
+          <Route path="trending-skills" element={<TrendingSkills />} />
+          <Route path="profile-coach" element={<RequireAuth roles={['SEEKER']}><ProfileCoach /></RequireAuth>} />
           <Route path="job-alerts" element={<RequireAuth roles={['SEEKER']}><JobAlerts /></RequireAuth>} />
           <Route path="notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
           <Route path="salary-explorer" element={<SalaryExplorer />} />
@@ -149,6 +154,7 @@ export function AppRoutes() {
           <Route path="analytics" element={<EmployerAnalyticsPage />} />
           <Route path="candidates" element={<CandidateSearch />} />
           <Route path="interviews" element={<InterviewScheduler />} />
+          <Route path="ai-insights" element={<EmployerAIInsights />} />
         </Route>
 
         {/* Admin routes */}
