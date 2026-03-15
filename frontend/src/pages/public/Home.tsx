@@ -38,6 +38,65 @@ function getCategoryIcon(name: string): React.ReactNode {
   return key ? CATEGORY_ICONS[key] : <Briefcase size={18} />;
 }
 
+function EmiratizationSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['jobs', 'emiratization'],
+    queryFn: () => api.get('/jobs?isEmiratization=true&limit=6').then((r) => r.data.data),
+    staleTime: 5 * 60_000,
+  });
+
+  if (!isLoading && !data?.items?.length) return null;
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 mt-4">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">🇦🇪</span>
+            <h2 className="text-xl font-bold text-gray-900">Emiratization Opportunities</h2>
+          </div>
+          <p className="text-sm text-gray-500">Roles open to UAE nationals under Emiratization programs</p>
+        </div>
+        <Link
+          to="/jobs?isEmiratization=true"
+          className="hidden sm:flex items-center gap-1.5 text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors"
+        >
+          View all <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+              <div className="flex gap-3">
+                <div className="skeleton h-12 w-12 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                  <div className="skeleton h-4 rounded w-3/4" />
+                  <div className="skeleton h-3 rounded w-1/2" />
+                </div>
+              </div>
+              <div className="skeleton h-3 rounded w-full" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data?.items?.map((job: Parameters<typeof JobCard>[0]['job']) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </div>
+      )}
+
+      <div className="text-center mt-6 sm:hidden">
+        <Link to="/jobs?isEmiratization=true" className="text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors flex items-center gap-1 justify-center">
+          View all Emiratization jobs <ArrowRight size={13} />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export function Home() {
   const navigate = useNavigate();
   const [searchQ, setSearchQ] = useState('');
@@ -309,6 +368,9 @@ export function Home() {
           </Link>
         </div>
       </section>
+
+      {/* ─── Emiratization Jobs ─────────────────────────────────────────── */}
+      <EmiratizationSection />
 
       {/* ─── How it works ───────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-gray-900 via-brand-950 to-gray-900 py-20 px-4 mt-10">
