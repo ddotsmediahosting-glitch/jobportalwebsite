@@ -53,7 +53,7 @@ async function ensureAdminExists() {
 async function bootstrap() {
   // Test DB connection
   await prisma.$connect();
-  console.log('[DB] PostgreSQL connected');
+  console.log('[DB] MariaDB connected');
 
   // Ensure admin account exists (idempotent — safe on every restart)
   await ensureAdminExists();
