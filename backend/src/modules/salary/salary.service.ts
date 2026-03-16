@@ -30,8 +30,8 @@ export class SalaryService {
     const { jobTitle, industry, emirate, experienceMin, experienceMax } = filters;
 
     const where: Prisma.SalaryDataWhereInput = {};
-    if (jobTitle) where.jobTitle = { contains: jobTitle, mode: 'insensitive' };
-    if (industry) where.industry = { contains: industry, mode: 'insensitive' };
+    if (jobTitle) where.jobTitle = { contains: jobTitle };
+    if (industry) where.industry = { contains: industry };
     if (emirate) where.emirate = emirate as Emirates;
     if (experienceMin !== undefined) where.experienceMin = { gte: experienceMin };
     if (experienceMax !== undefined) where.experienceMax = { lte: experienceMax };
@@ -46,14 +46,14 @@ export class SalaryService {
       }),
       prisma.salaryData.groupBy({
         by: ['emirate'],
-        where: jobTitle ? { jobTitle: { contains: jobTitle, mode: 'insensitive' } } : {},
+        where: jobTitle ? { jobTitle: { contains: jobTitle } } : {},
         _avg: { salaryMin: true, salaryMax: true },
         _count: { _all: true },
         orderBy: { _count: { emirate: 'desc' } },
       }),
       prisma.salaryData.groupBy({
         by: ['experienceMin'],
-        where: jobTitle ? { jobTitle: { contains: jobTitle, mode: 'insensitive' } } : {},
+        where: jobTitle ? { jobTitle: { contains: jobTitle } } : {},
         _avg: { salaryMin: true, salaryMax: true },
         _count: { _all: true },
         orderBy: { experienceMin: 'asc' },

@@ -15,8 +15,8 @@ router.get('/blog', async (req: Request, res: Response) => {
 
   const where: Record<string, unknown> = { isPublished: true };
   if (category) where.category = category;
-  if (tag) where.tags = { has: tag };
-  if (q) where.title = { contains: q, mode: 'insensitive' };
+  if (tag) where.tags = { array_contains: tag };
+  if (q) where.title = { contains: q };
 
   const [items, total] = await Promise.all([
     prisma.blogPost.findMany({

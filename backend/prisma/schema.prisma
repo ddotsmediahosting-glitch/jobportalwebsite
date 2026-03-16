@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -112,7 +112,7 @@ model User {
   id               String     @id @default(cuid())
   email            String     @unique
   phone            String?
-  passwordHash     String?
+  passwordHash     String?    @db.Text
   role             UserRole   @default(SEEKER)
   status           UserStatus @default(PENDING_VERIFICATION)
   verifiedAt       DateTime?
@@ -126,7 +126,7 @@ model User {
   // Social auth
   socialProvider   String?
   socialId         String?
-  avatarUrl        String?
+  avatarUrl        String?    @db.Text
   displayName      String?
 
   refreshTokens       RefreshToken[]
@@ -157,13 +157,12 @@ model User {
 
 model RefreshToken {
   id        String   @id @default(cuid())
-  token     String   @unique
+  token     String   @unique @db.Text
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([token])
   @@index([userId])
 }
 
@@ -175,8 +174,8 @@ model JobSeekerProfile {
   user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName         String
   lastName          String
-  headline          String?
-  bio               String?
+  headline          String?    @db.Text
+  bio               String?    @db.Text
   emirate           Emirates?
   location          String?
   nationality       String?
@@ -185,17 +184,17 @@ model JobSeekerProfile {
   desiredRole       String?
   desiredSalaryMin  Int?
   desiredSalaryMax  Int?
-  desiredWorkModes  WorkMode[]
-  desiredEmirates   Emirates[]
+  desiredWorkModes  Json       @default("[]")
+  desiredEmirates   Json       @default("[]")
   yearsOfExperience Int?
   currentSalary     Int?
   noticePeriod      String?
   immediateJoiner   Boolean    @default(false)
-  languages         String[]
-  skills            String[]
-  linkedInUrl       String?
-  portfolioUrl      String?
-  avatarUrl         String?
+  languages         Json       @default("[]")
+  skills            Json       @default("[]")
+  linkedInUrl       String?    @db.Text
+  portfolioUrl      String?    @db.Text
+  avatarUrl         String?    @db.Text
   isProfilePublic   Boolean    @default(true)
 
   resumes        Resume[]
@@ -213,11 +212,11 @@ model Resume {
   profileId   String
   profile     JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   fileName    String
-  fileUrl     String
+  fileUrl     String           @db.Text
   fileSize    Int
   mimeType    String
   isPrimary   Boolean          @default(false)
-  parsedText  String?
+  parsedText  String?          @db.LongText
   applications Application[]
 
   createdAt DateTime @default(now())
@@ -235,7 +234,7 @@ model Education {
   startDate    DateTime
   endDate      DateTime?
   current      Boolean          @default(false)
-  description  String?
+  description  String?          @db.Text
   createdAt    DateTime         @default(now())
 }
 
@@ -250,8 +249,8 @@ model WorkExperience {
   startDate   DateTime
   endDate     DateTime?
   current     Boolean          @default(false)
-  description String?
-  skills      String[]
+  description String?          @db.Text
+  skills      Json             @default("[]")
   createdAt   DateTime         @default(now())
 }
 
@@ -263,7 +262,7 @@ model Certification {
   issuingOrg    String
   issueDate     DateTime?
   expiryDate    DateTime?
-  credentialUrl String?
+  credentialUrl String?          @db.Text
   createdAt     DateTime         @default(now())
 }
 
@@ -278,24 +277,24 @@ model Employer {
   industry           String?
   companySize        String?
   foundedYear        Int?
-  description        String?
-  website            String?
-  logoUrl            String?
-  coverUrl           String?
+  description        String?            @db.Text
+  website            String?            @db.Text
+  logoUrl            String?            @db.Text
+  coverUrl           String?            @db.Text
   emirate            Emirates?
   location           String?
-  tradeLicenseUrl    String?
+  tradeLicenseUrl    String?            @db.Text
   tradeLicenseNumber String?
   verificationStatus VerificationStatus @default(PENDING)
   verifiedAt         DateTime?
   verifiedBy         String?
-  verificationNotes  String?
+  verificationNotes  String?            @db.Text
   isActive           Boolean            @default(true)
 
-  members      EmployerMember[]
-  jobs         Job[]
-  subscription Subscription?
-  reviews      CompanyReview[]
+  members         EmployerMember[]
+  jobs            Job[]
+  subscription    Subscription?
+  reviews         CompanyReview[]
   savedCandidates CandidateSave[]
 
   createdAt DateTime @default(now())
@@ -332,7 +331,7 @@ model Category {
   sortOrder  Int        @default(0)
   isActive   Boolean    @default(true)
   isFeatured Boolean    @default(false)
-  iconUrl    String?
+  iconUrl    String?    @db.Text
   jobs       Job[]
 
   createdAt DateTime @default(now())
@@ -352,9 +351,9 @@ model Job {
   category         Category       @relation(fields: [categoryId], references: [id])
   title            String
   slug             String         @unique
-  description      String
-  requirements     String?
-  benefits         String?
+  description      String         @db.LongText
+  requirements     String?        @db.Text
+  benefits         String?        @db.Text
   emirate          Emirates
   location         String?
   workMode         WorkMode       @default(ONSITE)
@@ -367,25 +366,25 @@ model Job {
   experienceMin    Int            @default(0)
   experienceMax    Int?
   level            String?
-  skills           String[]
-  languages        String[]
+  skills           Json           @default("[]")
+  languages        Json           @default("[]")
   status           JobStatus      @default(DRAFT)
   isFeatured       Boolean        @default(false)
   isUrgent         Boolean        @default(false)
   isEmiratization  Boolean        @default(false)
-  fraudRiskScore    Int?
-  fraudRiskLevel    String?
-  fraudFlags        Json?
-  fraudExplanation  String?
-  fraudCheckedAt    DateTime?
+  fraudRiskScore   Int?
+  fraudRiskLevel   String?
+  fraudFlags       Json?
+  fraudExplanation String?        @db.Text
+  fraudCheckedAt   DateTime?
   featuredUntil    DateTime?
   publishedAt      DateTime?
   expiresAt        DateTime?
   viewCount        Int            @default(0)
   applyCount       Int            @default(0)
-  moderationNotes  String?
+  moderationNotes  String?        @db.Text
   metaTitle        String?
-  metaDescription  String?
+  metaDescription  String?        @db.Text
 
   tags               JobTag[]
   screeningQuestions ScreeningQuestion[]
@@ -405,6 +404,8 @@ model Job {
   @@index([employmentType])
   @@index([publishedAt])
   @@index([isFeatured])
+  @@index([isEmiratization])
+  @@index([fraudRiskLevel])
 }
 
 model Tag {
@@ -426,9 +427,9 @@ model ScreeningQuestion {
   id        String  @id @default(cuid())
   jobId     String
   job       Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  question  String
+  question  String  @db.Text
   type      String
-  options   String[]
+  options   Json    @default("[]")
   required  Boolean @default(false)
   sortOrder Int     @default(0)
 }
@@ -443,12 +444,12 @@ model Application {
   user          User              @relation(fields: [userId], references: [id])
   resumeId      String?
   resume        Resume?           @relation(fields: [resumeId], references: [id])
-  coverLetter   String?
+  coverLetter   String?           @db.Text
   answersJson   Json?
   status        ApplicationStatus @default(SUBMITTED)
-  notes         String?
+  notes         String?           @db.Text
   rating        Int?
-  tags          String[]
+  tags          Json              @default("[]")
   interviewDate DateTime?
 
   interviewSlots  InterviewSlot[]
@@ -470,10 +471,10 @@ model AIScreeningResult {
   jobId             String
   fitScore          Int
   fitLabel          String
-  priority          String      // shortlist | review | reject
-  matchingStrengths String[]
-  gaps              String[]
-  recommendation    String
+  priority          String
+  matchingStrengths Json        @default("[]")
+  gaps              Json        @default("[]")
+  recommendation    String      @db.Text
   screenedAt        DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -509,15 +510,15 @@ model JobAlert {
 // ─── Messaging ────────────────────────────────────────────────────────────────
 
 model Message {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   threadId   String
   fromUserId String
-  from       User     @relation("MessageFrom", fields: [fromUserId], references: [id])
+  from       User      @relation("MessageFrom", fields: [fromUserId], references: [id])
   toUserId   String
-  to         User     @relation("MessageTo", fields: [toUserId], references: [id])
-  body       String
+  to         User      @relation("MessageTo", fields: [toUserId], references: [id])
+  body       String    @db.Text
   readAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([threadId])
   @@index([fromUserId])
@@ -527,15 +528,15 @@ model Message {
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 model Notification {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   type        String
   title       String
-  body        String?
+  body        String?   @db.Text
   payloadJson Json?
   readAt      DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([userId])
   @@index([readAt])
@@ -551,11 +552,11 @@ model Report {
   targetId       String
   job            Job?             @relation("JobReport", fields: [targetId], references: [id])
   reason         String
-  details        String?
+  details        String?          @db.Text
   status         ReportStatus     @default(PENDING)
   resolvedBy     String?
   resolvedAt     DateTime?
-  resolutionNote String?
+  resolutionNote String?          @db.Text
   createdAt      DateTime         @default(now())
 
   @@index([targetType, targetId])
@@ -596,7 +597,7 @@ model AuditLog {
   targetId    String?
   metaJson    Json?
   ipAddress   String?
-  userAgent   String?
+  userAgent   String?  @db.Text
   createdAt   DateTime @default(now())
 
   @@index([actorUserId])
@@ -607,16 +608,16 @@ model AuditLog {
 // ─── ATS / CV ─────────────────────────────────────────────────────────────────
 
 model CVProfile {
-  id        String @id @default(cuid())
-  userId    String @unique
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  title            String?
-  targetRole       String?
-  professionalSummary String?
-  skills           String[]
-  languages        String[]
-  cvDataJson       Json?     // full structured CV data (sections, experience, education)
+  title                String?
+  targetRole           String?
+  professionalSummary  String?  @db.Text
+  skills               Json     @default("[]")
+  languages            Json     @default("[]")
+  cvDataJson           Json?
 
   analyses CVAnalysis[]
 
@@ -635,26 +636,26 @@ model CVAnalysis {
 
   jobTitle        String?
   companyName     String?
-  jobDescription  String?
-  cvText          String   @db.Text
+  jobDescription  String?  @db.Text
+  cvText          String   @db.LongText
 
-  atsScore        Int
+  atsScore          Int
   keywordMatchScore Int
-  formatScore     Int
-  contentScore    Int
+  formatScore       Int
+  contentScore      Int
 
-  matchedKeywords  String[]
-  missingKeywords  String[]
-  strengths        String[]
-  weaknesses       String[]
+  matchedKeywords  Json     @default("[]")
+  missingKeywords  Json     @default("[]")
+  strengths        Json     @default("[]")
+  weaknesses       Json     @default("[]")
   suggestionsJson  Json?
-  summary          String?
+  summary          String?  @db.Text
 
-  coverLetter      String?  @db.Text
+  coverLetter      String?  @db.LongText
   interviewQsJson  Json?
 
   aiModel         String   @default("claude-sonnet-4-6")
-  analysisType    String   @default("ats") // ats | skills_gap | optimization
+  analysisType    String   @default("ats")
 
   createdAt DateTime @default(now())
 
@@ -668,12 +669,12 @@ model SocialShareClick {
   id          String   @id @default(cuid())
   jobId       String?
   job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  platform    String   // linkedin | twitter | facebook | whatsapp | copy | email
+  platform    String
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
-  referrer    String?
-  userAgent   String?
+  referrer    String?  @db.Text
+  userAgent   String?  @db.Text
   ipAddress   String?
   createdAt   DateTime @default(now())
 
@@ -685,33 +686,33 @@ model SocialShareClick {
 // ─── WhatsApp Chatbot ─────────────────────────────────────────────────────────
 
 model WhatsAppSession {
-  id          String   @id @default(cuid())
-  phoneNumber String   @unique   // E.164 format, e.g. +971501234567
-  waId        String?            // WhatsApp ID from Twilio
-  profileName String?
-  state       String   @default("idle")  // idle | searching | salary_query | company_query
-  contextJson Json?              // stores temp search results, pagination cursor etc.
-  optedOut    Boolean  @default(false)
-  userId      String?  @unique
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id           String   @id @default(cuid())
+  phoneNumber  String   @unique
+  waId         String?
+  profileName  String?
+  state        String   @default("idle")
+  contextJson  Json?
+  optedOut     Boolean  @default(false)
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   lastActiveAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([phoneNumber])
 }
 
 model WhatsAppMessage {
-  id          String   @id @default(cuid())
-  sessionId   String?
-  messageSid  String?  @unique   // Twilio message SID
-  from        String
-  to          String
-  body        String   @db.Text
-  direction   String   // inbound | outbound
-  status      String   @default("received") // received | sent | delivered | failed
-  mediaUrl    String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  sessionId  String?
+  messageSid String?  @unique
+  from       String
+  to         String
+  body       String   @db.Text
+  direction  String
+  status     String   @default("received")
+  mediaUrl   String?  @db.Text
+  createdAt  DateTime @default(now())
 
   @@index([from])
   @@index([sessionId])
@@ -721,27 +722,27 @@ model WhatsAppMessage {
 // ─── Company Reviews ──────────────────────────────────────────────────────────
 
 model CompanyReview {
-  id           String   @id @default(cuid())
-  employerId   String
-  employer     Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
-  reviewerId   String
-  reviewer     User     @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: Cascade)
-  title        String
-  pros         String   @db.Text
-  cons         String   @db.Text
-  rating       Int      // 1-5
-  workLifeBalance Int   // 1-5
-  salaryBenefits  Int   // 1-5
-  management      Int   // 1-5
-  careerGrowth    Int   // 1-5
-  jobTitle     String?
-  employmentStatus String @default("CURRENT") // CURRENT | FORMER
-  isAnonymous  Boolean  @default(true)
-  isVerified   Boolean  @default(false)
-  helpfulCount Int      @default(0)
-  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  employerId       String
+  employer         Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  reviewerId       String
+  reviewer         User     @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: Cascade)
+  title            String
+  pros             String   @db.Text
+  cons             String   @db.Text
+  rating           Int
+  workLifeBalance  Int
+  salaryBenefits   Int
+  management       Int
+  careerGrowth     Int
+  jobTitle         String?
+  employmentStatus String   @default("CURRENT")
+  isAnonymous      Boolean  @default(true)
+  isVerified       Boolean  @default(false)
+  helpfulCount     Int      @default(0)
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([employerId, reviewerId])
   @@index([employerId])
@@ -752,26 +753,26 @@ model CompanyReview {
 // ─── Salary Data ──────────────────────────────────────────────────────────────
 
 model SalaryData {
-  id             String    @id @default(cuid())
-  jobTitle       String
-  industry       String?
-  emirate        Emirates?
-  experienceMin  Int       @default(0)
-  experienceMax  Int?
-  salaryMin      Int
-  salaryMax      Int
-  currency       String    @default("AED")
-  source         String    @default("user") // user | employer | scrape
-  userId         String?
-  isAnonymous    Boolean   @default(true)
-  createdAt      DateTime  @default(now())
+  id            String    @id @default(cuid())
+  jobTitle      String
+  industry      String?
+  emirate       Emirates?
+  experienceMin Int       @default(0)
+  experienceMax Int?
+  salaryMin     Int
+  salaryMax     Int
+  currency      String    @default("AED")
+  source        String    @default("user")
+  userId        String?
+  isAnonymous   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
 
   @@index([jobTitle])
   @@index([emirate])
   @@index([industry])
 }
 
-// ─── Candidate Saves (employers save candidates) ──────────────────────────────
+// ─── Candidate Saves ──────────────────────────────────────────────────────────
 
 model CandidateSave {
   id         String   @id @default(cuid())
@@ -779,8 +780,8 @@ model CandidateSave {
   employer   Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
   seekerId   String
   seeker     User     @relation("SavedCandidate", fields: [seekerId], references: [id], onDelete: Cascade)
-  notes      String?
-  tags       String[]
+  notes      String?  @db.Text
+  tags       Json     @default("[]")
   createdAt  DateTime @default(now())
 
   @@unique([employerId, seekerId])
@@ -795,12 +796,12 @@ model InterviewSlot {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   scheduledAt   DateTime
   durationMins  Int         @default(60)
-  type          String      @default("VIDEO") // VIDEO | PHONE | ONSITE
-  meetingLink   String?
+  type          String      @default("VIDEO")
+  meetingLink   String?     @db.Text
   location      String?
-  notes         String?
-  status        String      @default("PROPOSED") // PROPOSED | CONFIRMED | CANCELLED | COMPLETED
-  proposedBy    String      // EMPLOYER | SEEKER
+  notes         String?     @db.Text
+  status        String      @default("PROPOSED")
+  proposedBy    String
   confirmedAt   DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -815,7 +816,7 @@ model ContentPage {
   id          String   @id @default(cuid())
   slug        String   @unique
   title       String
-  content     String
+  content     String   @db.LongText
   isPublished Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -832,12 +833,12 @@ model BlogPost {
   id          String    @id @default(cuid())
   slug        String    @unique
   title       String
-  excerpt     String?
-  content     String
-  coverImage  String?
+  excerpt     String?   @db.Text
+  content     String    @db.LongText
+  coverImage  String?   @db.Text
   author      String    @default("Admin")
   category    String    @default("General")
-  tags        String[]
+  tags        Json      @default("[]")
   isPublished Boolean   @default(false)
   publishedAt DateTime?
   readTime    Int?
@@ -852,10 +853,10 @@ model BlogPost {
 model UsefulLink {
   id          String   @id @default(cuid())
   title       String
-  url         String
-  description String?
+  url         String   @db.Text
+  description String?  @db.Text
   category    String   @default("General")
-  iconUrl     String?
+  iconUrl     String?  @db.Text
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -867,8 +868,8 @@ model UsefulLink {
 model WhatsAppGroup {
   id          String   @id @default(cuid())
   title       String
-  description String?
-  link        String
+  description String?  @db.Text
+  link        String   @db.Text
   category    String   @default("General")
   emoji       String   @default("💬")
   memberCount Int?
@@ -877,7 +878,7 @@ model WhatsAppGroup {
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   clickCount  Int      @default(0)
-  tags        String[]
+  tags        Json     @default("[]")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -889,9 +890,9 @@ model WhatsAppLinksPage {
   id          String  @id @default("main")
   name        String  @default("Join Our WhatsApp Groups")
   tagline     String?
-  bio         String?
-  avatarUrl   String?
-  bannerText  String?
+  bio         String? @db.Text
+  avatarUrl   String? @db.Text
+  bannerText  String? @db.Text
   bannerColor String  @default("#10b981")
   theme       String  @default("emerald")
   socialLinks Json?
@@ -910,32 +911,29 @@ enum DiscussionStatus {
 }
 
 model Discussion {
-  id            String           @id @default(cuid())
-  title         String
-  body          String
-  category      String           @default("GENERAL")
-  tags          String[]
-  status        DiscussionStatus @default(PENDING)
-  isPinned      Boolean          @default(false)
-  isAnonymous   Boolean          @default(false)
-  viewCount     Int              @default(0)
-  upvoteCount   Int              @default(0)
-  replyCount    Int              @default(0)
-  isAnswered    Boolean          @default(false)
-  // Author info (null = anonymous)
-  authorId      String?
-  authorName    String?
-  authorEmail   String?
-  authorIp      String?
-  // Admin
-  adminNote     String?
-  pinnedAt      DateTime?
-  closedAt      DateTime?
-  // Replies
-  replies       DiscussionReply[]
-  votes         DiscussionVote[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          String           @id @default(cuid())
+  title       String
+  body        String           @db.Text
+  category    String           @default("GENERAL")
+  tags        Json             @default("[]")
+  status      DiscussionStatus @default(PENDING)
+  isPinned    Boolean          @default(false)
+  isAnonymous Boolean          @default(false)
+  viewCount   Int              @default(0)
+  upvoteCount Int              @default(0)
+  replyCount  Int              @default(0)
+  isAnswered  Boolean          @default(false)
+  authorId    String?
+  authorName  String?
+  authorEmail String?
+  authorIp    String?
+  adminNote   String?          @db.Text
+  pinnedAt    DateTime?
+  closedAt    DateTime?
+  replies     DiscussionReply[]
+  votes       DiscussionVote[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@index([category, status])
   @@index([isPinned, status])
@@ -944,7 +942,7 @@ model Discussion {
 
 model DiscussionReply {
   id           String     @id @default(cuid())
-  body         String
+  body         String     @db.Text
   isAccepted   Boolean    @default(false)
   isAdminReply Boolean    @default(false)
   isAnonymous  Boolean    @default(false)
@@ -983,14 +981,14 @@ model DiscussionReplyVote {
 }
 
 model CommunitySettings {
-  id                  String  @id @default("main")
-  whatsappNumber      String?
-  whatsappGroupLink   String?
-  contactEmail        String?
-  telegramLink        String?
-  bannerText          String?
-  bannerEnabled       Boolean @default(false)
-  requireModeration   Boolean @default(true)
-  allowAnonymous      Boolean @default(true)
-  updatedAt           DateTime @updatedAt
+  id                String  @id @default("main")
+  whatsappNumber    String?
+  whatsappGroupLink String? @db.Text
+  contactEmail      String?
+  telegramLink      String? @db.Text
+  bannerText        String? @db.Text
+  bannerEnabled     Boolean @default(false)
+  requireModeration Boolean @default(true)
+  allowAnonymous    Boolean @default(true)
+  updatedAt         DateTime @updatedAt
 }

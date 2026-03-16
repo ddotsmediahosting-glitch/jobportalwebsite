@@ -148,9 +148,8 @@ async function searchJobs(keyword: string, emirate?: string) {
     ...(keyword
       ? {
           OR: [
-            { title: { contains: keyword, mode: 'insensitive' } },
-            { skills: { has: keyword } },
-            { description: { contains: keyword, mode: 'insensitive' } },
+            { title: { contains: keyword } },
+            { description: { contains: keyword } },
           ],
         }
       : {}),
@@ -175,8 +174,8 @@ async function getSalaryInsights(keyword: string): Promise<string> {
       status: 'PUBLISHED',
       salaryMin: { gt: 0 },
       OR: [
-        { title: { contains: keyword, mode: 'insensitive' } },
-        { skills: { has: keyword } },
+        { title: { contains: keyword } },
+        { description: { contains: keyword } },
       ],
     },
     select: { title: true, emirate: true, salaryMin: true, salaryMax: true },
@@ -410,7 +409,7 @@ export async function handleMessage(params: {
   if (companyMatch) {
     const name = (companyMatch[1] || companyMatch[2]).trim();
     const employer = await prisma.employer.findFirst({
-      where: { companyName: { contains: name, mode: 'insensitive' }, verificationStatus: 'APPROVED' },
+      where: { companyName: { contains: name }, verificationStatus: 'APPROVED' },
       include: { _count: { select: { jobs: { where: { status: 'PUBLISHED' } } } } },
     });
     if (employer) {

@@ -27,9 +27,8 @@ export class JobsService {
 
     if (q) {
       where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { skills: { has: q } },
+        { title: { contains: q } },
+        { description: { contains: q } },
       ];
     }
 

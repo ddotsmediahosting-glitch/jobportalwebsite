@@ -63,7 +63,7 @@ export class AdminService {
     if (role) where.role = role as 'SEEKER' | 'EMPLOYER' | 'ADMIN' | 'SUB_ADMIN';
     if (status) where.status = status as UserStatus;
     if (q) where.OR = [
-      { email: { contains: q, mode: 'insensitive' } },
+      { email: { contains: q } },
     ];
 
     const [items, total] = await Promise.all([
@@ -150,7 +150,7 @@ export class AdminService {
     const where: Prisma.EmployerWhereInput = {};
 
     if (verificationStatus) where.verificationStatus = verificationStatus as VerificationStatus;
-    if (q) where.companyName = { contains: q, mode: 'insensitive' };
+    if (q) where.companyName = { contains: q };
 
     const [items, total] = await Promise.all([
       prisma.employer.findMany({
@@ -208,8 +208,8 @@ export class AdminService {
 
     if (status) where.status = status as JobStatus;
     if (q) where.OR = [
-      { title: { contains: q, mode: 'insensitive' } },
-      { employer: { companyName: { contains: q, mode: 'insensitive' } } },
+      { title: { contains: q } },
+      { employer: { companyName: { contains: q } } },
     ];
     if (categoryId) where.categoryId = categoryId;
     if (emirate) where.emirate = emirate as Emirates;

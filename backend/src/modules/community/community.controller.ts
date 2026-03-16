@@ -25,12 +25,12 @@ export async function listDiscussions(req: Request, res: Response) {
 
   const where: any = { status: 'APPROVED' };
   if (category && CATEGORIES.includes(category)) where.category = category;
-  if (tag) where.tags = { has: tag };
+  if (tag) where.tags = { array_contains: tag };
   if (unanswered === 'true') where.isAnswered = false;
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { body: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search } },
+      { body: { contains: search } },
     ];
   }
 
@@ -237,9 +237,9 @@ export async function adminListDiscussions(req: Request, res: Response) {
   if (category) where.category = category;
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { authorEmail: { contains: search, mode: 'insensitive' } },
-      { authorName: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search } },
+      { authorEmail: { contains: search } },
+      { authorName: { contains: search } },
     ];
   }
 

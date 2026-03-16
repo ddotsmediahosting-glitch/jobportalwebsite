@@ -1,7 +1,7 @@
 # ── Local preview stack ────────────────────────────────────────────────────────
 # Usage:
 #   docker compose up --build          → full rebuild + start
-#   docker compose up -d postgres redis → DB/cache only (then use npm run dev)
+#   docker compose up -d mariadb redis → DB/cache only (then use npm run dev)
 #   docker compose logs -f api          → tail API logs
 #
 # Access:
@@ -11,18 +11,19 @@
 #   Health   : http://localhost:4001/health
 
 services:
-  postgres:
-    image: postgres:16-alpine
+  mariadb:
+    image: mariadb:11
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: uaejobs
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_USER: uaejobs
+      MARIADB_PASSWORD: uaejobs
+      MARIADB_DATABASE: uaejobs
     ports:
-      - "5433:5432"
+      - "3307:3306"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - mariadb_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d uaejobs"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -47,14 +48,14 @@ services:
       - .env
     # Override localhost URLs from .env with Docker-internal service hostnames
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uaejobs
+      DATABASE_URL: mysql://uaejobs:uaejobs@mariadb:3306/uaejobs
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: http://localhost:5173,http://localhost:3001
       NODE_ENV: development
     ports:
       - "4001:4000"
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -66,8 +67,6 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        # Empty = same-origin via nginx proxy (recommended)
-        # Set to http://localhost:4001 only if nginx proxy breaks
         VITE_API_URL: ""
         VITE_FRONTEND_URL: http://localhost:3001
     ports:
@@ -76,5 +75,5 @@ services:
       - api
 
 volumes:
-  pg_data:
+  mariadb_data:
   redis_data:

@@ -32,8 +32,8 @@ const worker = new Worker<JobAlertsData>(
 
         if (alert.keywords) {
           where.OR = [
-            { title: { contains: alert.keywords, mode: 'insensitive' } },
-            { description: { contains: alert.keywords, mode: 'insensitive' } },
+            { title: { contains: alert.keywords } },
+            { description: { contains: alert.keywords } },
           ];
         }
 

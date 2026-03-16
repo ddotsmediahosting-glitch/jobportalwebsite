@@ -15,7 +15,7 @@ router.get('/employers', async (req, res) => {
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const where: Record<string, unknown> = { verificationStatus: 'APPROVED', isActive: true };
   if (industry) where.industry = industry;
-  if (search) where.companyName = { contains: search, mode: 'insensitive' };
+  if (search) where.companyName = { contains: search };
   const [items, total] = await Promise.all([
     prisma.employer.findMany({
       where,

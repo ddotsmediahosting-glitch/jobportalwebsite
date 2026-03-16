@@ -20,5 +20,5 @@ COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/shared/dist ./shared/dist
 RUN npm install --omit=dev && cd backend && npx prisma generate
 EXPOSE 4000
-CMD ["sh", "-c", "cd backend && npx prisma migrate deploy && node /app/backend/dist/src/server.js"]
+CMD ["sh", "-c", "cd backend && npx prisma db push --accept-data-loss && node /app/backend/dist/src/server.js"]
 

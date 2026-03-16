@@ -26,19 +26,18 @@ export class CandidatesService {
 
     if (q) {
       where.OR = [
-        { firstName: { contains: q, mode: 'insensitive' } },
-        { lastName: { contains: q, mode: 'insensitive' } },
-        { headline: { contains: q, mode: 'insensitive' } },
-        { desiredRole: { contains: q, mode: 'insensitive' } },
-        { skills: { has: q } },
+        { firstName: { contains: q } },
+        { lastName: { contains: q } },
+        { headline: { contains: q } },
+        { desiredRole: { contains: q } },
       ];
     }
 
     if (emirate) where.emirate = emirate as Emirates;
-    if (workMode) where.desiredWorkModes = { has: workMode as WorkMode };
+    if (workMode) (where as any).desiredWorkModes = { array_contains: workMode };
     if (skills) {
       const skillList = skills.split(',').map((s) => s.trim());
-      where.skills = { hasSome: skillList };
+      (where as any).skills = { array_contains: skillList[0] };
     }
     if (experienceMin !== undefined) where.yearsOfExperience = { gte: experienceMin };
     if (experienceMax !== undefined) {
