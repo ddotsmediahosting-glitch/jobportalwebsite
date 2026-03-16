@@ -38,7 +38,7 @@ export function RecommendedJobs() {
   const { user } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['recommended-jobs', user?.sub],
+    queryKey: ['recommended-jobs', user?.id],
     queryFn: () => api.get('/ai/recommended-jobs').then((r) => r.data.data),
     enabled: !!user && user.role === 'SEEKER',
     staleTime: 30 * 60_000,
