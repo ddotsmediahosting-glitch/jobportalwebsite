@@ -106,24 +106,28 @@ export function PublicLayout() {
                   <Home size={13} /> Home
                 </span>
               </NavLink>
-              <NavLink to="/jobs">Browse Jobs</NavLink>
+              <NavLink to="/jobs">
+                <span className="flex items-center gap-1.5">
+                  <Search size={13} /> Browse Jobs
+                </span>
+              </NavLink>
               <NavLink to="/companies">
                 <span className="flex items-center gap-1.5">
                   <Building2 size={13} /> Companies
                 </span>
               </NavLink>
               <NavLink to="/salary-explorer">
-                <span className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700">
+                <span className="flex items-center gap-1.5">
                   <DollarSign size={13} /> Salaries
                 </span>
               </NavLink>
               <NavLink to="/trending">
-                <span className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700">
+                <span className="flex items-center gap-1.5">
                   <TrendingUp size={13} /> Trending
                 </span>
               </NavLink>
               <NavLink to="/career-advisor">
-                <span className="flex items-center gap-1.5 text-violet-600 hover:text-violet-700">
+                <span className="flex items-center gap-1.5">
                   <Bot size={13} /> Career AI
                 </span>
               </NavLink>
@@ -143,7 +147,7 @@ export function PublicLayout() {
               {user && (
                 <Link
                   to="/post-job"
-                  className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
                 >
                   <Briefcase size={12} /> Post a Job
                 </Link>
@@ -387,8 +391,8 @@ export function PublicLayout() {
                   {[
                     { to: '/jobs', label: 'Browse Jobs' },
                     { to: '/companies', label: 'Companies' },
-                    { to: '/community', label: '💬 Community Q&A' },
-                    { to: '/whatsapp-groups', label: '📱 WhatsApp Groups' },
+                    { to: '/community', label: 'Community Q&A' },
+                    { to: '/whatsapp-groups', label: 'WhatsApp Groups' },
                     { to: '/salary-insights', label: 'Salary Insights' },
                     { to: '/cv-analyzer', label: 'ATS CV Analyzer' },
                     { to: '/cv-builder', label: 'AI CV Builder' },
@@ -442,33 +446,6 @@ export function PublicLayout() {
           <p className="text-xs text-gray-600">
             © {new Date().getFullYear()} Ddotsmedia Jobs. All rights reserved.
           </p>
-          {/* Social row — driven by Admin → Settings → Social Media */}
-          {socialSettings && Object.values(socialSettings).some(Boolean) && (
-            <div className="flex items-center gap-3">
-              {([
-                { key: 'social_linkedin',  icon: <Linkedin size={13} />,  label: 'LinkedIn' },
-                { key: 'social_twitter',   icon: <Twitter size={13} />,   label: 'Twitter/X' },
-                { key: 'social_facebook',  icon: <Facebook size={13} />,  label: 'Facebook' },
-                { key: 'social_instagram', icon: <Instagram size={13} />, label: 'Instagram' },
-                { key: 'social_youtube',   icon: <Youtube size={13} />,   label: 'YouTube' },
-                { key: 'social_whatsapp',  icon: WHATSAPP_SVG,            label: 'WhatsApp' },
-                { key: 'social_tiktok',    icon: <span className="text-[10px] font-black leading-none">TT</span>, label: 'TikTok' },
-              ] as { key: string; icon: React.ReactNode; label: string }[])
-                .filter(({ key }) => socialSettings[key])
-                .map(({ key, icon, label }) => (
-                  <a
-                    key={key}
-                    href={socialSettings[key]}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={label}
-                    className="text-gray-600 hover:text-gray-300 transition-colors duration-150"
-                  >
-                    {icon}
-                  </a>
-                ))}
-            </div>
-          )}
           <div className="flex items-center gap-4 text-xs text-gray-600">
             <Link to="/pages/privacy-policy" className="hover:text-gray-400 transition-colors">Privacy</Link>
             <Link to="/pages/terms" className="hover:text-gray-400 transition-colors">Terms</Link>

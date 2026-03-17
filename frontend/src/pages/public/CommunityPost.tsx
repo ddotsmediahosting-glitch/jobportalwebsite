@@ -354,9 +354,9 @@ export function CommunityPost() {
               </div>
 
               {/* Tags */}
-              {discussion.tags.length > 0 && (
+              {(Array.isArray(discussion.tags) ? discussion.tags : []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-5">
-                  {discussion.tags.map((t) => (
+                  {(Array.isArray(discussion.tags) ? discussion.tags as string[] : []).map((t) => (
                     <Link
                       key={t}
                       to={`/community?tag=${t}`}

@@ -44,4 +44,13 @@ router.post('/reset-password', validate(resetPasswordSchema), ctrl.resetPassword
 router.get('/me', authenticate, ctrl.me.bind(ctrl));
 router.post('/change-password', authenticate, validate(changePasswordSchema), ctrl.changePassword.bind(ctrl));
 
+// Returns which social OAuth providers are configured on this server
+router.get('/providers', (_req, res) => {
+  res.json({
+    google:   !!process.env.GOOGLE_CLIENT_ID,
+    linkedin: !!process.env.LINKEDIN_CLIENT_ID,
+    facebook: !!process.env.FACEBOOK_APP_ID,
+  });
+});
+
 export default router;

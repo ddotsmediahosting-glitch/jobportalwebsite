@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Briefcase } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
 import { JobFilters, CategoryNode } from '../../components/JobFilters';
@@ -78,10 +78,10 @@ export function Jobs() {
   };
 
   const getFilterChipLabel = (key: string, value: string) => {
-    if (key === 'categoryId') return `📁 ${getCategoryName(value)}`;
-    if (key === 'subcategoryId') return `↳ ${getSubcategoryName(value)}`;
-    if (key === 'isFeatured') return '⭐ Featured only';
-    if (key === 'isEmiratization') return '🇦🇪 Emiratization only';
+    if (key === 'categoryId') return getCategoryName(value);
+    if (key === 'subcategoryId') return getSubcategoryName(value);
+    if (key === 'isFeatured') return 'Featured only';
+    if (key === 'isEmiratization') return 'Emiratization only';
     return `${FILTER_LABELS[key] ?? key}: ${value}`;
   };
 
@@ -99,7 +99,7 @@ export function Jobs() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Browse Jobs in UAE</h1>
+              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Briefcase size={18} className="text-brand-500" /> Browse Jobs in UAE</h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 {data
                   ? <><span className="font-semibold text-gray-800">{data.total.toLocaleString()}</span> positions available</>

@@ -143,7 +143,7 @@ You create compelling, achievement-focused content using strong action verbs and
 
 TARGET ROLE: ${input.targetRole}
 YEARS OF EXPERIENCE: ${input.yearsOfExperience}
-CURRENT SKILLS: ${input.skills.join(', ')}
+CURRENT SKILLS: ${(Array.isArray(input.skills) ? input.skills as string[] : []).join(', ')}
 ${input.jobDescription ? `\nTARGET JOB DESCRIPTION:\n${input.jobDescription}` : ''}
 
 WORK EXPERIENCE:
@@ -223,7 +223,7 @@ export async function analyzeSkillsGap(
 
   const prompt = `Perform a detailed skills gap analysis.
 
-CANDIDATE SKILLS: ${candidateSkills.join(', ')}
+CANDIDATE SKILLS: ${(Array.isArray(candidateSkills) ? candidateSkills as string[] : []).join(', ')}
 
 CV SUMMARY:
 ${cvText.substring(0, 2000)}
@@ -368,7 +368,7 @@ export async function screenApplications(
   const system = `You are an expert talent acquisition specialist for the UAE job market. Screen candidates objectively.`;
 
   const candidateList = candidates.map((c, i) =>
-    `[${i + 1}] ID: ${c.applicationId}\nName: ${c.candidateName}\nExp: ${c.yearsOfExperience ?? '?'} yrs\nHeadline: ${c.headline || '-'}\nSkills: ${c.skills.join(', ') || '-'}\nCover Letter: ${c.coverLetter ? c.coverLetter.substring(0, 200) : 'None'}`
+    `[${i + 1}] ID: ${c.applicationId}\nName: ${c.candidateName}\nExp: ${c.yearsOfExperience ?? '?'} yrs\nHeadline: ${c.headline || '-'}\nSkills: ${(Array.isArray(c.skills) ? c.skills as string[] : []).join(', ') || '-'}\nCover Letter: ${c.coverLetter ? c.coverLetter.substring(0, 200) : 'None'}`
   ).join('\n\n');
 
   const prompt = `Screen these ${candidates.length} candidates for: ${jobTitle}
@@ -424,7 +424,7 @@ DESCRIPTION: ${jobDescription.substring(0, 1200)}
 CANDIDATE:
 Headline: ${seekerProfile.headline || '-'}
 Experience: ${seekerProfile.yearsOfExperience ?? '?'} years
-Skills: ${seekerProfile.skills.join(', ') || '-'}
+Skills: ${(Array.isArray(seekerProfile.skills) ? seekerProfile.skills as string[] : []).join(', ') || '-'}
 Bio: ${seekerProfile.bio ? seekerProfile.bio.substring(0, 200) : '-'}
 
 Return JSON:
@@ -449,8 +449,8 @@ export async function chatWithCareerAdvisor(
   userContext?: { skills?: string[]; yearsOfExperience?: number; headline?: string }
 ): Promise<string> {
   assertApiKey();
-  const contextStr = userContext?.skills?.length
-    ? `\nUser: ${userContext.headline || 'job seeker'}, ${userContext.yearsOfExperience ?? '?'} yrs exp, skills: ${userContext.skills.slice(0, 8).join(', ')}`
+  const contextStr = (Array.isArray(userContext?.skills) ? userContext!.skills.length : 0) > 0
+    ? `\nUser: ${userContext!.headline || 'job seeker'}, ${userContext!.yearsOfExperience ?? '?'} yrs exp, skills: ${(userContext!.skills as string[]).slice(0, 8).join(', ')}`
     : '';
 
   const system = `You are an expert career advisor specializing in the UAE and MENA job market.
@@ -691,7 +691,7 @@ export async function rankJobsForCandidate(
   const system = `You are a smart job matching AI. Rank jobs by how well they fit a candidate's profile. Be precise with scores.`;
 
   const jobsList = jobs.map((j, i) =>
-    `[${i + 1}] ID: ${j.id}\nTitle: ${j.title}\nRequired skills: ${j.skills.join(', ') || 'Not listed'}\nDescription preview: ${j.description.substring(0, 200)}`
+    `[${i + 1}] ID: ${j.id}\nTitle: ${j.title}\nRequired skills: ${(Array.isArray(j.skills) ? j.skills as string[] : []).join(', ') || 'Not listed'}\nDescription preview: ${j.description.substring(0, 200)}`
   ).join('\n\n');
 
   const prompt = `Rank these jobs for this candidate and return match scores.
@@ -699,7 +699,7 @@ export async function rankJobsForCandidate(
 CANDIDATE:
 Headline: ${candidateProfile.headline || 'Not specified'}
 Experience: ${candidateProfile.yearsOfExperience ?? '?'} years
-Skills: ${candidateProfile.skills.join(', ') || 'Not listed'}
+Skills: ${(Array.isArray(candidateProfile.skills) ? candidateProfile.skills as string[] : []).join(', ') || 'Not listed'}
 Bio: ${candidateProfile.bio ? candidateProfile.bio.substring(0, 200) : 'Not provided'}
 Preferred Location: ${candidateProfile.preferredEmirate || 'Any'}
 Preferred Work Mode: ${candidateProfile.preferredWorkMode || 'Any'}
@@ -812,7 +812,7 @@ Help job seekers optimize their profiles to get hired faster. Be specific and ac
 Name: ${profile.firstName || 'Missing'} ${profile.lastName || 'Missing'}
 Headline: ${profile.headline || 'MISSING - Critical gap'}
 Bio/Summary: ${profile.bio ? `${profile.bio.length} chars` : 'MISSING - Critical gap'}
-Skills: ${profile.skills.length > 0 ? profile.skills.join(', ') : 'MISSING - Critical gap'}
+Skills: ${(Array.isArray(profile.skills) ? profile.skills as string[] : []).length > 0 ? (Array.isArray(profile.skills) ? profile.skills as string[] : []).join(', ') : 'MISSING - Critical gap'}
 Experience: ${profile.yearsOfExperience ?? 'Not specified'} years
 Work Mode Preference: ${profile.preferredWorkMode || 'Not set'}
 Profile Photo: ${profile.hasAvatar ? 'Added ✓' : 'Missing ✗'}

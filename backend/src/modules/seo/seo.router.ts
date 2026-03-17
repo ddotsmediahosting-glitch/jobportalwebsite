@@ -150,7 +150,7 @@ router.get('/job-schema/:slug', async (req: Request, res: Response) => {
           },
         }
       : {}),
-    skills: job.skills.join(', '),
+    skills: (Array.isArray(job.skills) ? job.skills as string[] : []).join(', '),
     occupationalCategory: job.category.name,
   };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, DollarSign, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap } from 'lucide-react';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, JobListItem } from '@uaejobs/shared';
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'AED', negotiable = false) {
@@ -44,13 +44,15 @@ interface JobCardProps {
   isSaved?: boolean;
 }
 
+const asArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+
 export function JobCard({ job, onSave, isSaved }: JobCardProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryNegotiable);
   const workModeStyle = WORK_MODE_STYLE[job.workMode] ?? 'bg-gray-50 text-gray-600 border-gray-200';
   const empTypeStyle = EMP_TYPE_STYLE[job.employmentType] ?? 'bg-gray-50 text-gray-600';
 
   return (
-    <article className="group bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-100 transition-all duration-200 relative flex flex-col shadow-card">
+    <article className={`group bg-white border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-100 transition-all duration-200 relative flex flex-col shadow-card ${job.isFeatured ? 'border-gold-300/40' : 'border-gray-100'}`}>
       {/* Top badges + save */}
       <div className="flex items-start justify-between gap-2 mb-4">
         <div className="flex gap-1.5 flex-wrap">
@@ -131,18 +133,24 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
             {salary}
           </span>
         )}
+        {job.experienceMin != null && (
+          <span className="flex items-center gap-1">
+            <GraduationCap size={11} className="text-gray-400" />
+            {job.experienceMin}{job.experienceMax ? `–${job.experienceMax}` : '+'} yrs
+          </span>
+        )}
       </div>
 
       {/* Skills */}
-      {job.skills.length > 0 && (
+      {asArr(job.skills).length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {job.skills.slice(0, 4).map((s) => (
+          {asArr(job.skills).slice(0, 4).map((s) => (
             <span key={s} className="text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-100 px-2 py-0.5 rounded-full">
               {s}
             </span>
           ))}
-          {job.skills.length > 4 && (
-            <span className="text-[10px] text-gray-400 px-1 py-0.5">+{job.skills.length - 4}</span>
+          {asArr(job.skills).length > 4 && (
+            <span className="text-[10px] text-gray-400 px-1 py-0.5">+{asArr(job.skills).length - 4}</span>
           )}
         </div>
       )}
@@ -162,11 +170,28 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
         </div>
         <Link
           to={`/jobs/${job.slug}`}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 group-hover:bg-brand-50 px-2.5 py-1.5 rounded-lg transition-all duration-150"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 shadow-sm"
         >
-          Apply <ArrowUpRight size={12} />
+          Apply Now <ArrowUpRight size={11} />
         </Link>
       </div>
+
+      {/* Hover preview panel — desktop only */}
+      {'description' in job && (job as { description?: string }).description && (
+        <div className="hidden md:block absolute left-0 right-0 top-full mt-1 z-20 pointer-events-none">
+          <div className="opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200 bg-white border border-brand-100 rounded-2xl shadow-xl p-4 pointer-events-auto">
+            <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">
+              {(job as { description?: string }).description}
+            </p>
+            <Link
+              to={`/jobs/${job.slug}`}
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              View full details <ArrowUpRight size={11} />
+            </Link>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

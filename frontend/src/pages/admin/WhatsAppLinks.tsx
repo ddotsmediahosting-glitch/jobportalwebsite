@@ -308,7 +308,7 @@ export function AdminWhatsAppLinks() {
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
                       {g.memberCount && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{g.memberCount.toLocaleString()} members</span>}
                       <span className="flex items-center gap-1"><BarChart2 className="w-3 h-3" />{g.clickCount} joins</span>
-                      {g.tags.length > 0 && <span>{g.tags.slice(0, 2).map(t => `#${t}`).join(' ')}</span>}
+                      {(Array.isArray(g.tags) ? g.tags : []).length > 0 && <span>{(Array.isArray(g.tags) ? g.tags as string[] : []).slice(0, 2).map(t => `#${t}`).join(' ')}</span>}
                     </div>
                   </div>
 

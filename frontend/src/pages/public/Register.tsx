@@ -8,12 +8,13 @@ import { registerSchema, RegisterInput } from '@uaejobs/shared';
 import { api, getApiError } from '../../lib/api';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { SocialLoginButtons } from '../../components/SocialLoginButtons';
+import { SocialLoginButtons, useSocialProviders } from '../../components/SocialLoginButtons';
 
 export function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<'SEEKER' | 'EMPLOYER'>('SEEKER');
+  const { any: hasSocialProviders } = useSocialProviders();
   const [emailSent, setEmailSent] = useState(false);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<RegisterInput>({
@@ -120,17 +121,19 @@ export function Register() {
           </div>
 
           {/* Social signup */}
-          <div className="px-7 pt-7">
-            <SocialLoginButtons role={role} label="Sign up" />
-            <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-400">or create account with email</span>
+          {hasSocialProviders && (
+            <div className="px-7 pt-7">
+              <SocialLoginButtons role={role} label="Sign up" />
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-3 text-gray-400">or create account with email</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-7 pb-7" noValidate>
             {role === 'SEEKER' && (

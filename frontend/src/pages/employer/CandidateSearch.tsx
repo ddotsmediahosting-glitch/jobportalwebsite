@@ -237,12 +237,12 @@ export function CandidateSearch() {
                       )}
                     </div>
 
-                    {c.skills.length > 0 && (
+                    {(Array.isArray(c.skills) ? c.skills : []).length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {c.skills.slice(0, 4).map((s) => (
+                        {(Array.isArray(c.skills) ? c.skills as string[] : []).slice(0, 4).map((s) => (
                           <span key={s} className="text-[10px] bg-gray-50 text-gray-600 border border-gray-100 px-2 py-0.5 rounded-full">{s}</span>
                         ))}
-                        {c.skills.length > 4 && <span className="text-[10px] text-gray-400">+{c.skills.length - 4}</span>}
+                        {(Array.isArray(c.skills) ? c.skills : []).length > 4 && <span className="text-[10px] text-gray-400">+{(Array.isArray(c.skills) ? c.skills : []).length - 4}</span>}
                       </div>
                     )}
 

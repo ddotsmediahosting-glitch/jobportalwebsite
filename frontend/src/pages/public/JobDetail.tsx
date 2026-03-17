@@ -314,11 +314,11 @@ export function JobDetail() {
           </div>
 
           {/* Skills */}
-          {job.skills?.length > 0 && (
+          {(Array.isArray(job.skills) ? job.skills : []).length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm">Required Skills</h3>
               <div className="flex flex-wrap gap-1.5">
-                {job.skills.map((s: string) => <Badge key={s} color="gray">{s}</Badge>)}
+                {(Array.isArray(job.skills) ? job.skills as string[] : []).map((s: string) => <Badge key={s} color="gray">{s}</Badge>)}
               </div>
             </div>
           )}
