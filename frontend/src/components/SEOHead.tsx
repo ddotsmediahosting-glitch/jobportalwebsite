@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const SITE_NAME = 'DdotsmediaJobs';
 const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://ddotsmediajobs.com';
 const DEFAULT_DESC = 'Find the best jobs in UAE – Abu Dhabi, Dubai, Sharjah and all Emirates. Thousands of verified job listings updated daily.';
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-default.png`;
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-default.svg`;
 
 export interface SEOProps {
   title?: string;
@@ -182,6 +182,19 @@ export function buildJobPostingSchema(job: {
     occupationalCategory: job.category.name,
   };
   return schema;
+}
+
+export function buildBreadcrumbSchema(items: { name: string; url: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
 }
 
 export function buildOrganizationSchema(employer: {

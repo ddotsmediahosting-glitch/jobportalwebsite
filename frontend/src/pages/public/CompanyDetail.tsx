@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SEOHead, buildOrganizationSchema, buildBreadcrumbSchema } from '../../components/SEOHead';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
@@ -139,6 +140,7 @@ function StarRating({ value, onChange, readonly = false }: { value: number; onCh
         <button
           key={s}
           type="button"
+          aria-label={`Rate ${s} star${s !== 1 ? 's' : ''}`}
           onClick={() => !readonly && onChange?.(s)}
           className={`${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110 transition-transform'}`}
         >
@@ -154,11 +156,13 @@ function StarRating({ value, onChange, readonly = false }: { value: number; onCh
 
 function RatingBar({ label, value }: { label: string; value: number | null }) {
   const pct = value ? (value / 5) * 100 : 0;
+  const barRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => { if (barRef.current) barRef.current.style.width = `${pct}%`; }, [pct]);
   return (
     <div className="flex items-center gap-3 text-sm">
       <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-gray-100 rounded-full">
-        <div className="h-2 rounded-full bg-yellow-400" style={{ width: `${pct}%` }} />
+        <div ref={barRef} className="h-2 rounded-full bg-yellow-400" />
       </div>
       <span className="font-semibold text-gray-700 w-6 text-right">{value ? value.toFixed(1) : '—'}</span>
     </div>
@@ -218,14 +222,35 @@ export function CompanyDetail() {
     );
   }
 
+  const metaDesc = employer.description
+    ? employer.description.slice(0, 155).replace(/\s+/g, ' ').trim() + '…'
+    : `${employer.companyName} jobs in the UAE. View open positions, company info and employee reviews on DdotsmediaJobs.`;
+
   return (
+    <>
+    <SEOHead
+      title={`${employer.companyName} – Jobs & Reviews in UAE`}
+      description={metaDesc}
+      ogTitle={`${employer.companyName} | DdotsmediaJobs`}
+      ogDescription={metaDesc}
+      ogImage={employer.logoUrl || undefined}
+      ogUrl={`https://ddotsmediajobs.com/companies/${employer.slug}`}
+      canonical={`https://ddotsmediajobs.com/companies/${employer.slug}`}
+      ogType="website"
+      jsonLd={buildBreadcrumbSchema([
+        { name: 'Home', url: 'https://ddotsmediajobs.com' },
+        { name: 'Companies', url: 'https://ddotsmediajobs.com/companies' },
+        { name: employer.companyName, url: `https://ddotsmediajobs.com/companies/${employer.slug}` },
+      ])}
+    />
     <div className="min-h-screen bg-gray-50">
       {/* Cover */}
       <div className="relative">
-        <div
-          className="h-48 bg-gradient-to-r from-brand-800 to-indigo-700"
-          style={employer.coverUrl ? { backgroundImage: `url(${employer.coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
-        />
+        <div className="h-48 bg-gradient-to-r from-brand-800 to-indigo-700 overflow-hidden">
+          {employer.coverUrl && (
+            <img src={employer.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+          )}
+        </div>
         <div className="absolute inset-0 bg-black/30" />
         <Link to="/companies" className="absolute top-4 left-8 flex items-center gap-1 text-white/80 hover:text-white text-sm z-10">
           <ArrowLeft size={14} /> Companies
@@ -342,6 +367,7 @@ export function CompanyDetail() {
             </h2>
             {user && (
               <button
+                type="button"
                 onClick={() => setReviewOpen(true)}
                 className="flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 px-3 py-1.5 rounded-lg transition-all"
               >
@@ -373,7 +399,7 @@ export function CompanyDetail() {
                       <div className="w-24 h-2 bg-gray-100 rounded-full">
                         <div
                           className="h-2 rounded-full bg-yellow-400"
-                          style={{ width: `${reviewsData.stats.totalReviews > 0 ? ((reviewsData.stats.ratingDistribution?.[r] || 0) / reviewsData.stats.totalReviews) * 100 : 0}%` }}
+                          ref={(el) => { if (el) el.style.width = `${reviewsData.stats.totalReviews > 0 ? ((reviewsData.stats.ratingDistribution?.[r] || 0) / reviewsData.stats.totalReviews) * 100 : 0}%`; }}
                         />
                       </div>
                       <span className="text-gray-400">{reviewsData.stats.ratingDistribution?.[r] || 0}</span>
@@ -440,6 +466,7 @@ export function CompanyDetail() {
                     ))}
                   </div>
                   <button
+                    type="button"
                     onClick={() => helpfulMutation.mutate(review.id)}
                     className="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-600 transition-colors"
                   >
@@ -468,6 +495,8 @@ export function CompanyDetail() {
               {[...Array(reviewsData.totalPages)].map((_: unknown, i: number) => (
                 <button
                   key={i}
+                  type="button"
+                  aria-label={`Page ${i + 1}`}
                   onClick={() => setReviewPage(i + 1)}
                   className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${reviewPage === i + 1 ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-300'}`}
                 >
@@ -485,7 +514,7 @@ export function CompanyDetail() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-gray-900">Review {employer.companyName}</h3>
-              <button onClick={() => setReviewOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <button type="button" aria-label="Close review form" onClick={() => setReviewOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <div className="space-y-4">
               <div>
@@ -550,6 +579,8 @@ export function CompanyDetail() {
                   <select
                     value={reviewForm.employmentStatus}
                     onChange={(e) => setReviewForm({ ...reviewForm, employmentStatus: e.target.value })}
+                    title="Employment status"
+                    aria-label="Employment status"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="CURRENT">Current Employee</option>
@@ -567,6 +598,7 @@ export function CompanyDetail() {
                 Post anonymously
               </label>
               <button
+                type="button"
                 onClick={() => reviewMutation.mutate()}
                 disabled={!reviewForm.title || !reviewForm.pros || !reviewForm.cons || reviewForm.rating === 0 || reviewMutation.isPending}
                 className="w-full bg-brand-600 text-white py-2.5 rounded-xl font-semibold hover:bg-brand-700 disabled:opacity-50 transition-colors"
@@ -578,5 +610,6 @@ export function CompanyDetail() {
         </div>
       )}
     </div>
+    </>
   );
 }
