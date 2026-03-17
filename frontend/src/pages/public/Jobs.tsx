@@ -9,6 +9,21 @@ import { JobFilters, CategoryNode } from '../../components/JobFilters';
 import { Pagination } from '../../components/Pagination';
 import { useAuth } from '../../hooks/useAuth';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SEOHead, buildBreadcrumbSchema } from '../../components/SEOHead';
+import { EMIRATES_LABELS } from '@uaejobs/shared';
+
+const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://ddotsmediajobs.com';
+
+// City intro copy — shown when browsing by emirate
+const CITY_INTRO: Record<string, string> = {
+  DUBAI: 'Dubai is the UAE\'s commercial hub and home to thousands of job opportunities across technology, finance, hospitality, retail, and construction. Whether you\'re a recent graduate or an experienced professional, DdotsmediaJobs lists the latest Dubai vacancies from top employers updated daily.',
+  ABU_DHABI: 'Abu Dhabi, the UAE capital, offers a wide range of career opportunities in government, oil & gas, healthcare, and financial services. Browse the latest Abu Dhabi job vacancies below and apply free on DdotsmediaJobs.',
+  SHARJAH: 'Sharjah is a growing business and cultural centre in the UAE with strong demand for professionals in education, manufacturing, logistics, and healthcare. Find the latest jobs in Sharjah on DdotsmediaJobs.',
+  AJMAN: 'Ajman offers competitive career opportunities in manufacturing, retail, and services. Explore the latest job vacancies in Ajman and apply directly on DdotsmediaJobs.',
+  RAS_AL_KHAIMAH: 'Ras Al Khaimah is rapidly expanding with opportunities in tourism, ceramics, construction, and free zone businesses. Discover the latest RAK job openings on DdotsmediaJobs.',
+  FUJAIRAH: 'Fujairah\'s growing port and free zone create strong demand for logistics, shipping, and trade professionals. Find jobs in Fujairah on DdotsmediaJobs.',
+  UMM_AL_QUWAIN: 'Umm Al Quwain offers emerging opportunities in industry and tourism. Browse UAQ vacancies on DdotsmediaJobs.',
+};
 
 const FILTER_LABELS: Record<string, string> = {
   q: 'Search', emirate: 'Emirate', workMode: 'Work Mode',
@@ -93,14 +108,69 @@ export function Jobs() {
     setSearchParams({ ...next, page: '1' });
   };
 
+  // ── Dynamic SEO values ─────────────────────────────────────────────────────
+  const emirateCode = filters.emirate as string | undefined;
+  const emirateName = emirateCode ? (EMIRATES_LABELS as Record<string, string>)[emirateCode] : null;
+  const activeCategoryName = filters.categoryId
+    ? categories?.find((c) => c.id === filters.categoryId)?.name ?? null
+    : null;
+  const totalCount = data?.total ?? 0;
+  const year = new Date().getFullYear();
+
+  let pageTitle: string;
+  let pageDescription: string;
+  let pageH1: string;
+  let canonicalSuffix = '';
+
+  if (emirateName) {
+    pageH1 = `Jobs in ${emirateName}`;
+    pageTitle = `Jobs in ${emirateName} ${year} | ${totalCount > 0 ? `${totalCount.toLocaleString()}+` : 'Latest'} Vacancies – DdotsmediaJobs`;
+    pageDescription = `Find the latest jobs in ${emirateName}. ${totalCount > 0 ? `${totalCount.toLocaleString()}+ verified` : 'Thousands of'} vacancies updated daily. Full-time, part-time & visa-sponsored roles. Apply free on DdotsmediaJobs.`;
+    canonicalSuffix = `?emirate=${emirateCode}`;
+  } else if (activeCategoryName) {
+    pageH1 = `${activeCategoryName} Jobs in UAE`;
+    pageTitle = `${activeCategoryName} Jobs in UAE ${year} | ${totalCount > 0 ? `${totalCount.toLocaleString()}+` : 'Latest'} Vacancies – DdotsmediaJobs`;
+    pageDescription = `Browse ${totalCount > 0 ? `${totalCount.toLocaleString()}+` : 'the latest'} ${activeCategoryName} jobs in UAE. Find vacancies across Dubai, Abu Dhabi, Sharjah and all Emirates. Apply free today on DdotsmediaJobs.`;
+    canonicalSuffix = `?categoryId=${filters.categoryId}`;
+  } else if (filters.q) {
+    pageH1 = `"${filters.q}" Jobs in UAE`;
+    pageTitle = `${filters.q} Jobs in UAE ${year} – DdotsmediaJobs`;
+    pageDescription = `Find "${filters.q}" jobs in UAE. ${totalCount > 0 ? `${totalCount.toLocaleString()} results` : 'Browse vacancies'} across Dubai, Abu Dhabi, Sharjah and all Emirates on DdotsmediaJobs.`;
+  } else {
+    pageH1 = 'Browse Jobs in UAE';
+    pageTitle = `Jobs in UAE ${year} | 10,000+ Vacancies – DdotsmediaJobs`;
+    pageDescription = `Browse 10,000+ verified jobs in UAE. Find vacancies in Dubai, Abu Dhabi, Sharjah and all Emirates. Full-time, part-time, fresher & visa-sponsored roles. Apply free today.`;
+    canonicalSuffix = '';
+  }
+
+  const canonicalUrl = `${BASE_URL}/jobs${canonicalSuffix}`;
+  const cityIntro = emirateCode ? CITY_INTRO[emirateCode] ?? null : null;
+
+  const breadcrumbItems = [
+    { name: 'Home', url: BASE_URL },
+    { name: 'Jobs in UAE', url: `${BASE_URL}/jobs` },
+    ...(emirateName ? [{ name: `Jobs in ${emirateName}`, url: canonicalUrl }] : []),
+    ...(activeCategoryName ? [{ name: `${activeCategoryName} Jobs`, url: canonicalUrl }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        canonical={canonicalUrl}
+        ogUrl={canonicalUrl}
+        ogTitle={pageTitle}
+        ogDescription={pageDescription}
+        jsonLd={buildBreadcrumbSchema(breadcrumbItems)}
+      />
+
       {/* Page header */}
       <div className="bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Briefcase size={18} className="text-brand-500" /> Browse Jobs in UAE</h1>
+              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Briefcase size={18} className="text-brand-500" /> {pageH1}</h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 {data
                   ? <><span className="font-semibold text-gray-800">{data.total.toLocaleString()}</span> positions available</>
@@ -114,6 +184,7 @@ export function Jobs() {
 
             {/* Mobile filter button */}
             <button
+              type="button"
               onClick={() => setMobileFiltersOpen(true)}
               className="lg:hidden flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm"
             >
@@ -136,6 +207,7 @@ export function Jobs() {
                 >
                   {getFilterChipLabel(key, value)}
                   <button
+                    type="button"
                     onClick={() => removeFilter(key)}
                     className="ml-0.5 hover:text-brand-900 transition-colors"
                     aria-label={`Remove ${key} filter`}
@@ -145,6 +217,7 @@ export function Jobs() {
                 </span>
               ))}
               <button
+                type="button"
                 onClick={() => setSearchParams({})}
                 className="text-xs text-gray-400 hover:text-red-500 font-medium transition-colors px-1"
               >
@@ -164,7 +237,7 @@ export function Jobs() {
               <h2 className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
                 <SlidersHorizontal size={14} className="text-brand-500" /> Filters
               </h2>
-              <button onClick={() => setMobileFiltersOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <button type="button" aria-label="Close filters" onClick={() => setMobileFiltersOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
                 <X size={15} />
               </button>
             </div>
@@ -186,6 +259,14 @@ export function Jobs() {
 
           {/* Job list */}
           <div className="flex-1 min-w-0">
+            {/* City / category intro paragraph (SEO content block) */}
+            {cityIntro && !isLoading && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4 shadow-card">
+                <h2 className="font-semibold text-gray-900 mb-1 text-sm">{pageH1}</h2>
+                <p className="text-sm text-gray-500 leading-relaxed">{cityIntro}</p>
+              </div>
+            )}
+
             {isLoading ? (
               <div className="grid gap-4">
                 {[...Array(5)].map((_, i) => (
