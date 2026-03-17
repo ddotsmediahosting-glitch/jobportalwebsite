@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, TrendingDown, Users, Briefcase, FileText, MapPin } from 'lucide-react';
 import { api } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function fmtDay(dateStr: string) {
@@ -24,7 +24,7 @@ function Trend({ pct }: { pct: number | null }) {
 // ── SVG Line Chart ────────────────────────────────────────────────────────────
 function LineChart({ data, label, color }: { data: { day: string; count: number }[]; label: string; color: string }) {
   if (!data || data.length === 0) return (
-    <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No data</div>
+    <EmptyState illustration="generic" title="No data available" className="py-8" />
   );
 
   const w = 600;
@@ -95,7 +95,7 @@ function LineChart({ data, label, color }: { data: { day: string; count: number 
 // ── SVG Bar Chart ─────────────────────────────────────────────────────────────
 function BarChart({ data, color }: { data: { label: string; count: number }[]; color: string }) {
   if (!data || data.length === 0) return (
-    <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No data</div>
+    <EmptyState illustration="generic" title="No data available" className="py-8" />
   );
 
   const w = 600;
@@ -135,7 +135,7 @@ function BarChart({ data, color }: { data: { label: string; count: number }[]; c
 // ── Donut chart ───────────────────────────────────────────────────────────────
 function DonutChart({ data }: { data: { label: string; count: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.count, 0);
-  if (total === 0) return <div className="flex items-center justify-center h-32 text-gray-400 text-sm">No data</div>;
+  if (total === 0) return <EmptyState illustration="generic" title="No data available" className="py-8" />;
 
   const cx = 60;
   const cy = 60;
@@ -201,6 +201,48 @@ function TrendCard({ label, current, previous, pct, icon, color }: {
   );
 }
 
+// ── Analytics skeleton ────────────────────────────────────────────────────────
+function AnalyticsSkeleton() {
+  return (
+    <div className="space-y-6 max-w-7xl">
+      {/* Trend cards */}
+      <div className="grid sm:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="skeleton h-10 w-10 rounded-xl" />
+              <div className="skeleton h-4 rounded w-24" />
+            </div>
+            <div className="skeleton h-8 rounded w-20 mb-2" />
+            <div className="skeleton h-3 rounded w-32" />
+          </div>
+        ))}
+      </div>
+      {/* Chart placeholders */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="skeleton h-4 rounded w-48 mb-4" />
+        <div className="skeleton h-40 rounded-lg w-full" />
+      </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="skeleton h-4 rounded w-32 mb-4" />
+            <div className="skeleton h-40 rounded-lg w-full" />
+          </div>
+        ))}
+      </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="skeleton h-4 rounded w-40 mb-4" />
+            <div className="skeleton h-36 rounded-lg w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const JOB_STATUS_COLORS: Record<string, string> = {
   PUBLISHED: '#16a34a',
   PENDING_APPROVAL: '#d97706',
@@ -252,7 +294,7 @@ export function AdminAnalytics() {
         </div>
       </div>
 
-      {isLoading && <PageSpinner />}
+      {isLoading && <AnalyticsSkeleton />}
 
       {!isLoading && data && (
         <>

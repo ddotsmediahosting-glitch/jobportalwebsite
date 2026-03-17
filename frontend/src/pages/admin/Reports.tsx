@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -32,6 +32,23 @@ const statusColor: Record<string, string> = {
   RESOLVED: 'bg-green-50 text-green-700',
   DISMISSED: 'bg-gray-100 text-gray-600',
 };
+
+function ReportsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function AdminReports() {
   const qc = useQueryClient();
@@ -69,7 +86,7 @@ export function AdminReports() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <ReportsSkeleton />
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -128,10 +145,7 @@ export function AdminReports() {
               </tbody>
             </table>
             {!data?.items?.length && (
-              <div className="text-center py-16 text-gray-400">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                No reports found.
-              </div>
+              <EmptyState illustration="generic" title="No reports found" description="User-submitted reports will appear here." className="py-12" />
             )}
           </div>
           <Pagination page={page} totalPages={data?.totalPages} total={data?.total} limit={data?.limit} onPageChange={setPage} />

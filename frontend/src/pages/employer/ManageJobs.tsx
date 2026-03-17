@@ -2,12 +2,55 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Play, Pause, X, Copy, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Pause, Copy, Users } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { JobStatusBadge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { Pagination } from '../../components/Pagination';
-import { PageSpinner } from '../../components/ui/Spinner';
+
+function ManageJobsSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th className="text-left px-4 py-3 font-medium text-gray-700">Job Title</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden sm:table-cell">Status</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Applications</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Views</th>
+            <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {[...Array(4)].map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3">
+                <div className="skeleton h-4 rounded w-48" />
+              </td>
+              <td className="px-4 py-3 hidden sm:table-cell">
+                <div className="skeleton h-5 rounded-full w-20" />
+              </td>
+              <td className="px-4 py-3 hidden md:table-cell">
+                <div className="skeleton h-4 rounded w-10" />
+              </td>
+              <td className="px-4 py-3 hidden md:table-cell">
+                <div className="skeleton h-4 rounded w-8" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex justify-end gap-1">
+                  <div className="skeleton h-7 w-7 rounded" />
+                  <div className="skeleton h-7 w-7 rounded" />
+                  <div className="skeleton h-7 w-7 rounded" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function ManageJobs() {
   const [page, setPage] = useState(1);
@@ -63,12 +106,14 @@ export function ManageJobs() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <ManageJobsSkeleton />
       ) : !data?.items?.length ? (
-        <div className="text-center py-20 text-gray-400">
-          <p>No jobs yet.</p>
-          <Link to="/employer/jobs/new" className="text-brand-600 text-sm mt-2 inline-block">Post your first job →</Link>
-        </div>
+        <EmptyState
+          illustration="jobs"
+          title="No jobs posted yet"
+          description="Post your first job and start receiving applications."
+          action={{ label: 'Post a Job', to: '/employer/jobs/new' }}
+        />
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

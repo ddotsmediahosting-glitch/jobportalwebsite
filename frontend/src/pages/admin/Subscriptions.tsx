@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { CreditCard, Building2, Edit2, Check, X } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface Subscription {
   id: string;
@@ -47,6 +47,23 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-xs text-gray-500 whitespace-nowrap">{used}/{limit}</span>
+    </div>
+  );
+}
+
+function SubscriptionsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -125,7 +142,7 @@ export function AdminSubscriptions() {
       )}
 
       {isLoading ? (
-        <PageSpinner />
+        <SubscriptionsSkeleton />
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -189,7 +206,7 @@ export function AdminSubscriptions() {
                 </tbody>
               </table>
               {!data?.items?.length && (
-                <div className="text-center py-16 text-gray-400">No subscriptions found.</div>
+                <EmptyState illustration="generic" title="No subscriptions found" className="py-12" />
               )}
             </div>
           </div>

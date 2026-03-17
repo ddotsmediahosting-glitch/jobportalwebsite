@@ -181,6 +181,9 @@ export function PublicLayout() {
 
                       {user.role === 'SEEKER' && (
                         <>
+                          <Link to="/seeker-dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-600 transition-colors">
+                            <Home className="h-3.5 w-3.5 text-gray-400" /> Dashboard
+                          </Link>
                           <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-600 transition-colors">
                             <User className="h-3.5 w-3.5 text-gray-400" /> My Profile
                           </Link>
@@ -306,6 +309,7 @@ export function PublicLayout() {
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-0.5">
                 {user.role === 'SEEKER' && (
                   <>
+                    <MobileNavLink to="/seeker-dashboard" icon={<Home size={15} />} onClick={() => setMobileOpen(false)}>Dashboard</MobileNavLink>
                     <MobileNavLink to="/profile" icon={<User size={15} />} onClick={() => setMobileOpen(false)}>My Profile</MobileNavLink>
                     <MobileNavLink to="/my-applications" icon={<FileText size={15} />} onClick={() => setMobileOpen(false)}>Applications</MobileNavLink>
                     <MobileNavLink to="/saved-jobs" icon={<BookmarkCheck size={15} />} onClick={() => setMobileOpen(false)}>Saved Jobs</MobileNavLink>

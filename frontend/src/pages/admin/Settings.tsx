@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Save, Globe, FileText, Plus, Pencil, Trash2, Share2, ExternalLink } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface ContentPage {
   id: string;
@@ -44,6 +44,46 @@ const SOCIAL_LINKS: SocialLink[] = [
   { key: 'social_tiktok',    label: 'TikTok',    placeholder: 'https://tiktok.com/@yourhandle',      icon: 'tt', color: 'bg-gray-800' },
   { key: 'social_whatsapp',  label: 'WhatsApp',  placeholder: 'https://wa.me/971XXXXXXXXX',          icon: 'wa', color: 'bg-green-500' },
 ];
+
+// ── Settings skeleton ─────────────────────────────────────────────────────────
+function SettingsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(7)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-4 rounded w-40" />
+              <div className="skeleton h-3 rounded w-28" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="skeleton h-8 rounded-lg w-52" />
+              <div className="skeleton h-8 rounded-lg w-16" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Pages skeleton ────────────────────────────────────────────────────────────
+function PagesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function AdminSettings() {
   const qc = useQueryClient();
@@ -97,8 +137,6 @@ export function AdminSettings() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (settingsLoading) return <PageSpinner />;
-
   const tabs = [
     { id: 'settings', label: 'Site Settings', icon: <Globe className="h-4 w-4" /> },
     { id: 'social',   label: 'Social Media',  icon: <Share2 className="h-4 w-4" /> },
@@ -129,108 +167,116 @@ export function AdminSettings() {
 
       {/* ── Site Settings ─────────────────────────────────────────────────── */}
       {activeTab === 'settings' && (
-        <div className="space-y-4">
-          {Object.entries(SETTING_LABELS).map(([key, { label, type, placeholder }]) => {
-            const currentVal = localSettings[key] ?? '';
-            return (
-              <div key={key} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[140px]">
-                    <label className="block text-sm font-medium text-gray-900 mb-0.5">{label}</label>
-                    <p className="text-xs text-gray-400 font-mono">{key}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {type === 'boolean' ? (
-                      <label className="relative inline-flex items-center cursor-pointer">
+        settingsLoading ? (
+          <SettingsSkeleton />
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(SETTING_LABELS).map(([key, { label, type, placeholder }]) => {
+              const currentVal = localSettings[key] ?? '';
+              return (
+                <div key={key} className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="block text-sm font-medium text-gray-900 mb-0.5">{label}</label>
+                      <p className="text-xs text-gray-400 font-mono">{key}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {type === 'boolean' ? (
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={currentVal === 'true'}
+                            onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: String(e.target.checked) }))}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600" />
+                        </label>
+                      ) : (
                         <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={currentVal === 'true'}
-                          onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: String(e.target.checked) }))}
+                          type={type === 'number' ? 'number' : 'text'}
+                          value={currentVal}
+                          placeholder={placeholder}
+                          onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+                          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-52 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600" />
-                      </label>
-                    ) : (
-                      <input
-                        type={type === 'number' ? 'number' : 'text'}
-                        value={currentVal}
-                        placeholder={placeholder}
-                        onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
-                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-52 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      icon={<Save className="h-3.5 w-3.5" />}
-                      onClick={() => updateSettingMutation.mutate({ key, value: currentVal })}
-                      loading={updateSettingMutation.isPending}
-                    >
-                      Save
-                    </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        icon={<Save className="h-3.5 w-3.5" />}
+                        onClick={() => updateSettingMutation.mutate({ key, value: currentVal })}
+                        loading={updateSettingMutation.isPending}
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* ── Social Media ──────────────────────────────────────────────────── */}
       {activeTab === 'social' && (
-        <div className="space-y-3">
-          <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 text-sm text-brand-700">
-            Add your social media profile URLs. Leave blank to hide a platform from the site footer.
-          </div>
+        settingsLoading ? (
+          <SettingsSkeleton />
+        ) : (
+          <div className="space-y-3">
+            <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 text-sm text-brand-700">
+              Add your social media profile URLs. Leave blank to hide a platform from the site footer.
+            </div>
 
-          {SOCIAL_LINKS.map(({ key, label, placeholder, icon, color }) => {
-            const currentVal = localSettings[key] ?? '';
-            return (
-              <div key={key} className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  {/* Platform badge */}
-                  <div className={`${color} text-white rounded-lg w-9 h-9 flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-xs font-bold uppercase">{icon}</span>
-                  </div>
-                  <div className="flex-shrink-0 w-24">
-                    <span className="text-sm font-medium text-gray-900">{label}</span>
-                  </div>
-                  <div className="flex-1 min-w-[200px]">
-                    <input
-                      type="url"
-                      value={currentVal}
-                      placeholder={placeholder}
-                      onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {currentVal && (
-                      <a
-                        href={currentVal}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg text-brand-500 hover:bg-brand-50"
-                        title="Preview link"
+            {SOCIAL_LINKS.map(({ key, label, placeholder, icon, color }) => {
+              const currentVal = localSettings[key] ?? '';
+              return (
+                <div key={key} className="bg-white rounded-xl border border-gray-200 p-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Platform badge */}
+                    <div className={`${color} text-white rounded-lg w-9 h-9 flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-xs font-bold uppercase">{icon}</span>
+                    </div>
+                    <div className="flex-shrink-0 w-24">
+                      <span className="text-sm font-medium text-gray-900">{label}</span>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <input
+                        type="url"
+                        value={currentVal}
+                        placeholder={placeholder}
+                        onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {currentVal && (
+                        <a
+                          href={currentVal}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg text-brand-500 hover:bg-brand-50"
+                          title="Preview link"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        icon={<Save className="h-3.5 w-3.5" />}
+                        onClick={() => updateSettingMutation.mutate({ key, value: currentVal })}
+                        loading={updateSettingMutation.isPending}
                       >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      icon={<Save className="h-3.5 w-3.5" />}
-                      onClick={() => updateSettingMutation.mutate({ key, value: currentVal })}
-                      loading={updateSettingMutation.isPending}
-                    >
-                      Save
-                    </Button>
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* ── Content Pages ─────────────────────────────────────────────────── */}
@@ -245,7 +291,7 @@ export function AdminSettings() {
             </Button>
           </div>
           {pagesLoading ? (
-            <PageSpinner />
+            <PagesSkeleton />
           ) : (
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <table className="w-full text-sm">
@@ -296,7 +342,12 @@ export function AdminSettings() {
                 </tbody>
               </table>
               {!pages?.length && (
-                <div className="text-center py-16 text-gray-400">No content pages yet.</div>
+                <EmptyState
+                  illustration="generic"
+                  title="No content pages yet"
+                  description="Create pages like About Us, Privacy Policy, and Terms of Service."
+                  className="py-8"
+                />
               )}
             </div>
           )}

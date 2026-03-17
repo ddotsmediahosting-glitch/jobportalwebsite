@@ -7,7 +7,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 
 // ── Mini sparkline SVG ──────────────────────────────────────────────────────
 function Sparkline({ data, color = '#3aa9b0' }: { data: number[]; color?: string }) {
@@ -80,6 +79,53 @@ function QuickAction({
   );
 }
 
+// ── Dashboard skeleton ───────────────────────────────────────────────────────
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 max-w-7xl">
+      {/* Stat cards grid */}
+      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="skeleton h-10 w-10 rounded-xl" />
+              <div className="skeleton h-7 w-20 rounded" />
+            </div>
+            <div className="mt-3 space-y-2">
+              <div className="skeleton h-3 rounded w-1/2" />
+              <div className="skeleton h-7 rounded w-1/3" />
+              <div className="skeleton h-3 rounded w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Panel skeletons */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <div className="skeleton h-4 rounded w-1/3" />
+              <div className="skeleton h-3 rounded w-12" />
+            </div>
+            <div className="divide-y divide-gray-50">
+              {[...Array(4)].map((_, j) => (
+                <div key={j} className="flex items-center gap-3 px-5 py-3">
+                  <div className="skeleton h-8 w-8 rounded-full" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="skeleton h-3 rounded w-2/3" />
+                    <div className="skeleton h-2.5 rounded w-1/2" />
+                  </div>
+                  <div className="skeleton h-6 rounded-full w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AdminDashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -126,7 +172,7 @@ export function AdminDashboard() {
   const jobSpark = analytics?.dailyJobs?.map((d: any) => d.count) ?? [];
   const appSpark = analytics?.dailyApplications?.map((d: any) => d.count) ?? [];
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <DashboardSkeleton />;
 
   const pendingJobs = stats?.pendingJobs ?? 0;
   const pendingVerifs = stats?.pendingVerifications ?? 0;

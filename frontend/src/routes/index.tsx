@@ -24,6 +24,7 @@ const TrendingJobs = lazy(() => import('../pages/public/TrendingJobs').then((m) 
 const ApplicationTracker = lazy(() => import('../pages/public/ApplicationTracker').then((m) => ({ default: m.ApplicationTracker })));
 
 // Seeker pages
+const SeekerDashboard = lazy(() => import('../pages/public/SeekerDashboard').then((m) => ({ default: m.SeekerDashboard })));
 const Profile = lazy(() => import('../pages/public/Profile').then((m) => ({ default: m.Profile })));
 const MyApplications = lazy(() => import('../pages/public/MyApplications').then((m) => ({ default: m.MyApplications })));
 const SavedJobs = lazy(() => import('../pages/public/SavedJobs').then((m) => ({ default: m.SavedJobs })));
@@ -114,6 +115,7 @@ export function AppRoutes() {
           <Route path="forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
           <Route path="reset-password" element={<GuestOnly><ResetPassword /></GuestOnly>} />
           <Route path="verify-email" element={<VerifyEmail />} />
+          <Route path="seeker-dashboard" element={<RequireAuth roles={['SEEKER']}><SeekerDashboard /></RequireAuth>} />
           <Route path="profile" element={<RequireAuth roles={['SEEKER']}><Profile /></RequireAuth>} />
           <Route path="my-applications" element={<RequireAuth roles={['SEEKER']}><MyApplications /></RequireAuth>} />
           <Route path="saved-jobs" element={<RequireAuth roles={['SEEKER']}><SavedJobs /></RequireAuth>} />

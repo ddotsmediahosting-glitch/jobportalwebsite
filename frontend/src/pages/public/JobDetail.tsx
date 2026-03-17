@@ -10,7 +10,6 @@ import { api, getApiError } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
 import { SEOHead, buildJobPostingSchema } from '../../components/SEOHead';
@@ -21,6 +20,55 @@ import {
 } from '@uaejobs/shared';
 
 const BASE_URL = import.meta.env.VITE_FRONTEND_URL || 'https://jobs.ddotsmedia.com';
+
+function JobDetailSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="skeleton h-4 rounded w-24 mb-6" />
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="skeleton h-14 w-14 rounded-xl flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="skeleton h-6 rounded w-3/4" />
+                <div className="skeleton h-4 rounded w-1/2" />
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-6 rounded-full w-24" />)}
+            </div>
+            <div className="space-y-2 pt-2">
+              <div className="skeleton h-4 rounded w-full" />
+              <div className="skeleton h-4 rounded w-5/6" />
+              <div className="skeleton h-4 rounded w-4/5" />
+              <div className="skeleton h-4 rounded w-full" />
+              <div className="skeleton h-4 rounded w-3/4" />
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+            <div className="skeleton h-5 rounded w-32" />
+            <div className="flex flex-wrap gap-2">
+              {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-7 rounded-full w-20" />)}
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <div className="skeleton h-10 rounded-xl w-full" />
+            <div className="skeleton h-10 rounded-xl w-full" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex justify-between py-2 border-b border-gray-50">
+                <div className="skeleton h-3.5 rounded w-24" />
+                <div className="skeleton h-3.5 rounded w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function fmt(n?: number | null) { return n ? n.toLocaleString() : null; }
 
@@ -69,7 +117,7 @@ export function JobDetail() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <JobDetailSkeleton />;
   if (error || !data) return (
     <div className="text-center py-20">
       <p className="text-gray-500">Job not found or no longer available.</p>

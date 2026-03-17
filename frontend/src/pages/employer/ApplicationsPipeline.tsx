@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { User, FileText, Star, Calendar, MessageSquare, Sparkles, Loader2, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { Select } from '../../components/ui/Select';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
 
 const APPLICATION_STATUSES = ['SUBMITTED', 'VIEWED', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED', 'REJECTED'];
@@ -45,6 +45,71 @@ const SCORE_BG: (score: number) => string = (score) => {
   if (score >= 35) return 'bg-amber-100 text-amber-800 border-amber-200';
   return 'bg-red-100 text-red-800 border-red-200';
 };
+
+/** Renders a progress bar without any JSX style= prop.
+ *  The fill width is set imperatively via a CSS custom property on the track element. */
+function ScoreBar({ score, trackClass, fillClass }: { score: number; trackClass: string; fillClass: string }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    trackRef.current?.style.setProperty('--progress', `${score}%`);
+  }, [score]);
+  return (
+    <div ref={trackRef} className={trackClass}>
+      <div className={`progress-fill ${fillClass}`} />
+    </div>
+  );
+}
+
+function ApplicationsPipelineSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th className="text-left px-4 py-3 font-medium text-gray-700">Candidate</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden sm:table-cell">Job</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden lg:table-cell">AI Score</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Applied</th>
+            <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {[...Array(5)].map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="skeleton h-8 w-8 rounded-full flex-shrink-0" />
+                  <div className="space-y-1.5">
+                    <div className="skeleton h-4 rounded w-36" />
+                    <div className="skeleton h-3 rounded w-24" />
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-3 hidden sm:table-cell">
+                <div className="skeleton h-4 rounded w-32" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="skeleton h-5 rounded-full w-20" />
+              </td>
+              <td className="px-4 py-3 hidden lg:table-cell">
+                <div className="skeleton h-4 rounded w-16" />
+              </td>
+              <td className="px-4 py-3 hidden md:table-cell">
+                <div className="skeleton h-4 rounded w-20" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex justify-end">
+                  <div className="skeleton h-7 rounded w-24" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function ApplicationsPipeline() {
   const [page, setPage] = useState(1);
@@ -121,7 +186,9 @@ export function ApplicationsPipeline() {
           {/* AI Screener */}
           <div className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2">
             <Sparkles size={15} className="text-violet-600 flex-shrink-0" />
+            <label htmlFor="screen-job-select" className="sr-only">Select job to screen</label>
             <select
+              id="screen-job-select"
               value={screenJobId}
               onChange={e => setScreenJobId(e.target.value)}
               className="text-xs border-none bg-transparent text-violet-700 font-medium focus:outline-none"
@@ -131,6 +198,7 @@ export function ApplicationsPipeline() {
             </select>
             {hasSavedResults && (
               <button
+                type="button"
                 onClick={() => { setScreenResults(savedResults!); setScreenOpen(true); }}
                 className="flex items-center gap-1 text-violet-600 text-xs px-2 py-1.5 rounded-lg hover:bg-violet-100 transition-colors font-medium"
                 title="View saved results"
@@ -139,6 +207,7 @@ export function ApplicationsPipeline() {
               </button>
             )}
             <button
+              type="button"
               onClick={() => screenJobId && screenMutation.mutate(screenJobId)}
               disabled={!screenJobId || screenMutation.isPending}
               className="flex items-center gap-1.5 bg-violet-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors font-medium"
@@ -160,9 +229,13 @@ export function ApplicationsPipeline() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <ApplicationsPipelineSkeleton />
       ) : !data?.items?.length ? (
-        <div className="text-center py-20 text-gray-400">No applications yet.</div>
+        <EmptyState
+          illustration="applications"
+          title="No applications yet"
+          description="Applications will appear here once candidates apply to your jobs."
+        />
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -216,7 +289,9 @@ export function ApplicationsPipeline() {
                       <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{new Date(app.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <label htmlFor={`status-${app.id}`} className="sr-only">Update status</label>
                           <select
+                            id={`status-${app.id}`}
                             value={app.status}
                             onChange={(e) => statusMutation.mutate({ id: app.id, status: e.target.value })}
                             className="text-xs border border-gray-200 rounded px-2 py-1"
@@ -258,9 +333,11 @@ export function ApplicationsPipeline() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${FIT_COLORS[r.fitLabel] || 'bg-gray-100 text-gray-600'}`}>{r.fitLabel}</span>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mb-3">
-                    <div className="h-1.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${r.fitScore}%` }} />
-                  </div>
+                  <ScoreBar
+                    score={r.fitScore}
+                    trackClass="w-full bg-gray-200 rounded-full h-1.5 mb-3 overflow-hidden"
+                    fillClass="h-1.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
+                  />
                   <div className="grid sm:grid-cols-2 gap-2 mb-2 text-xs">
                     {r.matchingStrengths.length > 0 && (
                       <div>
@@ -278,6 +355,7 @@ export function ApplicationsPipeline() {
                   <p className="text-xs text-gray-500 italic mb-3">{r.recommendation}</p>
                   {r.priority === 'shortlist' && (
                     <button
+                      type="button"
                       onClick={() => { statusMutation.mutate({ id: r.applicationId, status: 'SHORTLISTED' }); toast.success(`${r.candidateName} shortlisted`); }}
                       className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
                     >
@@ -329,9 +407,11 @@ export function ApplicationsPipeline() {
                       <div className="text-3xl font-bold text-gray-900">{aiResult.fitScore}<span className="text-sm text-gray-400">/100</span></div>
                     </div>
                   </div>
-                  <div className="w-full bg-violet-200 rounded-full h-2 mb-3">
-                    <div className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all" style={{ width: `${aiResult.fitScore}%` }} />
-                  </div>
+                  <ScoreBar
+                    score={aiResult.fitScore}
+                    trackClass="w-full bg-violet-200 rounded-full h-2 mb-3 overflow-hidden"
+                    fillClass="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
+                  />
                   <div className="grid sm:grid-cols-2 gap-3 mb-3 text-xs">
                     {aiResult.matchingStrengths.length > 0 && (
                       <div>
@@ -349,6 +429,7 @@ export function ApplicationsPipeline() {
                   <p className="text-xs text-gray-600 italic">{aiResult.recommendation}</p>
                   {aiResult.priority === 'shortlist' && selectedApp.status !== 'SHORTLISTED' && (
                     <button
+                      type="button"
                       onClick={() => { statusMutation.mutate({ id: selectedApp.id, status: 'SHORTLISTED' }); setSelectedApp(null); toast.success('Moved to Shortlisted'); }}
                       className="mt-3 text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
                     >
@@ -378,8 +459,9 @@ export function ApplicationsPipeline() {
               )}
 
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Notes (internal)</p>
+                <label htmlFor="internal-notes" className="text-xs font-medium text-gray-500 mb-1 block">Notes (internal)</label>
                 <textarea
+                  id="internal-notes"
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
                   rows={3}
@@ -397,6 +479,7 @@ export function ApplicationsPipeline() {
                 <div className="flex flex-wrap gap-2">
                   {APPLICATION_STATUSES.map((s) => (
                     <button
+                      type="button"
                       key={s}
                       onClick={() => statusMutation.mutate({ id: selectedApp.id, status: s })}
                       className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${

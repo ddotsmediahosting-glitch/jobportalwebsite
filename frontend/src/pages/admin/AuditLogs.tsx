@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, ShieldAlert, X, Filter } from 'lucide-react';
 import { api } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface AuditLog {
   id: string;
@@ -48,6 +48,23 @@ const ACTION_TYPE_OPTIONS = [
   { value: 'SETTINGS', label: 'Settings changes' },
   { value: 'BULK', label: 'Bulk actions' },
 ];
+
+function AuditLogsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function AdminAuditLogs() {
   const [page, setPage] = useState(1);
@@ -107,7 +124,7 @@ export function AdminAuditLogs() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <AuditLogsSkeleton />
       ) : (
         <>
           {/* Timeline view */}
@@ -162,10 +179,12 @@ export function AdminAuditLogs() {
                 </tbody>
               </table>
               {!data?.items?.length && (
-                <div className="text-center py-16 text-gray-400">
-                  <ShieldAlert className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No audit logs found.</p>
-                </div>
+                <EmptyState
+                  illustration="generic"
+                  title="No audit logs"
+                  description="System activity will be recorded here."
+                  className="py-8"
+                />
               )}
             </div>
           </div>

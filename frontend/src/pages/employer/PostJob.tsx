@@ -14,7 +14,26 @@ import { createJobSchema, CreateJobInput, EMIRATES_LABELS, WORK_MODE_LABELS, EMP
 import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
+function PostJobSkeleton() {
+  return (
+    <div className="max-w-3xl space-y-6">
+      <div className="skeleton h-7 rounded w-48" />
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+          <div className="skeleton h-5 rounded w-40" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[...Array(4)].map((__, j) => (
+              <div key={j} className="space-y-1.5">
+                <div className="skeleton h-3.5 rounded w-24" />
+                <div className="skeleton h-10 rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const emirateOptions = Object.entries(EMIRATES_LABELS).map(([value, label]) => ({ value, label }));
 const workModeOptions = Object.entries(WORK_MODE_LABELS).map(([value, label]) => ({ value, label }));
@@ -355,7 +374,7 @@ export function PostJob() {
       : [{ value: c.id, label: c.name }]
   ) : [];
 
-  if (isEditing && jobLoading) return <PageSpinner />;
+  if (isEditing && jobLoading) return <PostJobSkeleton />;
 
   return (
     <div className="max-w-3xl">

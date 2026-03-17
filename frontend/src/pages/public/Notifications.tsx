@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  Bell, BellOff, Check, CheckCheck, Trash2,
+  Bell, Check, CheckCheck, Trash2,
   Briefcase, User, FileText, AlertCircle, Info, Star
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/Pagination';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface Notification {
   id: string;
@@ -50,6 +50,23 @@ function timeAgo(dateStr: string): string {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
+}
+
+function NotificationsSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-4">
+          <div className="skeleton w-9 h-9 rounded-full flex-shrink-0" />
+          <div className="flex-1 space-y-2 pt-1">
+            <div className="skeleton h-4 rounded w-3/4" />
+            <div className="skeleton h-3 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/4 mt-1" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function NotificationItem({
@@ -174,12 +191,14 @@ export function NotificationsPage() {
 
         {/* Content */}
         {isLoading ? (
-          <PageSpinner />
+          <NotificationsSkeleton />
         ) : notifications.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
-            <BellOff className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-1">No notifications</h3>
-            <p className="text-sm text-gray-500">You're all caught up! We'll notify you about job matches, application updates, and more.</p>
+          <div className="bg-white rounded-2xl border border-gray-200">
+            <EmptyState
+              illustration="messages"
+              title="No notifications yet"
+              description="You'll see job alerts and application updates here."
+            />
           </div>
         ) : (
           <>

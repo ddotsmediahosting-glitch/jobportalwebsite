@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Bell, Plus, Trash2, BellOff, CheckCircle, Search, MapPin, Briefcase } from 'lucide-react';
+import { Bell, Plus, Trash2, CheckCircle, Search, MapPin, Briefcase } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Modal } from '../../components/ui/Modal';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const EMIRATE_OPTIONS = [
   { value: '', label: 'Any Emirate' },
@@ -58,6 +58,27 @@ interface JobAlert {
   isActive: boolean;
   lastSentAt?: string;
   createdAt: string;
+}
+
+function JobAlertsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="skeleton h-4 w-4 rounded" />
+            <div className="skeleton h-4 rounded w-1/3" />
+            <div className="skeleton h-5 rounded-full w-14" />
+          </div>
+          <div className="flex gap-2">
+            <div className="skeleton h-6 rounded-full w-24" />
+            <div className="skeleton h-6 rounded-full w-20" />
+          </div>
+          <div className="skeleton h-3 rounded w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function JobAlerts() {
@@ -132,13 +153,14 @@ export function JobAlerts() {
 
         {/* Alerts list */}
         {isLoading ? (
-          <PageSpinner />
+          <JobAlertsSkeleton />
         ) : alerts.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
-            <BellOff className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-1">No alerts yet</h3>
-            <p className="text-sm text-gray-500 mb-4">Create your first job alert to never miss an opportunity.</p>
-            <Button onClick={() => setShowModal(true)} icon={<Plus size={16} />}>Create Alert</Button>
+          <div className="bg-white rounded-2xl border border-gray-200">
+            <EmptyState
+              illustration="generic"
+              title="No job alerts set up"
+              description="Create alerts to get notified when matching jobs are posted."
+            />
           </div>
         ) : (
           <div className="space-y-3">
