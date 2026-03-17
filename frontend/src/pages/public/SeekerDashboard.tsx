@@ -123,7 +123,6 @@ export function SeekerDashboard() {
 
   const firstName =
     profile?.firstName ||
-    user?.firstName ||
     user?.email?.split('@')[0] ||
     'there';
 

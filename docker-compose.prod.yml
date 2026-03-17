@@ -33,7 +33,6 @@ services:
       dockerfile: backend/Dockerfile
     restart: always
     env_file: .env.production
-    # API is NOT exposed externally — nginx in web container proxies /api/ to it
     expose:
       - "4000"
     depends_on:
@@ -49,21 +48,11 @@ services:
       timeout: 10s
       retries: 3
 
-  rendertron:
-    image: rendertron/rendertron:latest
-    restart: always
-    expose:
-      - "3000"
-    environment:
-      TIMEOUT: "10000"
-    # No external port — only nginx reaches it
-
   web:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        # Empty = same-origin; nginx proxies /api/ to the api container
         VITE_API_URL: ""
         VITE_FRONTEND_URL: "https://ddotsmediajobs.com"
     restart: always
@@ -72,8 +61,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-      rendertron:
-        condition: service_started
 
 volumes:
   mariadb_data:
