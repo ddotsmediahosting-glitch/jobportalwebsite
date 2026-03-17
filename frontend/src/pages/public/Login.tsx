@@ -175,12 +175,6 @@ export function Login() {
             </div>
           </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">
-              Admin?{' '}
-              <Link to="/admin" className="text-brand-600 hover:text-brand-700">Go to Admin Panel →</Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
