@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { getApiError } from '../../lib/api';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { SocialLoginButtons } from '../../components/SocialLoginButtons';
+import { SocialLoginButtons, useSocialProviders } from '../../components/SocialLoginButtons';
 
 export function Login() {
   const { login } = useAuth();
@@ -17,6 +17,7 @@ export function Login() {
   const location = useLocation();
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { any: hasSocialProviders } = useSocialProviders();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
@@ -111,16 +112,19 @@ export function Login() {
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-soft p-7">
             {/* Social login */}
-            <SocialLoginButtons role="SEEKER" label="Sign in" />
-
-            <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-400">or sign in with email</span>
-              </div>
-            </div>
+            {hasSocialProviders && (
+              <>
+                <SocialLoginButtons role="SEEKER" label="Sign in" />
+                <div className="relative my-5">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-3 text-gray-400">or sign in with email</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
               <Input
