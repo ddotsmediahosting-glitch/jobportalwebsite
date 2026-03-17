@@ -1,11 +1,95 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Briefcase, Users, Eye, TrendingUp, Plus, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import {
+  Briefcase, Users, Eye, TrendingUp, Plus, CheckCircle, AlertTriangle,
+  ArrowUpRight, FileText, BarChart3,
+} from 'lucide-react';
 import { api } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { JobStatusBadge, VerificationBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
+
+const STAT_CONFIG = [
+  {
+    key: 'totalJobs',
+    label: 'Total Jobs',
+    icon: Briefcase,
+    bg: 'bg-blue-50',
+    iconColor: 'text-blue-600',
+    barColor: 'bg-blue-500',
+    trend: null,
+  },
+  {
+    key: 'publishedJobs',
+    label: 'Published',
+    icon: CheckCircle,
+    bg: 'bg-emerald-50',
+    iconColor: 'text-emerald-600',
+    barColor: 'bg-emerald-500',
+    trend: null,
+  },
+  {
+    key: 'totalApplications',
+    label: 'Applications',
+    icon: Users,
+    bg: 'bg-violet-50',
+    iconColor: 'text-violet-600',
+    barColor: 'bg-violet-500',
+    trend: null,
+  },
+  {
+    key: 'totalViews',
+    label: 'Total Views',
+    icon: Eye,
+    bg: 'bg-orange-50',
+    iconColor: 'text-orange-600',
+    barColor: 'bg-orange-500',
+    trend: null,
+  },
+] as const;
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="skeleton h-7 rounded w-48" />
+          <div className="skeleton h-4 rounded w-32" />
+        </div>
+        <div className="skeleton h-9 rounded-xl w-28" />
+      </div>
+      {/* Stats */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <div className="skeleton h-9 w-9 rounded-xl" />
+            <div className="skeleton h-8 rounded w-16" />
+            <div className="skeleton h-3 rounded w-24" />
+          </div>
+        ))}
+      </div>
+      {/* Panels */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <div className="skeleton h-5 rounded w-32" />
+            {[...Array(4)].map((_, j) => (
+              <div key={j} className="flex justify-between py-2 border-b border-gray-50">
+                <div className="space-y-1.5 flex-1">
+                  <div className="skeleton h-3.5 rounded w-2/3" />
+                  <div className="skeleton h-3 rounded w-1/3" />
+                </div>
+                <div className="skeleton h-5 rounded-full w-20" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function EmployerDashboard() {
   const { data: employer, isLoading: empLoading } = useQuery({
@@ -28,17 +112,23 @@ export function EmployerDashboard() {
     queryFn: () => api.get('/employer/applications?limit=5').then((r) => r.data.data),
   });
 
-  if (empLoading || analyticsLoading) return <PageSpinner />;
+  if (empLoading || analyticsLoading) return <DashboardSkeleton />;
 
   const emp = employer?.employer;
   const sub = emp?.subscription;
+  const usagePct = sub ? Math.min(100, (sub.jobPostsUsed / sub.jobPostsLimit) * 100) : 0;
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (barRef.current) barRef.current.style.width = `${usagePct}%`;
+  }, [usagePct]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{emp?.companyName || 'Dashboard'}</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1.5">
             <VerificationBadge status={emp?.verificationStatus || 'PENDING'} />
           </div>
         </div>
@@ -47,120 +137,179 @@ export function EmployerDashboard() {
         </Link>
       </div>
 
+      {/* Verification banner */}
       {emp?.verificationStatus !== 'APPROVED' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-yellow-800">Company verification pending</p>
-            <p className="text-xs text-yellow-600 mt-0.5">
-              Upload your trade license and our team will verify your company within 1-2 business days.
-              <Link to="/employer/profile" className="ml-1 underline">Complete profile →</Link>
+            <p className="text-sm font-semibold text-amber-800">Company verification pending</p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              Upload your trade license and our team will verify your company within 1–2 business days.{' '}
+              <Link to="/employer/profile" className="underline font-medium">Complete profile →</Link>
             </p>
           </div>
         </div>
       )}
 
-      {/* Stats */}
+      {/* Stat cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Jobs', value: analytics?.totalJobs || 0, icon: Briefcase, color: 'blue' },
-          { label: 'Published', value: analytics?.publishedJobs || 0, icon: CheckCircle, color: 'green' },
-          { label: 'Applications', value: analytics?.totalApplications || 0, icon: Users, color: 'purple' },
-          { label: 'Total Views', value: analytics?.totalViews || 0, icon: Eye, color: 'orange' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className={`inline-flex p-2 rounded-lg mb-3 ${
-              color === 'blue' ? 'bg-blue-50 text-blue-600' :
-              color === 'green' ? 'bg-green-50 text-green-600' :
-              color === 'purple' ? 'bg-purple-50 text-purple-600' :
-              'bg-orange-50 text-orange-600'
-            }`}>
-              <Icon className="h-5 w-5" />
+        {STAT_CONFIG.map(({ key, label, icon: Icon, bg, iconColor }) => {
+          const value: number = analytics?.[key] || 0;
+          return (
+            <div key={key} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow duration-200">
+              <div className={`inline-flex p-2.5 rounded-xl mb-4 ${bg}`}>
+                <Icon className={`h-5 w-5 ${iconColor}`} />
+              </div>
+              <div className="text-3xl font-extrabold text-gray-900 tabular-nums">
+                {value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-500 mt-0.5">{label}</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">{label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Subscription info */}
+      {/* Subscription usage bar */}
       {sub && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-gray-900">{sub.plan} Plan</h3>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {sub.jobPostsUsed}/{sub.jobPostsLimit} job posts used this period
-              </p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-brand-500" />
+              <span className="font-semibold text-gray-900 text-sm">{sub.plan} Plan</span>
             </div>
-            <Link to="/employer/billing" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
-              {sub.plan === 'FREE' ? 'Upgrade' : 'Manage Plan'} →
+            <Link to="/employer/billing" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+              {sub.plan === 'FREE' ? 'Upgrade plan' : 'Manage'} →
             </Link>
           </div>
-          <div className="mt-3 bg-gray-100 rounded-full h-2">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span>{sub.jobPostsUsed} of {sub.jobPostsLimit} job posts used</span>
+            <span className={usagePct >= 80 ? 'text-red-500 font-semibold' : 'text-gray-400'}>
+              {Math.round(usagePct)}%
+            </span>
+          </div>
+          <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
             <div
-              className="bg-brand-500 rounded-full h-2 transition-all"
-              style={{ width: `${Math.min(100, (sub.jobPostsUsed / sub.jobPostsLimit) * 100)}%` }}
+              ref={barRef}
+              className={`h-2.5 rounded-full transition-all duration-500 ${usagePct >= 80 ? 'bg-red-500' : 'bg-brand-500'}`}
             />
           </div>
         </div>
       )}
 
+      {/* Recent jobs + applications */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent jobs */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Recent Jobs</h3>
-            <Link to="/employer/jobs" className="text-xs text-brand-600">View all →</Link>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-gray-400" />
+              <h3 className="font-semibold text-gray-900 text-sm">Recent Jobs</h3>
+            </div>
+            <Link to="/employer/jobs" className="text-xs text-brand-600 font-medium hover:text-brand-700 transition-colors">
+              View all →
+            </Link>
           </div>
           {!recentJobs?.items?.length ? (
-            <div className="text-center py-8 text-gray-400 text-sm">
-              No jobs yet.
-              <Link to="/employer/jobs/new" className="text-brand-600 ml-1">Post your first job →</Link>
-            </div>
+            <EmptyState
+              illustration="jobs"
+              title="No jobs posted yet"
+              description="Post your first job and start receiving applications."
+              action={{ label: 'Post a Job', to: '/employer/jobs/new' }}
+              className="py-8"
+            />
           ) : (
-            <div className="space-y-3">
-              {recentJobs.items.map((job: { id: string; title: string; status: string; _count?: { applications: number }; publishedAt?: string }) => (
-                <div key={job.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{job.title}</p>
-                    <p className="text-xs text-gray-500">{job._count?.applications || 0} applications</p>
+            <div className="space-y-1">
+              {recentJobs.items.map((job: {
+                id: string; title: string; status: string; slug: string;
+                _count?: { applications: number }; publishedAt?: string
+              }) => (
+                <Link
+                  key={job.id}
+                  to={`/employer/jobs/${job.id}`}
+                  className="flex items-center justify-between py-2.5 px-2 rounded-xl hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 group-hover:text-brand-600 transition-colors truncate">{job.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {job._count?.applications || 0} application{job._count?.applications !== 1 ? 's' : ''}
+                    </p>
                   </div>
-                  <JobStatusBadge status={job.status} />
-                </div>
+                  <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                    <JobStatusBadge status={job.status} />
+                    <ArrowUpRight size={12} className="text-gray-300 group-hover:text-brand-400 transition-colors" />
+                  </div>
+                </Link>
               ))}
             </div>
           )}
         </div>
 
         {/* Recent applications */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Recent Applications</h3>
-            <Link to="/employer/applications" className="text-xs text-brand-600">View all →</Link>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-gray-400" />
+              <h3 className="font-semibold text-gray-900 text-sm">Recent Applications</h3>
+            </div>
+            <Link to="/employer/applications" className="text-xs text-brand-600 font-medium hover:text-brand-700 transition-colors">
+              View all →
+            </Link>
           </div>
           {!recentApplications?.items?.length ? (
-            <div className="text-center py-8 text-gray-400 text-sm">No applications yet.</div>
+            <EmptyState
+              illustration="applications"
+              title="No applications yet"
+              description="Applications will appear here once candidates apply to your jobs."
+              className="py-8"
+            />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-1">
               {recentApplications.items.map((app: {
                 id: string; status: string; createdAt: string;
                 user: { email: string; seekerProfile?: { firstName: string; lastName: string } };
                 job: { title: string };
-              }) => (
-                <div key={app.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {app.user.seekerProfile ? `${app.user.seekerProfile.firstName} ${app.user.seekerProfile.lastName}` : app.user.email}
-                    </p>
-                    <p className="text-xs text-gray-500">{app.job.title}</p>
+              }) => {
+                const name = app.user.seekerProfile
+                  ? `${app.user.seekerProfile.firstName} ${app.user.seekerProfile.lastName}`
+                  : app.user.email;
+                return (
+                  <div key={app.id} className="flex items-center justify-between py-2.5 px-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{app.job.title}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 ml-3 flex-shrink-0">
+                      {new Date(app.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">{new Date(app.createdAt).toLocaleDateString()}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid sm:grid-cols-3 gap-3">
+        {[
+          { to: '/employer/jobs/new', icon: Plus, label: 'Post a Job', desc: 'Attract top talent', color: 'text-brand-600 bg-brand-50' },
+          { to: '/employer/candidates', icon: Users, label: 'Browse Candidates', desc: 'Find the right fit', color: 'text-violet-600 bg-violet-50' },
+          { to: '/employer/analytics', icon: TrendingUp, label: 'View Analytics', desc: 'Track performance', color: 'text-emerald-600 bg-emerald-50' },
+        ].map(({ to, icon: Icon, label, desc, color }) => (
+          <Link
+            key={to}
+            to={to}
+            className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 hover:shadow-md hover:border-brand-100 transition-all duration-200 group"
+          >
+            <div className={`p-2.5 rounded-xl ${color}`}>
+              <Icon className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">{label}</p>
+              <p className="text-xs text-gray-400">{desc}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

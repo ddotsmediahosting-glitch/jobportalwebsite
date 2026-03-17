@@ -4,8 +4,28 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
 import { Pagination } from '../../components/Pagination';
-import { PageSpinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
+
+function ApplicationsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+          <div className="skeleton h-12 w-12 rounded-lg flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-3/5" />
+            <div className="skeleton h-3 rounded w-2/5" />
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="skeleton h-5 rounded-full w-20" />
+            <div className="skeleton h-3 rounded w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function Applications() {
   const [page, setPage] = useState(1);
@@ -20,12 +40,14 @@ export function Applications() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">My Applications</h1>
 
       {isLoading ? (
-        <PageSpinner />
+        <ApplicationsSkeleton />
       ) : !data?.items?.length ? (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg">No applications yet</p>
-          <Link to="/jobs" className="text-brand-600 text-sm mt-2 inline-block">Browse jobs →</Link>
-        </div>
+        <EmptyState
+          illustration="applications"
+          title="No applications yet"
+          description="Start applying to jobs that match your skills and experience."
+          action={{ label: 'Browse Jobs', to: '/jobs' }}
+        />
       ) : (
         <>
           <div className="space-y-3">
@@ -35,9 +57,9 @@ export function Applications() {
             }) => (
               <div key={app.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
                 {app.job.employer.logoUrl ? (
-                  <img src={app.job.employer.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain border border-gray-100" />
+                  <img src={app.job.employer.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
                 ) : (
-                  <div className="h-12 w-12 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold">
+                  <div className="h-12 w-12 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold flex-shrink-0">
                     {app.job.employer.companyName[0]}
                   </div>
                 )}

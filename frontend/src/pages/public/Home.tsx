@@ -9,6 +9,7 @@ import {
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
 import { RecommendedJobs } from '../../components/RecommendedJobs';
+import { CompanyTicker } from '../../components/CompanyTicker';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -183,6 +184,8 @@ export function Home() {
                 <select
                   value={searchEmirate}
                   onChange={(e) => setSearchEmirate(e.target.value)}
+                  title="Select emirate"
+                  aria-label="Select emirate"
                   className="text-sm text-gray-600 focus:outline-none bg-transparent cursor-pointer py-1"
                 >
                   <option value="">All Emirates</option>
@@ -236,6 +239,9 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── Company Ticker ──────────────────────────────────────────────── */}
+      <CompanyTicker />
 
       {/* ─── Browse by Category ──────────────────────────────────────────── */}
       {featuredCategories?.length > 0 && (

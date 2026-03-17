@@ -144,3 +144,16 @@
 .card-premium {
   @apply bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
 }
+
+/* ── Company ticker ─────────────────────────────────────────────── */
+/* stylelint-disable-next-line plugin/no-low-performance-animation-properties */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 35s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}

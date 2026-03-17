@@ -175,6 +175,23 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
           Apply Now <ArrowUpRight size={11} />
         </Link>
       </div>
+
+      {/* Hover preview panel — desktop only */}
+      {'description' in job && (job as { description?: string }).description && (
+        <div className="hidden md:block absolute left-0 right-0 top-full mt-1 z-20 pointer-events-none">
+          <div className="opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200 bg-white border border-brand-100 rounded-2xl shadow-xl p-4 pointer-events-auto">
+            <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">
+              {(job as { description?: string }).description}
+            </p>
+            <Link
+              to={`/jobs/${job.slug}`}
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              View full details <ArrowUpRight size={11} />
+            </Link>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
