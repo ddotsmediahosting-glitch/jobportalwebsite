@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, DollarSign, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap } from 'lucide-react';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, JobListItem } from '@uaejobs/shared';
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'AED', negotiable = false) {
@@ -52,7 +52,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
   const empTypeStyle = EMP_TYPE_STYLE[job.employmentType] ?? 'bg-gray-50 text-gray-600';
 
   return (
-    <article className="group bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-100 transition-all duration-200 relative flex flex-col shadow-card">
+    <article className={`group bg-white border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-100 transition-all duration-200 relative flex flex-col shadow-card ${job.isFeatured ? 'border-gold-300/40' : 'border-gray-100'}`}>
       {/* Top badges + save */}
       <div className="flex items-start justify-between gap-2 mb-4">
         <div className="flex gap-1.5 flex-wrap">
@@ -133,6 +133,12 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
             {salary}
           </span>
         )}
+        {job.experienceMin != null && (
+          <span className="flex items-center gap-1">
+            <GraduationCap size={11} className="text-gray-400" />
+            {job.experienceMin}{job.experienceMax ? `–${job.experienceMax}` : '+'} yrs
+          </span>
+        )}
       </div>
 
       {/* Skills */}
@@ -164,9 +170,9 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
         </div>
         <Link
           to={`/jobs/${job.slug}`}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 group-hover:bg-brand-50 px-2.5 py-1.5 rounded-lg transition-all duration-150"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 shadow-sm"
         >
-          Apply <ArrowUpRight size={12} />
+          Apply Now <ArrowUpRight size={11} />
         </Link>
       </div>
     </article>

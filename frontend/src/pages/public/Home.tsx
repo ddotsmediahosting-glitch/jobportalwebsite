@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Search, MapPin, TrendingUp, Users, Briefcase, ArrowRight, Star,
   Zap, Bot, DollarSign, Mic, ChevronRight, CheckCircle,
-  Code2, HeartPulse, Building, BarChart3, ShoppingBag, Plane,
+  Code2, HeartPulse, Building, BarChart3, ShoppingBag, Plane, Building2,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
@@ -164,7 +164,7 @@ export function Home() {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-brand-100/90 mb-10 max-w-xl mx-auto leading-relaxed">
-              Thousands of opportunities across Abu Dhabi, Dubai, Sharjah and all seven Emirates
+              Connect with top employers across Abu Dhabi, Dubai, Sharjah and all seven Emirates
             </p>
 
             {/* Search box */}
@@ -212,6 +212,8 @@ export function Home() {
                 </Link>
               ))}
             </div>
+            {/* Trusted note */}
+            <p className="text-xs text-brand-200/50 mt-6">Trusted by professionals from Emirates NBD, ADNOC, Dubai Holdings, and 2,000+ companies</p>
           </div>
         </div>
 
@@ -224,7 +226,7 @@ export function Home() {
               { icon: TrendingUp, stat: '2,000+', label: 'Companies', color: 'text-green-300' },
             ].map(({ icon: Icon, stat, label, color }) => (
               <div key={label} className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                <Icon className={`h-4 w-4 ${color} hidden sm:block`} />
+                <Icon className={`h-4 w-4 ${color}`} />
                 <div>
                   <div className={`text-xl sm:text-2xl font-extrabold text-white`}>{stat}</div>
                   <div className="text-xs text-brand-200/70">{label}</div>
@@ -235,40 +237,14 @@ export function Home() {
         </div>
       </section>
 
-      {/* ─── AI Tools Promo ──────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-900 py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { icon: Zap, label: 'ATS CV Analyzer', desc: 'Score your CV instantly', to: '/cv-analyzer', color: 'from-blue-500 to-indigo-500' },
-              { icon: Bot, label: 'Career Advisor AI', desc: 'Get personalized career guidance', to: '/career-advisor', color: 'from-violet-500 to-purple-500' },
-              { icon: DollarSign, label: 'Salary Insights', desc: 'Know your market worth', to: '/salary-insights', color: 'from-emerald-500 to-teal-500' },
-              { icon: Mic, label: 'Interview Prep', desc: 'Practice with AI coaching', to: '/interview-prep', color: 'from-pink-500 to-rose-500' },
-            ].map(({ icon: Icon, label, desc, to, color }) => (
-              <Link
-                key={to}
-                to={to}
-                className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-4 transition-all duration-200"
-              >
-                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon size={18} className="text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{label}</p>
-                  <p className="text-xs text-purple-300 truncate">{desc}</p>
-                </div>
-                <ChevronRight size={14} className="text-white/30 group-hover:text-white/60 ml-auto flex-shrink-0 transition-colors" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── Browse by Category ──────────────────────────────────────────── */}
       {featuredCategories?.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex items-center justify-between mb-8">
             <div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full mb-2">
+                <Briefcase size={11} /> Explore Opportunities
+              </span>
               <h2 className="text-2xl font-bold text-gray-900">Browse by Category</h2>
               <p className="text-sm text-gray-500 mt-1">Explore opportunities across every sector</p>
             </div>
@@ -370,9 +346,10 @@ export function Home() {
         </div>
       </section>
 
-      {/* ─── Emiratization Jobs ─────────────────────────────────────────── */}
-      <EmiratizationSection />
-      <RecommendedJobs />
+      {/* Section separator */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border-t border-gray-100" />
+      </div>
 
       {/* ─── How it works ───────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-gray-900 via-brand-950 to-gray-900 py-20 px-4 mt-10">
@@ -426,6 +403,75 @@ export function Home() {
               className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-colors shadow-lg"
             >
               Get Started for Free <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Emiratization Jobs ─────────────────────────────────────────── */}
+      <EmiratizationSection />
+      <RecommendedJobs />
+
+      {/* ─── AI Tools Promo ──────────────────────────────────────────────── */}
+      <section className="bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-900 py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { icon: Zap, label: 'ATS CV Analyzer', desc: 'Score your CV instantly', to: '/cv-analyzer', color: 'from-blue-500 to-indigo-500' },
+              { icon: Bot, label: 'Career Advisor AI', desc: 'Get personalized career guidance', to: '/career-advisor', color: 'from-violet-500 to-purple-500' },
+              { icon: DollarSign, label: 'Salary Insights', desc: 'Know your market worth', to: '/salary-insights', color: 'from-emerald-500 to-teal-500' },
+              { icon: Mic, label: 'Interview Prep', desc: 'Practice with AI coaching', to: '/interview-prep', color: 'from-pink-500 to-rose-500' },
+            ].map(({ icon: Icon, label, desc, to, color }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-4 transition-all duration-200"
+              >
+                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
+                  <Icon size={18} className="text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">{label}</p>
+                  <p className="text-xs text-purple-300 truncate">{desc}</p>
+                </div>
+                <ChevronRight size={14} className="text-white/30 group-hover:text-white/60 ml-auto flex-shrink-0 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Employers CTA ───────────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 rounded-3xl p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-8 shadow-xl overflow-hidden relative">
+          {/* Background decoration */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -right-20 -top-20 w-80 h-80 bg-white/5 rounded-full" />
+            <div className="absolute -left-10 -bottom-10 w-60 h-60 bg-white/5 rounded-full" />
+          </div>
+          <div className="relative text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 bg-white/15 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
+              <Building2 size={12} /> For Employers
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+              Hire the Best Talent in the UAE
+            </h2>
+            <p className="text-brand-100/80 text-sm max-w-md">
+              Post jobs, screen candidates with AI, and connect with thousands of qualified professionals across all seven Emirates.
+            </p>
+          </div>
+          <div className="relative flex flex-col sm:flex-row gap-3 flex-shrink-0">
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-colors shadow-lg text-sm whitespace-nowrap"
+            >
+              Post a Job Free <ArrowRight size={14} />
+            </Link>
+            <Link
+              to="/companies"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all text-sm whitespace-nowrap"
+            >
+              Learn More
             </Link>
           </div>
         </div>

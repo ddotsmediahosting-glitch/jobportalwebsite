@@ -129,3 +129,18 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* ── Section eyebrow label ─────────────────────────────────────── */
+.eyebrow {
+  @apply text-xs font-semibold text-brand-600 uppercase tracking-wider;
+}
+
+/* ── Improved focus ring ────────────────────────────────────────── */
+.focus-brand {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2;
+}
+
+/* ── Premium card ───────────────────────────────────────────────── */
+.card-premium {
+  @apply bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
+}
