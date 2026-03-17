@@ -1,15 +1,33 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Calendar, Clock, Eye, Tag, ChevronRight } from 'lucide-react';
+import { Search, Calendar, Clock, Eye } from 'lucide-react';
 import { api } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface BlogPost {
   id: string; slug: string; title: string; excerpt?: string;
   coverImage?: string; author: string; category: string; tags: string[];
   readTime?: number; viewCount: number; publishedAt?: string; createdAt: string;
+}
+
+function BlogSkeleton() {
+  return (
+    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden space-y-3">
+          <div className="skeleton w-full h-44" />
+          <div className="p-4 space-y-2">
+            <div className="skeleton h-4 rounded w-1/3" />
+            <div className="skeleton h-4 rounded w-full" />
+            <div className="skeleton h-3 rounded w-3/4" />
+            <div className="skeleton h-3 rounded w-1/2 mt-2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function Blog() {
@@ -51,7 +69,7 @@ export function Blog() {
             <p className="text-sm font-semibold text-gray-700 mb-3">Search Articles</p>
             <form onSubmit={e => { e.preventDefault(); setSearch(searchInput); setPage(1); }} className="flex gap-2">
               <input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Search..." className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" />
-              <button type="submit" className="p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"><Search size={15} /></button>
+              <button type="submit" title="Search articles" aria-label="Search articles" className="p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"><Search size={15} /></button>
             </form>
           </div>
 
@@ -60,12 +78,12 @@ export function Blog() {
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <p className="text-sm font-semibold text-gray-700 mb-3">Categories</p>
               <div className="space-y-1">
-                <button onClick={() => { setActiveCategory(''); setPage(1); }}
+                <button type="button" onClick={() => { setActiveCategory(''); setPage(1); }}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${!activeCategory ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}>
                   All Articles <span className="text-xs text-gray-400">{data?.total || ''}</span>
                 </button>
                 {categories.map((c: { name: string; count: number }) => (
-                  <button key={c.name} onClick={() => { setActiveCategory(c.name); setPage(1); }}
+                  <button type="button" key={c.name} onClick={() => { setActiveCategory(c.name); setPage(1); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${activeCategory === c.name ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}>
                     {c.name} <span className="text-xs text-gray-400">{c.count}</span>
                   </button>
@@ -78,14 +96,14 @@ export function Blog() {
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {isLoading ? (
-            <PageSpinner />
+            <BlogSkeleton />
           ) : posts.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-              <p className="text-gray-400 font-medium">No articles found.</p>
-              {(search || activeCategory) && (
-                <button onClick={() => { setSearch(''); setSearchInput(''); setActiveCategory(''); setPage(1); }}
-                  className="mt-3 text-sm text-brand-600 hover:underline">Clear filters</button>
-              )}
+            <div className="bg-white rounded-2xl border border-gray-200">
+              <EmptyState
+                illustration="generic"
+                title="No articles yet"
+                description="Check back soon for career tips and industry insights."
+              />
             </div>
           ) : (
             <>

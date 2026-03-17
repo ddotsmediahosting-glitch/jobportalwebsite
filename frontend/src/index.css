@@ -130,6 +130,11 @@
   animation: shimmer 1.5s infinite;
 }
 
+/* ── Score progress bar ─────────────────────────────────────────── */
+.progress-fill {
+  width: var(--progress, 0%);
+}
+
 /* ── Section eyebrow label ─────────────────────────────────────── */
 .eyebrow {
   @apply text-xs font-semibold text-brand-600 uppercase tracking-wider;

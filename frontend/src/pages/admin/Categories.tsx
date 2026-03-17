@@ -6,11 +6,11 @@ import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, ChevronRight, ChevronDown, FolderOpen, Folder, Tag } from 'lucide-react';
 import { categorySchema, CategoryInput } from '@uaejobs/shared';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface Category {
   id: string;
@@ -81,6 +81,23 @@ function CategoryRow({ cat, depth, onEdit, onDelete, onAddChild }: {
         <CategoryRow key={child.id} cat={child} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} />
       ))}
     </>
+  );
+}
+
+function CategoriesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -178,8 +195,6 @@ export function AdminCategories() {
     ...(categories?.map((c: Category) => ({ value: c.id, label: c.name })) ?? []),
   ];
 
-  if (isLoading) return <PageSpinner />;
-
   const totalCategories = categories?.length ?? 0;
   const totalSubs = categories?.reduce((sum: number, c: Category) => sum + (c.children?.length ?? 0), 0) ?? 0;
 
@@ -199,31 +214,31 @@ export function AdminCategories() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-700">Name</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Stats</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {categories?.map((cat: Category) => (
-              <CategoryRow key={cat.id} cat={cat} depth={0} onEdit={openEdit}
-                onDelete={(c) => { if (confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c.id); }}
-                onAddChild={openCreateSubCategory} />
-            ))}
-          </tbody>
-        </table>
-        {!categories?.length && (
-          <div className="text-center py-16 text-gray-400">
-            <FolderOpen className="h-10 w-10 mx-auto mb-3 text-gray-200" />
-            <p className="font-medium">No categories yet</p>
-            <p className="text-sm mt-1">Click "Add Category" to create your first one.</p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <CategoriesSkeleton />
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Name</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Stats</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {categories?.map((cat: Category) => (
+                <CategoryRow key={cat.id} cat={cat} depth={0} onEdit={openEdit}
+                  onDelete={(c) => { if (confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c.id); }}
+                  onAddChild={openCreateSubCategory} />
+              ))}
+            </tbody>
+          </table>
+          {!categories?.length && (
+            <EmptyState illustration="generic" title="No categories yet" description="Add job categories to help employers and seekers." className="py-8" />
+          )}
+        </div>
+      )}
 
       <Modal
         isOpen={modalOpen}

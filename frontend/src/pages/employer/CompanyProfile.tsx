@@ -9,7 +9,6 @@ import { api, getApiError } from '../../lib/api';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
 
 const emirateOptions = Object.entries(EMIRATES_LABELS).map(([value, label]) => ({ value, label }));
 
@@ -27,6 +26,61 @@ const INDUSTRIES = [
   'Retail & E-commerce', 'Hospitality & Tourism', 'Education', 'Oil & Gas',
   'Logistics & Supply Chain', 'Media & Marketing', 'Legal', 'Government', 'Other',
 ];
+
+function CompanyProfileSkeleton() {
+  return (
+    <div className="max-w-3xl space-y-6">
+      {/* Page title */}
+      <div className="skeleton h-7 rounded w-44" />
+
+      {/* Cover / logo card */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="skeleton h-36 w-full rounded-none" />
+        <div className="px-6 pb-6 pt-0">
+          <div className="flex items-end gap-4 -mt-8">
+            <div className="skeleton h-20 w-20 rounded-xl flex-shrink-0" />
+            <div className="pb-1 space-y-2">
+              <div className="skeleton h-5 rounded w-40" />
+              <div className="skeleton h-4 rounded-full w-20" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Form fields card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="skeleton h-5 rounded w-44" />
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className={`space-y-1.5 ${i === 6 || i === 7 ? 'sm:col-span-2' : ''}`}>
+              <div className="skeleton h-3.5 rounded w-28" />
+              <div className="skeleton h-10 rounded-lg w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-1.5 mt-4">
+          <div className="skeleton h-3.5 rounded w-40" />
+          <div className="skeleton h-28 rounded-lg w-full" />
+        </div>
+      </div>
+
+      {/* Save button */}
+      <div className="skeleton h-10 rounded-lg w-32" />
+
+      {/* Trade license card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1.5">
+            <div className="skeleton h-4 rounded w-44" />
+            <div className="skeleton h-3.5 rounded w-64" />
+          </div>
+          <div className="skeleton h-9 rounded-lg w-32" />
+        </div>
+        <div className="skeleton h-12 rounded-lg w-full" />
+      </div>
+    </div>
+  );
+}
 
 function VerificationStatusBanner({ status }: { status: string }) {
   if (status === 'VERIFIED') {
@@ -111,7 +165,7 @@ export function CompanyProfile() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <CompanyProfileSkeleton />;
 
   return (
     <div className="max-w-3xl">

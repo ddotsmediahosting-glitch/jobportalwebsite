@@ -10,8 +10,8 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Modal } from '../../components/ui/Modal';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 
 const ROLES = [
@@ -32,6 +32,46 @@ const roleColor: Record<string, BadgeColor> = {
   RECRUITER: 'green',
   VIEWER: 'gray',
 };
+
+function TeamSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th className="text-left px-4 py-3 font-medium text-gray-700">Member</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700">Role</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-700 hidden sm:table-cell">Joined</th>
+            <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {[...Array(3)].map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="skeleton h-8 w-8 rounded-full flex-shrink-0" />
+                  <div className="skeleton h-4 rounded w-40" />
+                </div>
+              </td>
+              <td className="px-4 py-3">
+                <div className="skeleton h-5 rounded-full w-20" />
+              </td>
+              <td className="px-4 py-3 hidden sm:table-cell">
+                <div className="skeleton h-4 rounded w-24" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex justify-end">
+                  <div className="skeleton h-6 w-6 rounded" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function Team() {
   const qc = useQueryClient();
@@ -72,8 +112,6 @@ export function Team() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (isLoading) return <PageSpinner />;
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -99,11 +137,14 @@ export function Team() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {!members?.length ? (
-          <div className="text-center py-16 text-gray-400">
-            <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No team members yet. Invite your first team member.</p>
-          </div>
+        {isLoading ? (
+          <TeamSkeleton />
+        ) : !members?.length ? (
+          <EmptyState
+            illustration="generic"
+            title="No team members yet"
+            description="Invite colleagues to manage jobs and applications together."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">

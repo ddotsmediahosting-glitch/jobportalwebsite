@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Plus, Briefcase, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, Eye } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; description: string }> = {
   PENDING_APPROVAL: {
@@ -60,6 +60,28 @@ interface JobPost {
   _count?: { applications: number };
 }
 
+function MyPostsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-5 rounded-full w-24" />
+          </div>
+          <div className="skeleton h-3 rounded w-3/4" />
+          <div className="flex gap-3">
+            <div className="skeleton h-3 rounded w-16" />
+            <div className="skeleton h-3 rounded w-20" />
+            <div className="skeleton h-3 rounded w-14" />
+          </div>
+          <div className="skeleton h-3 rounded w-1/3" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function MyPosts() {
   const qc = useQueryClient();
 
@@ -90,16 +112,15 @@ export function MyPosts() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <MyPostsSkeleton />
       ) : items.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-          <Briefcase size={40} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500 font-medium">No job posts yet</p>
-          <p className="text-sm text-gray-400 mt-1 mb-6">Post your first job and it will appear here for review.</p>
-          <Link to="/post-job"
-            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors">
-            <Plus size={16} /> Post a Job
-          </Link>
+        <div className="bg-white rounded-2xl border border-gray-200">
+          <EmptyState
+            illustration="jobs"
+            title="No posts yet"
+            description="Post a job to start receiving applications."
+            action={{ label: 'Post a Job', to: '/post-job' }}
+          />
         </div>
       ) : (
         <div className="space-y-4">
@@ -142,6 +163,7 @@ export function MyPosts() {
                     )}
                     {job.status !== 'PUBLISHED' && (
                       <button
+                        type="button"
                         onClick={() => { if (confirm('Delete this job post?')) deleteMutation.mutate(job.id); }}
                         className="flex items-center gap-1.5 text-xs border border-red-200 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
                       >

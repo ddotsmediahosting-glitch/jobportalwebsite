@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, MapPin, Users, Briefcase, Search, Globe, ChevronRight } from 'lucide-react';
+import { Building2, MapPin, Users, Briefcase, Search, ChevronRight } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
-import { PageSpinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const INDUSTRIES = [
   '', 'Technology', 'Finance & Banking', 'Healthcare', 'Construction & Real Estate',
@@ -31,6 +31,25 @@ interface Employer {
   website?: string;
   foundedYear?: number;
   _count: { jobs: number };
+}
+
+function CompaniesSkeleton() {
+  return (
+    <div className="grid sm:grid-cols-2 gap-4">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+          <div className="flex items-start gap-4">
+            <div className="skeleton w-14 h-14 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="skeleton h-4 rounded w-3/4" />
+              <div className="skeleton h-3 rounded w-1/2" />
+              <div className="skeleton h-3 rounded w-full mt-1" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function CompanyCard({ employer }: { employer: Employer }) {
@@ -162,13 +181,13 @@ export function Companies() {
 
         {/* Grid */}
         {isLoading ? (
-          <PageSpinner />
+          <CompaniesSkeleton />
         ) : data?.items?.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No companies found</p>
-            <p className="text-sm mt-1">Try adjusting your search or filters</p>
-          </div>
+          <EmptyState
+            illustration="search"
+            title="No companies found"
+            description="Try a different search term."
+          />
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {data?.items?.map((emp: Employer) => (

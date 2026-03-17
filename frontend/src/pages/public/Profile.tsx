@@ -9,9 +9,29 @@ import { api, getApiError } from '../../lib/api';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
-
 const emirateOptions = Object.entries(EMIRATES_LABELS).map(([value, label]) => ({ value, label }));
+
+function ProfileSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="skeleton h-8 rounded w-40 mb-6" />
+      {[...Array(2)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="skeleton h-5 rounded w-48" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[...Array(6)].map((__, j) => (
+              <div key={j} className="space-y-1.5">
+                <div className="skeleton h-3.5 rounded w-24" />
+                <div className="skeleton h-10 rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="skeleton h-10 rounded-xl w-36" />
+    </div>
+  );
+}
 
 export function Profile() {
   const qc = useQueryClient();
@@ -54,7 +74,7 @@ export function Profile() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <ProfileSkeleton />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -8,6 +8,7 @@ import { JobCard } from '../../components/JobCard';
 import { JobFilters, CategoryNode } from '../../components/JobFilters';
 import { Pagination } from '../../components/Pagination';
 import { useAuth } from '../../hooks/useAuth';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const FILTER_LABELS: Record<string, string> = {
   q: 'Search', emirate: 'Emirate', workMode: 'Work Mode',
@@ -206,16 +207,13 @@ export function Jobs() {
                 ))}
               </div>
             ) : !data?.items?.length ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-card">
-                <div className="text-5xl mb-4">🔍</div>
-                <p className="text-lg font-semibold text-gray-700">No jobs found</p>
-                <p className="text-sm text-gray-400 mt-1 mb-6">Try adjusting your filters or search terms</p>
-                <button
-                  onClick={() => setSearchParams({})}
-                  className="inline-flex items-center gap-1.5 text-sm text-brand-600 font-medium hover:text-brand-700 border border-brand-200 px-4 py-2 rounded-xl hover:bg-brand-50 transition-all"
-                >
-                  <X size={13} /> Clear all filters
-                </button>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-card">
+                <EmptyState
+                  illustration="search"
+                  title="No jobs found"
+                  description="Try adjusting your filters or search terms."
+                  className="col-span-full py-12"
+                />
               </div>
             ) : (
               <>

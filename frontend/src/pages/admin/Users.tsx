@@ -6,12 +6,12 @@ import {
   Download, CheckSquare, Square, Users as UsersIcon, X, UserPlus, Copy, Eye, EyeOff,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
 import { Pagination } from '../../components/Pagination';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -59,6 +59,23 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs text-gray-400">{label}</p>
       <p className="font-medium text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function UsersSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="skeleton h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 rounded w-1/2" />
+            <div className="skeleton h-3 rounded w-1/3" />
+          </div>
+          <div className="skeleton h-6 rounded-full w-20" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -226,7 +243,7 @@ export function AdminUsers() {
       </div>
 
       {isLoading ? (
-        <PageSpinner />
+        <UsersSkeleton />
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -335,7 +352,7 @@ export function AdminUsers() {
                 </tbody>
               </table>
               {!data?.items?.length && (
-                <div className="text-center py-16 text-gray-400">No users found.</div>
+                <EmptyState illustration="generic" title="No users found" description="Try adjusting your search or filters." className="py-12" />
               )}
             </div>
           </div>

@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Check, Zap, Crown, Briefcase } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
-import { PageSpinner } from '../../components/ui/Spinner';
 
 interface Plan {
   id: string;
@@ -80,6 +79,62 @@ const PLANS: Plan[] = [
   },
 ];
 
+function BillingSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Page heading */}
+      <div className="space-y-1.5">
+        <div className="skeleton h-7 rounded w-44" />
+        <div className="skeleton h-4 rounded w-64" />
+      </div>
+
+      {/* Current subscription card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="skeleton h-5 rounded w-44" />
+        <div className="flex flex-wrap gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="skeleton h-3.5 rounded w-16" />
+              <div className="skeleton h-5 rounded w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Usage card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="skeleton h-5 rounded w-36" />
+        <div className="grid sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="skeleton h-3.5 rounded w-24 mx-auto" />
+              <div className="skeleton h-5 rounded w-16 mx-auto" />
+              <div className="skeleton h-1.5 rounded-full w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Plan cards */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-6 space-y-4">
+            <div className="skeleton h-12 w-12 rounded-xl" />
+            <div className="skeleton h-6 rounded w-24" />
+            <div className="skeleton h-8 rounded w-32" />
+            <div className="space-y-2">
+              {[...Array(4)].map((__, j) => (
+                <div key={j} className="skeleton h-4 rounded w-full" />
+              ))}
+            </div>
+            <div className="skeleton h-10 rounded-lg w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Billing() {
   const qc = useQueryClient();
 
@@ -107,7 +162,7 @@ export function Billing() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <BillingSkeleton />;
 
   const currentPlan = data?.plan || 'FREE';
   const subscription = data?.subscription;
@@ -242,17 +297,21 @@ export function Billing() {
 
 function UsageStat({ label, used, limit }: { label: string; used: number; limit: number }) {
   const pct = limit > 900 ? 100 : Math.min((used / limit) * 100, 100);
+  const displayPct = limit > 900 ? 30 : pct;
   const isNearLimit = pct >= 80;
+  const trackRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    trackRef.current?.style.setProperty('--progress', `${displayPct}%`);
+  }, [displayPct]);
   return (
     <div className="text-center p-4 bg-gray-50 rounded-lg">
       <p className="text-xs text-gray-400 mb-1">{label}</p>
       <p className={`font-semibold ${isNearLimit ? 'text-orange-500' : 'text-gray-900'}`}>
         {used} / {limit > 900 ? '∞' : limit}
       </p>
-      <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div ref={trackRef} className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${isNearLimit ? 'bg-orange-400' : 'bg-brand-500'}`}
-          style={{ width: `${limit > 900 ? 30 : pct}%` }}
+          className={`progress-fill h-full rounded-full transition-all ${isNearLimit ? 'bg-orange-400' : 'bg-brand-500'}`}
         />
       </div>
     </div>

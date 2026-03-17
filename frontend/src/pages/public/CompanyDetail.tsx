@@ -6,9 +6,48 @@ import {
   CheckCircle, ArrowLeft, ExternalLink, Clock, DollarSign, Star, ThumbsUp, MessageSquarePlus
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
-import { PageSpinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
+
+function CompanyDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="h-48 skeleton" />
+      <div className="max-w-4xl mx-auto px-4 -mt-12 pb-12">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 space-y-4">
+          <div className="flex items-start gap-5">
+            <div className="skeleton h-20 w-20 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-7 rounded w-56" />
+              <div className="skeleton h-4 rounded w-32" />
+              <div className="flex gap-3 mt-2">
+                {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-4 rounded w-28" />)}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 pt-4 border-t border-gray-100">
+            <div className="skeleton h-4 rounded w-full" />
+            <div className="skeleton h-4 rounded w-5/6" />
+            <div className="skeleton h-4 rounded w-4/5" />
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+          <div className="skeleton h-5 rounded w-40" />
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3">
+              <div className="flex-1 space-y-2">
+                <div className="skeleton h-4 rounded w-1/2" />
+                <div className="skeleton h-3 rounded w-1/3" />
+              </div>
+              <div className="skeleton h-3.5 rounded w-12" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const EMIRATE_LABELS: Record<string, string> = {
   ABU_DHABI: 'Abu Dhabi', DUBAI: 'Dubai', SHARJAH: 'Sharjah',
@@ -166,7 +205,7 @@ export function CompanyDetail() {
     onSuccess: () => { refetchReviews(); toast.success('Marked as helpful'); },
   });
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading) return <CompanyDetailSkeleton />;
   if (isError || !employer) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -276,11 +315,12 @@ export function CompanyDetail() {
           </div>
 
           {!employer.jobs?.length ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400">
-              <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p>No open positions at the moment.</p>
-              <p className="text-sm mt-1">Check back soon or browse other companies.</p>
-            </div>
+            <EmptyState
+              illustration="jobs"
+              title="No open positions at the moment"
+              description="Check back soon or browse other companies."
+              action={{ label: 'Browse All Jobs', to: '/jobs' }}
+            />
           ) : (
             <div className="space-y-3">
               {(employer.jobs as CompanyJob[]).map((job) => (
@@ -411,19 +451,15 @@ export function CompanyDetail() {
           </div>
 
           {!reviewsData?.items?.length && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
-              <Star className="h-8 w-8 mx-auto mb-2 opacity-20" />
-              <p>No reviews yet.</p>
-              {user ? (
-                <button onClick={() => setReviewOpen(true)} className="text-brand-600 text-sm underline mt-1">
-                  Be the first to review {employer.companyName}
-                </button>
-              ) : (
-                <Link to="/login" className="text-brand-600 text-sm underline mt-1 inline-block">
-                  Sign in to write a review
-                </Link>
-              )}
-            </div>
+            <EmptyState
+              illustration="generic"
+              title="No reviews yet"
+              description={user ? `Be the first to share your experience at ${employer.companyName}.` : 'Sign in to write the first review.'}
+              action={user
+                ? undefined
+                : { label: 'Sign In', to: '/login' }
+              }
+            />
           )}
 
           {/* Pagination */}
