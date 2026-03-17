@@ -49,6 +49,15 @@ services:
       timeout: 10s
       retries: 3
 
+  rendertron:
+    image: rendertron/rendertron:latest
+    restart: always
+    expose:
+      - "3000"
+    environment:
+      TIMEOUT: "10000"
+    # No external port — only nginx reaches it
+
   web:
     build:
       context: .
@@ -63,6 +72,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      rendertron:
+        condition: service_started
 
 volumes:
   mariadb_data:

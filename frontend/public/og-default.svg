@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="1100" cy="80" r="200" fill="white" fill-opacity="0.04"/>
+  <circle cx="100" cy="560" r="160" fill="white" fill-opacity="0.04"/>
+
+  <!-- Logo icon -->
+  <rect x="80" y="60" width="80" height="80" rx="18" fill="white" fill-opacity="0.15"/>
+  <rect x="96" y="90" width="48" height="32" rx="4" fill="white"/>
+  <path d="M108 90V86a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v4" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Main headline -->
+  <text x="80" y="240" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="72" fill="white">UAE Jobs Portal</text>
+  <text x="80" y="320" font-family="Inter, Arial, sans-serif" font-weight="400" font-size="36" fill="white" fill-opacity="0.8">Find verified jobs in Dubai, Abu Dhabi &amp; all Emirates</text>
+
+  <!-- Stats pills -->
+  <rect x="80" y="380" width="240" height="56" rx="28" fill="white" fill-opacity="0.15"/>
+  <text x="200" y="416" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" fill="white" text-anchor="middle">10,000+ Jobs</text>
+
+  <rect x="340" y="380" width="240" height="56" rx="28" fill="white" fill-opacity="0.15"/>
+  <text x="460" y="416" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" fill="white" text-anchor="middle">2,000+ Companies</text>
+
+  <rect x="600" y="380" width="240" height="56" rx="28" fill="white" fill-opacity="0.15"/>
+  <text x="720" y="416" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" fill="white" text-anchor="middle">Free to Apply</text>
+
+  <!-- Domain -->
+  <text x="80" y="560" font-family="Inter, Arial, sans-serif" font-weight="600" font-size="28" fill="white" fill-opacity="0.6">ddotsmediajobs.com</text>
+</svg>
