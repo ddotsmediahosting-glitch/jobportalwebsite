@@ -137,7 +137,7 @@ Company: ${companyName}
 Location: ${emirate}, UAE
 Type: ${employmentType}
 ${salaryText}
-${skills?.length ? `Key skills: ${skills.slice(0, 5).join(', ')}` : ''}
+${(Array.isArray(skills) ? skills as string[] : []).length > 0 ? `Key skills: ${(Array.isArray(skills) ? skills as string[] : []).slice(0, 5).join(', ')}` : ''}
 Job URL: ${jobUrl}
 
 Platform instructions: ${platformGuide[platform]}

@@ -82,7 +82,7 @@ router.post('/screen-applications/:jobId', requireRole('EMPLOYER'), async (req: 
       ? `${app.user.seekerProfile.firstName} ${app.user.seekerProfile.lastName}`
       : app.user.email,
     coverLetter: app.coverLetter || undefined,
-    skills: (app.user.seekerProfile?.skills as string[]) || [],
+    skills: (Array.isArray(app.user.seekerProfile?.skills) ? app.user.seekerProfile!.skills as string[] : []),
     headline: app.user.seekerProfile?.headline || undefined,
     yearsOfExperience: app.user.seekerProfile?.yearsOfExperience || undefined,
   }));
@@ -161,7 +161,7 @@ router.get('/match-score/:jobId', requireRole('SEEKER'), async (req: AuthRequest
 
   const result = await scoreJobMatch(
     {
-      skills: (profile.skills as string[]) || [],
+      skills: (Array.isArray(profile.skills) ? profile.skills as string[] : []),
       yearsOfExperience: profile.yearsOfExperience || undefined,
       headline: profile.headline || undefined,
       bio: profile.bio || undefined,
@@ -190,7 +190,7 @@ router.post('/career-chat', async (req: AuthRequest, res: Response) => {
     });
     if (profile) {
       userContext = {
-        skills: (profile.skills as string[]) || [],
+        skills: (Array.isArray(profile.skills) ? profile.skills as string[] : []),
         yearsOfExperience: profile.yearsOfExperience || undefined,
         headline: profile.headline || undefined,
       };
@@ -301,7 +301,7 @@ router.get('/recommended-jobs', requireRole('SEEKER'), async (req: AuthRequest, 
     select: { skills: true, yearsOfExperience: true, headline: true, bio: true, preferredWorkMode: true },
   });
 
-  if (!profile || !(profile.skills as string[])?.length) {
+  if (!profile || !(Array.isArray(profile.skills) && profile.skills.length)) {
     res.json({ success: true, data: [], message: 'Complete your profile to get personalized recommendations' });
     return;
   }
@@ -336,13 +336,13 @@ router.get('/recommended-jobs', requireRole('SEEKER'), async (req: AuthRequest, 
 
     const rankings = await rankJobsForCandidate(
       {
-        skills: (profile.skills as string[]) || [],
+        skills: (Array.isArray(profile.skills) ? profile.skills as string[] : []),
         yearsOfExperience: profile.yearsOfExperience || undefined,
         headline: profile.headline || undefined,
         bio: profile.bio || undefined,
         preferredWorkMode: profile.preferredWorkMode || undefined,
       },
-      recentJobs.map((j) => ({ id: j.id, title: j.title, description: j.description, skills: (j.skills as string[]) || [] }))
+      recentJobs.map((j) => ({ id: j.id, title: j.title, description: j.description, skills: (Array.isArray(j.skills) ? j.skills as string[] : []) }))
     );
 
     // Merge match scores back into full job objects
@@ -376,7 +376,7 @@ router.get('/trending-skills', async (_req: Request, res: Response) => {
 
     recentJobs.forEach((job) => {
       titleSet.add(job.title);
-      ((job.skills as string[]) || []).forEach((skill) => {
+      (Array.isArray(job.skills) ? job.skills as string[] : []).forEach((skill) => {
         if (skill && skill.length > 1) {
           skillFreq[skill] = (skillFreq[skill] || 0) + 1;
         }
@@ -430,7 +430,7 @@ router.get('/profile-coach', requireRole('SEEKER'), async (req: AuthRequest, res
     lastName: profile.lastName || undefined,
     headline: profile.headline || undefined,
     bio: profile.bio || undefined,
-    skills: (profile.skills as string[]) || [],
+    skills: (Array.isArray(profile.skills) ? profile.skills as string[] : []),
     yearsOfExperience: profile.yearsOfExperience || undefined,
     preferredWorkMode: profile.preferredWorkMode || undefined,
     hasAvatar: !!(profile.avatarUrl || user?.avatarUrl),

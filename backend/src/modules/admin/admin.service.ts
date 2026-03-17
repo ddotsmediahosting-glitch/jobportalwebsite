@@ -239,25 +239,28 @@ export class AdminService {
   }
 
   async moderateJob(actorId: string, jobId: string, status: JobStatus, notes?: string) {
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
-    if (!job) throw new NotFoundError('Job');
+    const existing = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!existing) throw new NotFoundError('Job');
 
     await prisma.job.update({
       where: { id: jobId },
       data: {
         status,
         moderationNotes: notes,
-        ...(status === 'PUBLISHED' ? { publishedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : {}),
+        ...(status === 'PUBLISHED' ? {
+          publishedAt: existing.publishedAt || new Date(),
+          expiresAt: existing.expiresAt && existing.expiresAt > new Date() ? existing.expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        } : {}),
       },
     });
 
     // Notify employer
     await prisma.notification.create({
       data: {
-        userId: (await prisma.employer.findUnique({ where: { id: job.employerId } }))!.ownerUserId,
+        userId: (await prisma.employer.findUnique({ where: { id: existing.employerId } }))!.ownerUserId,
         type: `JOB_${status}`,
         title: `Job ${status === 'PUBLISHED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Updated'}`,
-        body: `Your job "${job.title}" has been ${status.toLowerCase()}.${notes ? ` Note: ${notes}` : ''}`,
+        body: `Your job "${existing.title}" has been ${status.toLowerCase()}.${notes ? ` Note: ${notes}` : ''}`,
       },
     });
 
@@ -491,7 +494,7 @@ export class AdminService {
         employmentType: (data.employmentType || 'FULL_TIME') as EmploymentType,
         salaryMin: data.salaryMin,
         salaryMax: data.salaryMax,
-        skills: data.skills || [],
+        skills: Array.isArray(data.skills) ? data.skills : [],
         status: 'PUBLISHED',
         publishedAt: new Date(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

@@ -134,7 +134,7 @@ ${EMOJI.chart} ${job.employmentType} · ${job.experienceMin}${job.experienceMax 
 
 ${desc}...
 
-${job.skills.length ? `${EMOJI.check} *Skills:* ${job.skills.slice(0, 5).join(', ')}` : ''}
+${(Array.isArray(job.skills) ? job.skills as string[] : []).length ? `${EMOJI.check} *Skills:* ${(Array.isArray(job.skills) ? job.skills as string[] : []).slice(0, 5).join(', ')}` : ''}
 
 ${EMOJI.rocket} *Apply:* ${SITE_URL}/jobs/${job.slug}`;
 }

@@ -272,9 +272,9 @@ function DiscussionCard({ d }: { d: Discussion }) {
             {d.title}
           </h3>
 
-          {d.tags.length > 0 && (
+          {(Array.isArray(d.tags) ? d.tags : []).length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {d.tags.slice(0, 4).map((t) => (
+              {(Array.isArray(d.tags) ? d.tags as string[] : []).slice(0, 4).map((t) => (
                 <span key={t} className="text-[10px] bg-brand-50 text-brand-600 px-2 py-0.5 rounded-full font-medium">
                   #{t}
                 </span>

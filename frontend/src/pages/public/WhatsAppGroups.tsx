@@ -126,9 +126,9 @@ function GroupCard({
           )}
 
           {/* Tags */}
-          {group.tags && group.tags.length > 0 && (
+          {(Array.isArray(group.tags) ? group.tags : []).length > 0 && (
             <div className="flex gap-1 flex-wrap mt-2">
-              {group.tags.slice(0, 4).map(tag => (
+              {(Array.isArray(group.tags) ? group.tags as string[] : []).slice(0, 4).map(tag => (
                 <span key={tag} className="inline-flex items-center gap-0.5 text-xs text-white/35 bg-white/5 px-1.5 py-0.5 rounded">
                   <Hash className="w-2.5 h-2.5" />{tag}
                 </span>
@@ -197,7 +197,7 @@ export function WhatsAppGroups() {
       || g.title.toLowerCase().includes(q)
       || g.description?.toLowerCase().includes(q)
       || g.category.toLowerCase().includes(q)
-      || g.tags.some(t => t.toLowerCase().includes(q));
+      || (Array.isArray(g.tags) ? g.tags : []).some(t => t.toLowerCase().includes(q));
     const matchCat = activeCategory === 'All' || g.category === activeCategory;
     return matchSearch && matchCat;
   });

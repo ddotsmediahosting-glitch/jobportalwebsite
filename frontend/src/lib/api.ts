@@ -70,12 +70,12 @@ api.interceptors.response.use(
 
         original!.headers!['Authorization'] = `Bearer ${accessToken}`;
         return api(original!);
-      } catch {
-        pendingQueue.forEach((p) => p.reject(error));
+      } catch (refreshError) {
+        pendingQueue.forEach((p) => p.reject(refreshError));
         pendingQueue = [];
         tokenStorage.clear();
         window.location.href = '/login';
-        return Promise.reject(error);
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }

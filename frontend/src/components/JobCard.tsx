@@ -44,6 +44,8 @@ interface JobCardProps {
   isSaved?: boolean;
 }
 
+const asArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+
 export function JobCard({ job, onSave, isSaved }: JobCardProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryNegotiable);
   const workModeStyle = WORK_MODE_STYLE[job.workMode] ?? 'bg-gray-50 text-gray-600 border-gray-200';
@@ -134,15 +136,15 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
       </div>
 
       {/* Skills */}
-      {job.skills.length > 0 && (
+      {asArr(job.skills).length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {job.skills.slice(0, 4).map((s) => (
+          {asArr(job.skills).slice(0, 4).map((s) => (
             <span key={s} className="text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-100 px-2 py-0.5 rounded-full">
               {s}
             </span>
           ))}
-          {job.skills.length > 4 && (
-            <span className="text-[10px] text-gray-400 px-1 py-0.5">+{job.skills.length - 4}</span>
+          {asArr(job.skills).length > 4 && (
+            <span className="text-[10px] text-gray-400 px-1 py-0.5">+{asArr(job.skills).length - 4}</span>
           )}
         </div>
       )}

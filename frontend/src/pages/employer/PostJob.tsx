@@ -196,23 +196,23 @@ function AIJobWizard({ onApply, onClose }: { onApply: (result: AIJDResult) => vo
 
               <div className="grid sm:grid-cols-2 gap-4 text-xs text-gray-600">
                 <div>
-                  <p className="font-semibold text-gray-700 mb-1.5">Responsibilities ({result.responsibilities.length})</p>
+                  <p className="font-semibold text-gray-700 mb-1.5">Responsibilities ({(Array.isArray(result.responsibilities) ? result.responsibilities : []).length})</p>
                   <ul className="space-y-1 bg-gray-50 rounded-lg p-3">
-                    {result.responsibilities.map((r, i) => <li key={i} className="flex gap-1.5"><span className="text-violet-400 mt-0.5 flex-shrink-0">•</span>{r}</li>)}
+                    {(Array.isArray(result.responsibilities) ? result.responsibilities : []).map((r, i) => <li key={i} className="flex gap-1.5"><span className="text-violet-400 mt-0.5 flex-shrink-0">•</span>{r}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-700 mb-1.5">Requirements ({result.requirements.length})</p>
+                  <p className="font-semibold text-gray-700 mb-1.5">Requirements ({(Array.isArray(result.requirements) ? result.requirements : []).length})</p>
                   <ul className="space-y-1 bg-gray-50 rounded-lg p-3">
-                    {result.requirements.map((r, i) => <li key={i} className="flex gap-1.5"><span className="text-violet-400 mt-0.5 flex-shrink-0">•</span>{r}</li>)}
+                    {(Array.isArray(result.requirements) ? result.requirements : []).map((r, i) => <li key={i} className="flex gap-1.5"><span className="text-violet-400 mt-0.5 flex-shrink-0">•</span>{r}</li>)}
                   </ul>
                 </div>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1.5">Skills ({result.skills.length})</p>
+                <p className="text-xs font-semibold text-gray-700 mb-1.5">Skills ({(Array.isArray(result.skills) ? result.skills : []).length})</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {result.skills.map(s => (
+                  {(Array.isArray(result.skills) ? result.skills : []).map(s => (
                     <span key={s} className="bg-violet-100 text-violet-700 text-xs px-2.5 py-0.5 rounded-full">{s}</span>
                   ))}
                 </div>
@@ -221,7 +221,7 @@ function AIJobWizard({ onApply, onClose }: { onApply: (result: AIJDResult) => vo
               <div>
                 <p className="text-xs font-semibold text-gray-700 mb-1.5">Benefits</p>
                 <ul className="text-xs text-gray-600 space-y-0.5 columns-2">
-                  {result.benefits.map((b, i) => <li key={i} className="flex gap-1.5"><span className="text-green-500">✓</span>{b}</li>)}
+                  {(Array.isArray(result.benefits) ? result.benefits : []).map((b, i) => <li key={i} className="flex gap-1.5"><span className="text-green-500">✓</span>{b}</li>)}
                 </ul>
               </div>
             </div>
@@ -301,12 +301,18 @@ export function PostJob() {
   });
 
   const handleApplyAIResult = (result: AIJDResult) => {
+    const responsibilities = Array.isArray(result.responsibilities) ? result.responsibilities : [];
+    const requirements_arr = Array.isArray(result.requirements) ? result.requirements : [];
+    const niceToHave = Array.isArray(result.niceToHave) ? result.niceToHave : [];
+    const benefits_arr = Array.isArray(result.benefits) ? result.benefits : [];
+    const skills_arr = Array.isArray(result.skills) ? result.skills : [];
+
     const description = [
       result.summary,
-      '\n\nResponsibilities:\n' + result.responsibilities.map(r => `• ${r}`).join('\n'),
+      '\n\nResponsibilities:\n' + responsibilities.map(r => `• ${r}`).join('\n'),
     ].join('');
-    const requirements = result.requirements.concat(result.niceToHave.map(n => `(Preferred) ${n}`)).map(r => `• ${r}`).join('\n');
-    const benefits = result.benefits.map(b => `• ${b}`).join('\n');
+    const requirements = requirements_arr.concat(niceToHave.map(n => `(Preferred) ${n}`)).map(r => `• ${r}`).join('\n');
+    const benefits = benefits_arr.map(b => `• ${b}`).join('\n');
 
     setValue('description', description);
     setValue('requirements', requirements);
@@ -322,7 +328,7 @@ export function PostJob() {
     if (result.suggestedWorkMode) setValue('workMode', result.suggestedWorkMode as CreateJobInput['workMode']);
     if (result.suggestedLevel) setValue('level', result.suggestedLevel);
 
-    setSkills(prev => Array.from(new Set([...prev, ...result.skills.slice(0, 12)])));
+    setSkills(prev => Array.from(new Set([...prev, ...skills_arr.slice(0, 12)])));
     toast.success('AI content applied to form!');
   };
 
