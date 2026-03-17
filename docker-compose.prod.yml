@@ -48,6 +48,21 @@ services:
       timeout: 10s
       retries: 3
 
+  prerender:
+    build:
+      context: ./prerender
+    restart: always
+    environment:
+      FRONTEND_URL: "http://web:80"
+      CACHE_TTL: "300"
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   web:
     build:
       context: .
