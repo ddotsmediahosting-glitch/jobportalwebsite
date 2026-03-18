@@ -4,12 +4,11 @@ import { SEOHead } from '../../components/SEOHead';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search, MapPin, TrendingUp, Users, Briefcase, ArrowRight, Star,
-  Zap, Bot, DollarSign, Mic, ChevronRight, CheckCircle,
+  Zap, CheckCircle,
   Code2, HeartPulse, Building, BarChart3, ShoppingBag, Plane, Building2,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
-import { RecommendedJobs } from '../../components/RecommendedJobs';
 import { CompanyTicker } from '../../components/CompanyTicker';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
 
@@ -39,65 +38,6 @@ function getCategoryColor(name: string): string {
 function getCategoryIcon(name: string): React.ReactNode {
   const key = Object.keys(CATEGORY_ICONS).find((k) => name.toLowerCase().includes(k.toLowerCase()));
   return key ? CATEGORY_ICONS[key] : <Briefcase size={18} />;
-}
-
-function EmiratizationSection() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['jobs', 'emiratization'],
-    queryFn: () => api.get('/jobs?isEmiratization=true&limit=6').then((r) => r.data.data),
-    staleTime: 5 * 60_000,
-  });
-
-  if (!isLoading && !data?.items?.length) return null;
-
-  return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 mt-4">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🇦🇪</span>
-            <h2 className="text-xl font-bold text-gray-900">Emiratization Opportunities</h2>
-          </div>
-          <p className="text-sm text-gray-500">Roles open to UAE nationals under Emiratization programs</p>
-        </div>
-        <Link
-          to="/jobs?isEmiratization=true"
-          className="hidden sm:flex items-center gap-1.5 text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors"
-        >
-          View all <ArrowRight size={14} />
-        </Link>
-      </div>
-
-      {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
-              <div className="flex gap-3">
-                <div className="skeleton h-12 w-12 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <div className="skeleton h-4 rounded w-3/4" />
-                  <div className="skeleton h-3 rounded w-1/2" />
-                </div>
-              </div>
-              <div className="skeleton h-3 rounded w-full" />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.items?.map((job: Parameters<typeof JobCard>[0]['job']) => (
-            <JobCard key={job.id} job={job} />
-          ))}
-        </div>
-      )}
-
-      <div className="text-center mt-6 sm:hidden">
-        <Link to="/jobs?isEmiratization=true" className="text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors flex items-center gap-1 justify-center">
-          View all Emiratization jobs <ArrowRight size={13} />
-        </Link>
-      </div>
-    </section>
-  );
 }
 
 export function Home() {
@@ -321,8 +261,8 @@ export function Home() {
             </h2>
             <p className="text-sm text-gray-500 mt-1">Hand-picked opportunities from top employers</p>
           </div>
-          <Link to="/jobs?isFeatured=true" className="hidden sm:flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 font-medium group">
-            See all featured
+          <Link to="/jobs" className="hidden sm:flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 font-medium group">
+            Browse all jobs
             <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -350,15 +290,6 @@ export function Home() {
             ))}
           </div>
         )}
-
-        <div className="text-center mt-10">
-          <Link
-            to="/jobs"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white px-8 py-3.5 rounded-xl font-semibold hover:from-brand-700 hover:to-brand-600 transition-all duration-150 shadow-sm hover:shadow-glow-brand"
-          >
-            Browse All Jobs <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
       </section>
 
       {/* Section separator */}
@@ -409,48 +340,6 @@ export function Home() {
                 <h3 className="text-white font-bold mb-2">{title}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
               </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-colors shadow-lg"
-            >
-              Get Started for Free <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Emiratization Jobs ─────────────────────────────────────────── */}
-      <EmiratizationSection />
-      <RecommendedJobs />
-
-      {/* ─── AI Tools Promo ──────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-900 py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { icon: Zap, label: 'ATS CV Analyzer', desc: 'Score your CV instantly', to: '/cv-analyzer', color: 'from-blue-500 to-indigo-500' },
-              { icon: Bot, label: 'Career Advisor AI', desc: 'Get personalized career guidance', to: '/career-advisor', color: 'from-violet-500 to-purple-500' },
-              { icon: DollarSign, label: 'Salary Insights', desc: 'Know your market worth', to: '/salary-insights', color: 'from-emerald-500 to-teal-500' },
-              { icon: Mic, label: 'Interview Prep', desc: 'Practice with AI coaching', to: '/interview-prep', color: 'from-pink-500 to-rose-500' },
-            ].map(({ icon: Icon, label, desc, to, color }) => (
-              <Link
-                key={to}
-                to={to}
-                className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-4 transition-all duration-200"
-              >
-                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon size={18} className="text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{label}</p>
-                  <p className="text-xs text-purple-300 truncate">{desc}</p>
-                </div>
-                <ChevronRight size={14} className="text-white/30 group-hover:text-white/60 ml-auto flex-shrink-0 transition-colors" />
-              </Link>
             ))}
           </div>
         </div>
@@ -510,7 +399,7 @@ export function Home() {
               Post a Job Free <ArrowRight size={14} />
             </Link>
             <Link
-              to="/companies"
+              to="/about"
               className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all text-sm whitespace-nowrap"
             >
               Learn More
