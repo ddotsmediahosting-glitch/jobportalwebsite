@@ -3,8 +3,8 @@ import { Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Menu, X, User, ChevronDown, LogOut, BookmarkCheck, FileText,
-  Zap, Wand2, Bot, Building2, Bell, DollarSign, Mic, Briefcase,
-  Search, MapPin, TrendingUp, LayoutList, Home,
+  Zap, Wand2, Bot, Building2, Bell, Mic, Briefcase,
+  Search, MapPin, LayoutList, Home,
   Linkedin, Twitter, Facebook, Instagram, Youtube,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -114,21 +114,6 @@ export function PublicLayout() {
               <NavLink to="/companies">
                 <span className="flex items-center gap-1.5">
                   <Building2 size={13} /> Companies
-                </span>
-              </NavLink>
-              <NavLink to="/salary-explorer">
-                <span className="flex items-center gap-1.5">
-                  <DollarSign size={13} /> Salaries
-                </span>
-              </NavLink>
-              <NavLink to="/trending">
-                <span className="flex items-center gap-1.5">
-                  <TrendingUp size={13} /> Trending
-                </span>
-              </NavLink>
-              <NavLink to="/career-advisor">
-                <span className="flex items-center gap-1.5">
-                  <Bot size={13} /> Career AI
                 </span>
               </NavLink>
               <Link
@@ -276,9 +261,7 @@ export function PublicLayout() {
               <MobileNavLink to="/" icon={<Home size={15} />} onClick={() => setMobileOpen(false)}>Home</MobileNavLink>
               <MobileNavLink to="/jobs" icon={<Search size={15} />} onClick={() => setMobileOpen(false)}>Browse Jobs</MobileNavLink>
               <MobileNavLink to="/companies" icon={<Building2 size={15} />} onClick={() => setMobileOpen(false)}>Companies</MobileNavLink>
-              <MobileNavLink to="/salary-insights" icon={<DollarSign size={15} className="text-emerald-500" />} onClick={() => setMobileOpen(false)}>Salary Insights</MobileNavLink>
               <MobileNavLink to="/interview-prep" icon={<Mic size={15} className="text-purple-500" />} onClick={() => setMobileOpen(false)}>Interview Prep</MobileNavLink>
-              <MobileNavLink to="/career-advisor" icon={<Bot size={15} className="text-violet-500" />} onClick={() => setMobileOpen(false)}>Career AI</MobileNavLink>
               <Link
                 to="/community"
                 onClick={() => setMobileOpen(false)}
@@ -392,12 +375,14 @@ export function PublicLayout() {
               <div>
                 <h4 className="text-white font-semibold mb-4 text-sm">For Job Seekers</h4>
                 <ul className="space-y-2.5 text-sm">
-                  {[
+                  [
                     { to: '/jobs', label: 'Browse Jobs' },
                     { to: '/companies', label: 'Companies' },
+                    { to: '/trending', label: 'Trending Jobs' },
+                    { to: '/salary-explorer', label: 'Salary Explorer' },
+                    { to: '/career-advisor', label: 'Career AI' },
                     { to: '/community', label: 'Community Q&A' },
                     { to: '/whatsapp-groups', label: 'WhatsApp Groups' },
-                    { to: '/salary-insights', label: 'Salary Insights' },
                     { to: '/cv-analyzer', label: 'ATS CV Analyzer' },
                     { to: '/cv-builder', label: 'AI CV Builder' },
                     { to: '/interview-prep', label: 'Interview Prep' },
