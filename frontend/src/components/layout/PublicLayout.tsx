@@ -375,7 +375,7 @@ export function PublicLayout() {
               <div>
                 <h4 className="text-white font-semibold mb-4 text-sm">For Job Seekers</h4>
                 <ul className="space-y-2.5 text-sm">
-                  [
+                  {[
                     { to: '/jobs', label: 'Browse Jobs' },
                     { to: '/companies', label: 'Companies' },
                     { to: '/trending', label: 'Trending Jobs' },
