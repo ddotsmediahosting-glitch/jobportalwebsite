@@ -430,10 +430,10 @@ export function PublicLayout() {
                 <h4 className="text-white font-semibold mb-4 text-sm">Company</h4>
                 <ul className="space-y-2.5 text-sm">
                   {[
-                    { to: '/pages/about', label: 'About Us' },
+                    { to: '/about', label: 'About Us' },
+                    { to: '/contact', label: 'Contact Us' },
                     { to: '/pages/privacy-policy', label: 'Privacy Policy' },
                     { to: '/pages/terms', label: 'Terms of Use' },
-                    { to: '/pages/contact', label: 'Contact' },
                   ].map(({ to, label }) => (
                     <li key={to}>
                       <Link to={to} className="hover:text-brand-400 transition-colors duration-150">{label}</Link>
@@ -453,7 +453,7 @@ export function PublicLayout() {
           <div className="flex items-center gap-4 text-xs text-gray-600">
             <Link to="/pages/privacy-policy" className="hover:text-gray-400 transition-colors">Privacy</Link>
             <Link to="/pages/terms" className="hover:text-gray-400 transition-colors">Terms</Link>
-            <Link to="/pages/contact" className="hover:text-gray-400 transition-colors">Contact</Link>
+            <Link to="/contact" className="hover:text-gray-400 transition-colors">Contact</Link>
           </div>
         </div>
       </footer>

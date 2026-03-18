@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  MapPin, Briefcase, DollarSign, Clock, Users, Bookmark, BookmarkCheck, ExternalLink, Flag, ChevronLeft,
+  MapPin, Briefcase, Banknote, Clock, Users, Bookmark, BookmarkCheck, ExternalLink, Flag, ChevronLeft,
   Sparkles, Loader2, TrendingUp,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
@@ -12,7 +12,7 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
-import { SEOHead, buildJobPostingSchema } from '../../components/SEOHead';
+import { SEOHead, buildJobPostingSchema, buildBreadcrumbSchema } from '../../components/SEOHead';
 import { SocialShare } from '../../components/SocialShare';
 import {
   EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, VISA_STATUS_LABELS,
@@ -127,40 +127,73 @@ export function JobDetail() {
 
   const job = data;
   const jobUrl = `${BASE_URL}/jobs/${job.slug}`;
+  const cityName = EMIRATES_LABELS[job.emirate as Emirates] || job.emirate;
   const salaryText = job.salaryMin && job.salaryMax
     ? `AED ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}/mo`
     : null;
+
+  // Part 2c: "[Job Title] – [Company] | [City] Jobs – DdotsmediaJobs"
+  const seoTitle = job.metaTitle || `${job.title} – ${job.employer.companyName} | ${cityName} Jobs`;
+
+  // Part 2d: "Apply for [Job Title] at [Company] in [City], UAE. [summary]. Browse more [City] vacancies."
   const metaDesc = job.metaDescription ||
-    `${job.title} at ${job.employer.companyName} in ${EMIRATES_LABELS[job.emirate as Emirates] || job.emirate}, UAE. ${salaryText ? salaryText + '.' : ''} Apply now on DdotsmediaJobs.`;
+    `Apply for ${job.title} at ${job.employer.companyName} in ${cityName}, UAE.${salaryText ? ` Salary: ${salaryText}.` : ''} Browse more ${cityName} vacancies at DdotsmediaJobs.`;
+
+  // Part 2a: JobPosting schema with identifier + applicantLocationRequirements
+  const jobPostingSchema = buildJobPostingSchema({
+    title: job.title,
+    description: job.description,
+    slug: job.slug,
+    publishedAt: job.publishedAt,
+    expiresAt: job.expiresAt,
+    employmentType: job.employmentType,
+    workMode: job.workMode,
+    emirate: job.emirate,
+    location: job.location,
+    salaryMin: job.salaryMin,
+    salaryMax: job.salaryMax,
+    salaryCurrency: job.salaryCurrency,
+    skills: job.skills,
+    employer: job.employer,
+    category: job.category,
+  });
+
+  // Part 2b: BreadcrumbList schema
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: BASE_URL },
+    { name: 'Jobs in UAE', url: `${BASE_URL}/jobs` },
+    { name: `Jobs in ${cityName}`, url: `${BASE_URL}/jobs?emirate=${job.emirate}` },
+    { name: job.title, url: jobUrl },
+  ]);
+
+  // Combined @graph — avoids duplicate @context across schemas
+  const { '@context': _c1, ...jobPostingData } = jobPostingSchema as Record<string, unknown>;
+  const { '@context': _c2, ...breadcrumbData } = breadcrumbSchema as Record<string, unknown>;
+  const combinedSchema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        ...jobPostingData,
+        // Part 2a extras: identifier + applicantLocationRequirements
+        identifier: { '@type': 'PropertyValue', name: 'DdotsmediaJobs', value: job.id },
+        applicantLocationRequirements: { '@type': 'Country', name: 'AE' },
+      },
+      breadcrumbData,
+    ],
+  };
 
   return (
     <>
       <SEOHead
-        title={job.metaTitle || `${job.title} at ${job.employer.companyName}`}
+        title={seoTitle}
         description={metaDesc}
-        ogTitle={`${job.title} – ${job.employer.companyName} | DdotsmediaJobs`}
+        ogTitle={`${job.title} – ${job.employer.companyName} | ${cityName} Jobs – DdotsmediaJobs`}
         ogDescription={metaDesc}
         ogImage={job.employer.logoUrl || undefined}
         ogUrl={jobUrl}
         ogType="article"
         canonical={jobUrl}
-        jsonLd={buildJobPostingSchema({
-          title: job.title,
-          description: job.description,
-          slug: job.slug,
-          publishedAt: job.publishedAt,
-          expiresAt: job.expiresAt,
-          employmentType: job.employmentType,
-          workMode: job.workMode,
-          emirate: job.emirate,
-          location: job.location,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
-          salaryCurrency: job.salaryCurrency,
-          skills: job.skills,
-          employer: job.employer,
-          category: job.category,
-        })}
+        jsonLd={combinedSchema}
       />
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link to="/jobs" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-brand-600 mb-6 transition-colors">
@@ -198,7 +231,7 @@ export function JobDetail() {
               {[
                 { icon: MapPin, label: EMIRATES_LABELS[job.emirate as Emirates] || job.emirate },
                 { icon: Briefcase, label: WORK_MODE_LABELS[job.workMode as WorkMode] },
-                { icon: DollarSign, label: job.salaryMin && job.salaryMax ? `AED ${fmt(job.salaryMin)}–${fmt(job.salaryMax)}` : job.salaryNegotiable ? 'Negotiable' : 'Not specified' },
+                { icon: Banknote, label: job.salaryMin && job.salaryMax ? `AED ${fmt(job.salaryMin)}–${fmt(job.salaryMax)}` : job.salaryNegotiable ? 'Negotiable' : 'Not specified' },
                 { icon: Clock, label: `${job.experienceMin}${job.experienceMax ? `–${job.experienceMax}` : '+'} yrs exp` },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="text-center">

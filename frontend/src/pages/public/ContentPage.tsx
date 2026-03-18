@@ -1,4 +1,3 @@
-import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -26,7 +25,7 @@ export function ContentPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['content-page', slug],
-    queryFn: () => api.get(`/content/${slug}`).then((r) => r.data.data),
+    queryFn: () => api.get(`/pages/${slug}`).then((r) => r.data.data),
     enabled: !!slug,
   });
 

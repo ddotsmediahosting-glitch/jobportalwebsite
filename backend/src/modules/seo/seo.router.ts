@@ -9,14 +9,30 @@ const BASE_URL = (process.env.FRONTEND_URL || 'https://ddotsmediajobs.com').spli
 // ── Robots.txt ─────────────────────────────────────────────────────────────────
 router.get('/robots.txt', (_req: Request, res: Response) => {
   res.type('text/plain');
+  res.set('Cache-Control', 'public, max-age=86400');
   res.send(
     `User-agent: *
 Allow: /
+
+# Private / dynamic sections — no crawl value
 Disallow: /admin/
 Disallow: /employer/
 Disallow: /api/
+Disallow: /dashboard/
+Disallow: /seeker/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /?s=
+Disallow: /search?
 
-Sitemap: ${BASE_URL}/api/v1/seo/sitemap.xml
+# Static assets — crawlable (CDN/build artefacts)
+Allow: /assets/
+Allow: /static/
+
+Sitemap: ${BASE_URL}/sitemap.xml
 `,
   );
 });
@@ -41,40 +57,76 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     }),
   ]);
 
+  // ── City pages (emirate filter URLs) ──────────────────────────────────────
+  const cityPages = [
+    { emirate: 'DUBAI',          slug: 'dubai' },
+    { emirate: 'ABU_DHABI',      slug: 'abu-dhabi' },
+    { emirate: 'SHARJAH',        slug: 'sharjah' },
+    { emirate: 'AJMAN',          slug: 'ajman' },
+    { emirate: 'RAS_AL_KHAIMAH', slug: 'ras-al-khaimah' },
+    { emirate: 'FUJAIRAH',       slug: 'fujairah' },
+    { emirate: 'UMM_AL_QUWAIN',  slug: 'umm-al-quwain' },
+  ];
+
+  // ── Fixed category keyword pages ──────────────────────────────────────────
+  const fixedCategoryPages = [
+    'sales', 'it-technology', 'engineering', 'healthcare', 'hospitality',
+    'finance-accounting', 'construction', 'logistics', 'marketing',
+    'fresher-entry-level', 'part-time', 'remote', 'visa-sponsored',
+  ];
+
   const staticPages = [
-    { url: '/', priority: '1.0', changefreq: 'daily' },
-    { url: '/jobs', priority: '0.9', changefreq: 'hourly' },
-    { url: '/companies', priority: '0.8', changefreq: 'daily' },
-    { url: '/salary-insights', priority: '0.7', changefreq: 'weekly' },
-    { url: '/career-advisor', priority: '0.7', changefreq: 'weekly' },
-    { url: '/interview-prep', priority: '0.7', changefreq: 'weekly' },
-    { url: '/cv-analyzer', priority: '0.6', changefreq: 'weekly' },
-    { url: '/cv-builder', priority: '0.6', changefreq: 'weekly' },
-    { url: '/pages/about', priority: '0.5', changefreq: 'monthly' },
-    { url: '/pages/contact', priority: '0.5', changefreq: 'monthly' },
-    { url: '/pages/pricing', priority: '0.6', changefreq: 'monthly' },
-    { url: '/pages/privacy-policy', priority: '0.3', changefreq: 'yearly' },
-    { url: '/pages/terms', priority: '0.3', changefreq: 'yearly' },
+    // Core
+    { url: '/',                  priority: '1.0', changefreq: 'daily'   },
+    { url: '/jobs',              priority: '0.9', changefreq: 'hourly'  },
+    { url: '/companies',         priority: '0.8', changefreq: 'daily'   },
+    // AI tools
+    { url: '/salary-insights',   priority: '0.7', changefreq: 'weekly'  },
+    { url: '/career-advisor',    priority: '0.7', changefreq: 'weekly'  },
+    { url: '/interview-prep',    priority: '0.7', changefreq: 'weekly'  },
+    { url: '/cv-analyzer',       priority: '0.6', changefreq: 'weekly'  },
+    { url: '/cv-builder',        priority: '0.6', changefreq: 'weekly'  },
+    // Static info pages
+    { url: '/pages/about',           priority: '0.5', changefreq: 'monthly' },
+    { url: '/pages/contact',         priority: '0.5', changefreq: 'monthly' },
+    { url: '/pages/pricing',         priority: '0.6', changefreq: 'monthly' },
+    { url: '/pages/faq',             priority: '0.5', changefreq: 'monthly' },
+    { url: '/pages/privacy-policy',  priority: '0.3', changefreq: 'yearly'  },
+    { url: '/pages/terms',           priority: '0.3', changefreq: 'yearly'  },
   ];
 
   const now = new Date().toISOString().split('T')[0];
 
+  const u = (loc: string, lastmod: string, changefreq: string, priority: string) =>
+    `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+
   const urlEntries = [
-    ...staticPages.map(
-      (p) =>
-        `  <url>\n    <loc>${BASE_URL}${p.url}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`,
+    // Static pages
+    ...staticPages.map((p) => u(`${BASE_URL}${p.url}`, now, p.changefreq, p.priority)),
+
+    // City / emirate pages — high-value SEO targets
+    ...cityPages.map((c) =>
+      u(`${BASE_URL}/jobs?emirate=${c.emirate}`, now, 'daily', '0.85'),
     ),
-    ...jobs.map(
-      (j) =>
-        `  <url>\n    <loc>${BASE_URL}/jobs/${j.slug}</loc>\n    <lastmod>${j.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`,
+
+    // Fixed keyword category pages
+    ...fixedCategoryPages.map((slug) =>
+      u(`${BASE_URL}/jobs?q=${slug}`, now, 'daily', '0.75'),
     ),
-    ...employers.map(
-      (e) =>
-        `  <url>\n    <loc>${BASE_URL}/companies/${e.slug}</loc>\n    <lastmod>${e.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`,
+
+    // Dynamic DB categories
+    ...categories.map((c) =>
+      u(`${BASE_URL}/jobs?categoryId=${c.id}`, c.updatedAt.toISOString().split('T')[0], 'daily', '0.75'),
     ),
-    ...categories.map(
-      (c) =>
-        `  <url>\n    <loc>${BASE_URL}/jobs?category=${c.slug}</loc>\n    <lastmod>${c.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>`,
+
+    // Individual job listings
+    ...jobs.map((j) =>
+      u(`${BASE_URL}/jobs/${j.slug}`, j.updatedAt.toISOString().split('T')[0], 'weekly', '0.8'),
+    ),
+
+    // Company profiles
+    ...employers.map((e) =>
+      u(`${BASE_URL}/companies/${e.slug}`, e.updatedAt.toISOString().split('T')[0], 'weekly', '0.6'),
     ),
   ];
 

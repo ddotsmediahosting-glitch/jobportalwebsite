@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { SEOHead } from '../../components/SEOHead';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search, MapPin, TrendingUp, Users, Briefcase, ArrowRight, Star,
@@ -126,6 +127,13 @@ export function Home() {
 
   return (
     <div className="overflow-hidden">
+      <SEOHead
+        title="Jobs in UAE | Dubai, Abu Dhabi &amp; Sharjah Vacancies 2026"
+        description="Find the latest jobs in UAE. Browse thousands of vacancies in Dubai, Abu Dhabi, Sharjah and across the Emirates. Full-time, part-time, fresher &amp; visa-sponsored roles. Apply free today."
+        canonical="https://ddotsmediajobs.com/"
+        ogUrl="https://ddotsmediajobs.com/"
+      />
+
       {/* ─── Hero ──────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-hero text-white overflow-hidden">
         {/* Decorative blobs */}
@@ -155,14 +163,15 @@ export function Home() {
 
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 leading-[1.1] tracking-tight text-balance">
-              Find Your Dream Job<br />
-              in the{' '}
+              Jobs in{' '}
               <span className="relative inline-block">
                 <span className="text-gold-400">UAE</span>
                 <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 120 8" fill="none">
                   <path d="M2 6 Q60 1 118 6" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" fill="none" />
                 </svg>
               </span>
+              <br />
+              <span className="text-3xl sm:text-4xl lg:text-5xl">Find Dubai, Abu Dhabi &amp; Sharjah Vacancies</span>
             </h1>
             <p className="text-lg sm:text-xl text-brand-100/90 mb-10 max-w-xl mx-auto leading-relaxed">
               Connect with top employers across Abu Dhabi, Dubai, Sharjah and all seven Emirates
@@ -441,6 +450,33 @@ export function Home() {
                   <p className="text-xs text-purple-300 truncate">{desc}</p>
                 </div>
                 <ChevronRight size={14} className="text-white/30 group-hover:text-white/60 ml-auto flex-shrink-0 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SEO Keyword Footer Links ────────────────────────────────────── */}
+      <section className="bg-gray-50 border-t border-gray-100 py-10 px-4">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Browse Jobs by Location &amp; Category</h2>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {[
+              { label: 'Jobs in Dubai', to: '/jobs?emirate=DUBAI' },
+              { label: 'Jobs in Abu Dhabi', to: '/jobs?emirate=ABU_DHABI' },
+              { label: 'Jobs in Sharjah', to: '/jobs?emirate=SHARJAH' },
+              { label: 'Jobs in Ajman', to: '/jobs?emirate=AJMAN' },
+              { label: 'Sales Jobs UAE', to: '/jobs?q=sales' },
+              { label: 'IT Jobs UAE', to: '/jobs?q=IT' },
+              { label: 'Fresher Jobs Dubai', to: '/jobs?emirate=DUBAI&q=fresher' },
+              { label: 'Visa Sponsored Jobs UAE', to: '/jobs?q=visa+sponsored' },
+              { label: 'Remote Jobs UAE', to: '/jobs?workMode=REMOTE' },
+              { label: 'Part-Time Jobs UAE', to: '/jobs?employmentType=PART_TIME' },
+              { label: 'Healthcare Jobs UAE', to: '/jobs?q=healthcare' },
+              { label: 'Engineering Jobs UAE', to: '/jobs?q=engineering' },
+            ].map(({ label, to }) => (
+              <Link key={to} to={to} className="text-sm text-brand-600 hover:text-brand-800 hover:underline transition-colors">
+                {label}
               </Link>
             ))}
           </div>
