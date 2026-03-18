@@ -18,7 +18,9 @@ interface Category {
   slug: string;
   iconUrl?: string;
   parentId?: string | null;
-  _count?: { jobs: number; children: number };
+  isActive?: boolean;
+  isFeatured?: boolean;
+  _count?: { jobs: number };
   children?: Category[];
 }
 
@@ -32,53 +34,127 @@ function CategoryRow({ cat, depth, onEdit, onDelete, onAddChild }: {
   onDelete: (c: Category) => void;
   onAddChild: (parentId: string, parentName: string) => void;
 }) {
-  const [open, setOpen] = useState(depth === 0);
+  const [open, setOpen] = useState(true);
   const hasChildren = (cat.children?.length ?? 0) > 0;
+  const subCount = cat.children?.length ?? 0;
+
   return (
     <>
-      <tr className="hover:bg-gray-50">
+      <tr className={`hover:bg-gray-50 ${depth === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
         <td className="px-4 py-2.5">
-          <div className="flex items-center gap-1" style={{ paddingLeft: `${depth * 22}px` }}>
+          <div
+            ref={(el) => { if (el) el.style.setProperty('--indent', `${depth * 24}px`); }}
+            className="flex items-center gap-1.5 [padding-left:var(--indent,0px)]"
+          >
+            {/* Indent connector line for subcategories */}
+            {depth > 0 && (
+              <span className="inline-block w-3 border-l-2 border-b-2 border-gray-200 h-3 rounded-bl mr-0.5 flex-shrink-0" />
+            )}
+
+            {/* Expand/collapse toggle */}
             {hasChildren ? (
-              <button onClick={() => setOpen(!open)} className="text-gray-400 hover:text-gray-600">
+              <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                aria-label={open ? 'Collapse' : 'Expand'}
+              >
                 {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </button>
-            ) : <span className="w-4" />}
-            {hasChildren
-              ? <FolderOpen className="h-4 w-4 text-brand-400 flex-shrink-0" />
-              : depth > 0
-                ? <Tag className="h-3.5 w-3.5 text-gray-300 flex-shrink-0" />
-                : <Folder className="h-4 w-4 text-gray-300 flex-shrink-0" />}
-            <span className="ml-1.5 text-sm font-medium text-gray-900">{cat.name}</span>
+            ) : (
+              <span className="w-4 flex-shrink-0" />
+            )}
+
+            {/* Icon */}
+            {depth === 0
+              ? (hasChildren
+                ? <FolderOpen className="h-4 w-4 text-brand-400 flex-shrink-0" />
+                : <Folder className="h-4 w-4 text-brand-300 flex-shrink-0" />)
+              : <Tag className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+            }
+
+            <span className={`ml-1 text-sm font-medium ${depth === 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+              {cat.name}
+            </span>
+
+            {/* Badges */}
             {depth === 0 && (
-              <span className="ml-2 text-xs bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded font-medium">Category</span>
+              <span className="ml-1.5 text-[10px] font-bold bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                Category
+              </span>
             )}
             {depth > 0 && (
-              <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-medium">Sub</span>
+              <span className="ml-1.5 text-[10px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                Sub
+              </span>
+            )}
+            {cat.isFeatured && (
+              <span className="text-[10px] font-bold bg-gold-100 text-yellow-700 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                Featured
+              </span>
+            )}
+            {cat.isActive === false && (
+              <span className="text-[10px] font-bold bg-red-50 text-red-500 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                Inactive
+              </span>
             )}
           </div>
         </td>
-        <td className="px-4 py-2.5 text-sm text-gray-500 hidden md:table-cell">
-          {cat._count?.jobs ?? 0} jobs · {cat._count?.children ?? 0} sub-categories
+
+        <td className="px-4 py-2.5 text-xs text-gray-500 hidden md:table-cell">
+          <span className="font-medium text-gray-700">{cat._count?.jobs ?? 0}</span> jobs
+          {depth === 0 && (
+            <> · <span className="font-medium text-gray-700">{subCount}</span> sub-categories</>
+          )}
         </td>
+
+        <td className="px-4 py-2.5 text-xs text-gray-400 hidden lg:table-cell font-mono">
+          {cat.slug}
+        </td>
+
         <td className="px-4 py-2.5">
           <div className="flex justify-end gap-1">
+            {/* Add sub-category button — only on root categories */}
             {depth === 0 && (
               <button
+                type="button"
                 onClick={() => onAddChild(cat.id, cat.name)}
-                className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50"
-                title="Add sub-category"
+                className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
+                title={`Add sub-category under "${cat.name}"`}
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
             )}
-            <button onClick={() => onEdit(cat)} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-            <button onClick={() => onDelete(cat)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+            <button
+              type="button"
+              onClick={() => onEdit(cat)}
+              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+              title="Edit"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(cat)}
+              className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         </td>
       </tr>
+
+      {/* Render children when expanded */}
       {open && hasChildren && cat.children!.map((child) => (
-        <CategoryRow key={child.id} cat={child} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} />
+        <CategoryRow
+          key={child.id}
+          cat={child}
+          depth={depth + 1}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onAddChild={onAddChild}
+        />
       ))}
     </>
   );
@@ -108,7 +184,8 @@ export function AdminCategories() {
   const [modalMode, setModalMode] = useState<'category' | 'subcategory'>('category');
   const [parentInfo, setParentInfo] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: categories, isLoading } = useQuery({
+  // Fetch full tree (including inactive items for admin)
+  const { data: categories, isLoading } = useQuery<Category[]>({
     queryKey: ['admin-categories'],
     queryFn: () => api.get('/categories?all=true').then((r) => r.data.data),
   });
@@ -117,6 +194,7 @@ export function AdminCategories() {
     resolver: zodResolver(categorySchema),
   });
 
+  // Auto-generate slug from name (only on create)
   const watchedName = watch('name', '');
   useEffect(() => {
     if (!editingCat) {
@@ -143,8 +221,24 @@ export function AdminCategories() {
   const openEdit = (cat: Category) => {
     setEditingCat(cat);
     setModalMode(cat.parentId ? 'subcategory' : 'category');
-    setParentInfo(null);
-    reset({ name: cat.name, slug: cat.slug, iconUrl: cat.iconUrl ?? '', parentId: cat.parentId ?? null, sortOrder: 0, isActive: true, isFeatured: false });
+
+    // Resolve parent info for display in modal header
+    if (cat.parentId) {
+      const parent = categories?.find((c) => c.id === cat.parentId);
+      setParentInfo(parent ? { id: parent.id, name: parent.name } : null);
+    } else {
+      setParentInfo(null);
+    }
+
+    reset({
+      name: cat.name,
+      slug: cat.slug,
+      iconUrl: cat.iconUrl ?? '',
+      parentId: cat.parentId ?? null,
+      sortOrder: 0,
+      isActive: cat.isActive !== false,
+      isFeatured: cat.isFeatured ?? false,
+    });
     setModalOpen(true);
   };
 
@@ -177,21 +271,38 @@ export function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/categories/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-categories'] }); toast.success('Deleted.'); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-categories'] });
+      toast.success('Deleted.');
+    },
     onError: (err) => toast.error(getApiError(err)),
   });
 
   const onSubmit = (data: CategoryInput) => {
-    // On create: generate unique slug. On edit: preserve original slug for URL stability.
-    const slug = editingCat ? editingCat.slug : `${slugify(data.name)}-${Date.now().toString(36)}`;
-    const payload = { ...data, slug };
+    // Convert empty-string parentId to null (Select sends '' for "None" option)
+    const cleanedParentId = data.parentId === ('' as unknown as null) ? null : data.parentId;
+    const slug = editingCat
+      ? editingCat.slug  // preserve slug for URL stability
+      : `${slugify(data.name)}-${Date.now().toString(36)}`;  // unique slug on create
+
+    const payload: CategoryInput = { ...data, parentId: cleanedParentId, slug };
     if (editingCat) updateMutation.mutate({ id: editingCat.id, data: payload });
     else createMutation.mutate(payload);
   };
 
-  // Derive flat top-level list from the tree for the parent selector
+  const handleDelete = (cat: Category) => {
+    const hasChildren = (cat.children?.length ?? 0) > 0;
+    if (hasChildren) {
+      toast.error(`Cannot delete "${cat.name}" — it has ${cat.children!.length} sub-categories. Delete them first.`);
+      return;
+    }
+    if (!confirm(`Delete "${cat.name}"? This cannot be undone.`)) return;
+    deleteMutation.mutate(cat.id);
+  };
+
+  // Parent selector options — only root-level categories (no sub-categories as parents)
   const parentOptions = [
-    { value: '', label: 'None (top-level category)' },
+    { value: '', label: '— None (top-level category) —' },
     ...(categories?.map((c: Category) => ({ value: c.id, label: c.name })) ?? []),
   ];
 
@@ -200,18 +311,19 @@ export function AdminCategories() {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-          <p className="text-gray-500 mt-1">
-            {totalCategories} categories · {totalSubs} sub-categories
+          <p className="text-gray-500 mt-1 text-sm">
+            <span className="font-semibold text-gray-700">{totalCategories}</span> top-level categories
+            &nbsp;·&nbsp;
+            <span className="font-semibold text-gray-700">{totalSubs}</span> sub-categories
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" icon={<Plus className="h-4 w-4" />} onClick={openCreateCategory}>
-            Add Category
-          </Button>
-        </div>
+        <Button icon={<Plus className="h-4 w-4" />} onClick={openCreateCategory}>
+          Add Category
+        </Button>
       </div>
 
       {isLoading ? (
@@ -223,46 +335,86 @@ export function AdminCategories() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">Stats</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 hidden lg:table-cell">Slug</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {categories?.map((cat: Category) => (
-                <CategoryRow key={cat.id} cat={cat} depth={0} onEdit={openEdit}
-                  onDelete={(c) => { if (confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c.id); }}
-                  onAddChild={openCreateSubCategory} />
+                <CategoryRow
+                  key={cat.id}
+                  cat={cat}
+                  depth={0}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onAddChild={openCreateSubCategory}
+                />
               ))}
             </tbody>
           </table>
           {!categories?.length && (
-            <EmptyState illustration="generic" title="No categories yet" description="Add job categories to help employers and seekers." className="py-8" />
+            <EmptyState
+              illustration="generic"
+              title="No categories yet"
+              description="Add top-level categories first, then add sub-categories under them."
+              className="py-8"
+            />
           )}
         </div>
       )}
 
+      {/* Legend */}
+      {(categories?.length ?? 0) > 0 && (
+        <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded bg-brand-100" />
+            Category (top-level)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded bg-gray-100" />
+            Sub-category
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Plus className="h-3 w-3 text-brand-500" />
+            Click <strong className="text-gray-500">+</strong> on a category row to add a sub-category
+          </span>
+        </div>
+      )}
+
+      {/* Create / Edit Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={closeModal}
-        title={editingCat
-          ? `Edit ${editingCat.parentId ? 'Sub-category' : 'Category'}`
-          : modalMode === 'subcategory'
-            ? `Add Sub-category${parentInfo ? ` under "${parentInfo.name}"` : ''}`
-            : 'Add Category'}
+        title={
+          editingCat
+            ? `Edit ${editingCat.parentId ? 'Sub-category' : 'Category'}: ${editingCat.name}`
+            : modalMode === 'subcategory'
+              ? `Add Sub-category${parentInfo ? ` under "${parentInfo.name}"` : ''}`
+              : 'Add New Category'
+        }
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Parent selector — only shown when editing, for reassignment */}
-          {editingCat && (
-            <Select
-              {...register('parentId')}
-              label="Parent Category"
-              options={parentOptions}
-              error={errors.parentId?.message}
-            />
-          )}
+          {/* When CREATING a sub-category, show parent as read-only banner */}
           {!editingCat && modalMode === 'subcategory' && parentInfo && (
-            <div className="bg-brand-50 text-brand-700 text-sm rounded-lg px-3 py-2">
-              Sub-category of: <strong>{parentInfo.name}</strong>
+            <div className="flex items-center gap-2 bg-brand-50 text-brand-700 text-sm rounded-xl px-4 py-2.5 border border-brand-100">
+              <FolderOpen className="h-4 w-4 flex-shrink-0" />
+              <span>Parent category: <strong>{parentInfo.name}</strong></span>
             </div>
+          )}
+
+          {/* When EDITING, show parent dropdown to allow reassignment */}
+          {editingCat && (
+            <>
+              <Select
+                {...register('parentId')}
+                label="Parent Category"
+                options={parentOptions}
+                error={errors.parentId?.message}
+              />
+              <p className="text-xs text-gray-400 -mt-2">
+                Set to "None" to make this a top-level category. Choose a category to make it a sub-category.
+              </p>
+            </>
           )}
 
           <Input
@@ -275,16 +427,47 @@ export function AdminCategories() {
           />
 
           <Input
+            {...register('slug')}
+            label="Slug"
+            placeholder="auto-generated"
+            error={errors.slug?.message}
+          />
+
+          <Input
             {...register('iconUrl')}
             label="Icon URL (optional)"
             placeholder="https://..."
             error={errors.iconUrl?.message}
           />
 
-          <div className="flex justify-end gap-3 pt-2">
+          {/* Active / Featured toggles */}
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                {...register('isActive')}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+              />
+              <span className="text-sm text-gray-700">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                {...register('isFeatured')}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+              />
+              <span className="text-sm text-gray-700">Featured</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
             <Button type="button" variant="ghost" onClick={closeModal}>Cancel</Button>
             <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>
-              {editingCat ? 'Save Changes' : modalMode === 'subcategory' ? 'Create Sub-category' : 'Create Category'}
+              {editingCat
+                ? 'Save Changes'
+                : modalMode === 'subcategory'
+                  ? 'Create Sub-category'
+                  : 'Create Category'}
             </Button>
           </div>
         </form>
