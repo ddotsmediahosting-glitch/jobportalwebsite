@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { SEOHead } from '../../components/SEOHead';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Search, MapPin, TrendingUp, Users, Briefcase, ArrowRight, Star,
+  Search, MapPin, Briefcase, ArrowRight, Star,
   Zap, CheckCircle,
   Code2, HeartPulse, Building, BarChart3, ShoppingBag, Plane, Building2,
 } from 'lucide-react';
@@ -93,14 +93,6 @@ export function Home() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
-          {/* Badge */}
-          <div className="flex justify-center mb-6">
-            <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-brand-100 px-4 py-1.5 rounded-full text-sm font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-              10,000+ active jobs across the UAE
-            </span>
-          </div>
-
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 leading-[1.1] tracking-tight text-balance">
               Jobs in{' '}
@@ -164,29 +156,9 @@ export function Home() {
                 </Link>
               ))}
             </div>
-            {/* Trusted note */}
-            <p className="text-xs text-brand-200/50 mt-6">Trusted by professionals from Emirates NBD, ADNOC, Dubai Holdings, and 2,000+ companies</p>
           </div>
         </div>
 
-        {/* Stats bar */}
-        <div className="relative border-t border-white/10 bg-black/20 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-3 gap-4 text-center">
-            {[
-              { icon: Briefcase, stat: '10,000+', label: 'Active Jobs', color: 'text-brand-300' },
-              { icon: Users, stat: '50,000+', label: 'Job Seekers', color: 'text-gold-300' },
-              { icon: TrendingUp, stat: '2,000+', label: 'Companies', color: 'text-green-300' },
-            ].map(({ icon: Icon, stat, label, color }) => (
-              <div key={label} className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                <Icon className={`h-4 w-4 ${color}`} />
-                <div>
-                  <div className={`text-xl sm:text-2xl font-extrabold text-white`}>{stat}</div>
-                  <div className="text-xs text-brand-200/70">{label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ─── Company Ticker ──────────────────────────────────────────────── */}
@@ -340,33 +312,6 @@ export function Home() {
                 <h3 className="text-white font-bold mb-2">{title}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SEO Keyword Footer Links ────────────────────────────────────── */}
-      <section className="bg-gray-50 border-t border-gray-100 py-10 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Browse Jobs by Location &amp; Category</h2>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {[
-              { label: 'Jobs in Dubai', to: '/jobs?emirate=DUBAI' },
-              { label: 'Jobs in Abu Dhabi', to: '/jobs?emirate=ABU_DHABI' },
-              { label: 'Jobs in Sharjah', to: '/jobs?emirate=SHARJAH' },
-              { label: 'Jobs in Ajman', to: '/jobs?emirate=AJMAN' },
-              { label: 'Sales Jobs UAE', to: '/jobs?q=sales' },
-              { label: 'IT Jobs UAE', to: '/jobs?q=IT' },
-              { label: 'Fresher Jobs Dubai', to: '/jobs?emirate=DUBAI&q=fresher' },
-              { label: 'Visa Sponsored Jobs UAE', to: '/jobs?q=visa+sponsored' },
-              { label: 'Remote Jobs UAE', to: '/jobs?workMode=REMOTE' },
-              { label: 'Part-Time Jobs UAE', to: '/jobs?employmentType=PART_TIME' },
-              { label: 'Healthcare Jobs UAE', to: '/jobs?q=healthcare' },
-              { label: 'Engineering Jobs UAE', to: '/jobs?q=engineering' },
-            ].map(({ label, to }) => (
-              <Link key={to} to={to} className="text-sm text-brand-600 hover:text-brand-800 hover:underline transition-colors">
-                {label}
-              </Link>
             ))}
           </div>
         </div>
