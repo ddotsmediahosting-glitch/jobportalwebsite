@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  MapPin, Briefcase, DollarSign, Clock, Users, Bookmark, BookmarkCheck, ExternalLink, Flag, ChevronLeft,
+  MapPin, Briefcase, Banknote, Clock, Users, Bookmark, BookmarkCheck, ExternalLink, Flag, ChevronLeft,
   Sparkles, Loader2, TrendingUp,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
@@ -231,7 +231,7 @@ export function JobDetail() {
               {[
                 { icon: MapPin, label: EMIRATES_LABELS[job.emirate as Emirates] || job.emirate },
                 { icon: Briefcase, label: WORK_MODE_LABELS[job.workMode as WorkMode] },
-                { icon: DollarSign, label: job.salaryMin && job.salaryMax ? `AED ${fmt(job.salaryMin)}–${fmt(job.salaryMax)}` : job.salaryNegotiable ? 'Negotiable' : 'Not specified' },
+                { icon: Banknote, label: job.salaryMin && job.salaryMax ? `AED ${fmt(job.salaryMin)}–${fmt(job.salaryMax)}` : job.salaryNegotiable ? 'Negotiable' : 'Not specified' },
                 { icon: Clock, label: `${job.experienceMin}${job.experienceMax ? `–${job.experienceMax}` : '+'} yrs exp` },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="text-center">

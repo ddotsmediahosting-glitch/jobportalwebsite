@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, DollarSign, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap } from 'lucide-react';
+import { MapPin, Briefcase, Banknote, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap } from 'lucide-react';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, JobListItem } from '@uaejobs/shared';
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'AED', negotiable = false) {
@@ -129,7 +129,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
         </span>
         {salary && (
           <span className="flex items-center gap-1 text-emerald-700 font-medium">
-            <DollarSign size={11} className="text-emerald-500" />
+            <Banknote size={11} className="text-emerald-500" />
             {salary}
           </span>
         )}

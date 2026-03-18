@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { DollarSign, TrendingUp, MapPin, Briefcase, Search, ChevronDown, Plus, X } from 'lucide-react';
+import { Banknote, TrendingUp, MapPin, Briefcase, Search, ChevronDown, Plus, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import { EMIRATES_LABELS, Emirates } from '@uaejobs/shared';
 import toast from 'react-hot-toast';
@@ -91,7 +91,7 @@ export function SalaryExplorer() {
       <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-900 text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm mb-6">
-            <DollarSign size={14} className="text-emerald-300" />
+            <Banknote size={14} className="text-emerald-300" />
             <span className="text-emerald-100">Powered by real salary data from UAE professionals</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">UAE Salary Explorer</h1>
@@ -172,7 +172,7 @@ export function SalaryExplorer() {
                       </>
                     ) : (
                       <div className="text-center py-8 text-gray-400">
-                        <DollarSign size={32} className="mx-auto mb-2 opacity-30" />
+                        <Banknote size={32} className="mx-auto mb-2 opacity-30" />
                         <p className="text-sm">No data yet for this search.</p>
                         <button onClick={() => setShowSubmit(true)} className="mt-2 text-emerald-600 text-xs underline">
                           Be the first to submit your salary!

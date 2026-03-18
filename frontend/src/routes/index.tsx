@@ -16,6 +16,8 @@ const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword').then(
 const ResetPassword = lazy(() => import('../pages/public/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const VerifyEmail = lazy(() => import('../pages/public/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ContentPage = lazy(() => import('../pages/public/ContentPage').then((m) => ({ default: m.ContentPage })));
+const AboutUs = lazy(() => import('../pages/public/AboutUs').then((m) => ({ default: m.AboutUs })));
+const ContactUs = lazy(() => import('../pages/public/ContactUs').then((m) => ({ default: m.ContactUs })));
 const Companies = lazy(() => import('../pages/public/Companies').then((m) => ({ default: m.Companies })));
 const CompanyDetail = lazy(() => import('../pages/public/CompanyDetail').then((m) => ({ default: m.CompanyDetail })));
 const NotificationsPage = lazy(() => import('../pages/public/Notifications').then((m) => ({ default: m.NotificationsPage })));
@@ -110,6 +112,8 @@ export function AppRoutes() {
           <Route path="jobs" element={<Jobs />} />
           <Route path="jobs/:slug" element={<JobDetail />} />
           <Route path="pages/:slug" element={<ContentPage />} />
+          <Route path="about" element={<AboutUs />} />
+          <Route path="contact" element={<ContactUs />} />
           <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="register" element={<GuestOnly><Register /></GuestOnly>} />
           <Route path="forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
