@@ -89,61 +89,47 @@ export function PublicLayout() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+
+            {/* Left — Logo */}
+            <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-glow-brand">
                 <span className="text-white font-black text-sm">D</span>
               </div>
               <span className="font-bold text-gray-900 text-[15px]">
-                Ddotsmedia<span className="text-brand-600">Jobs</span>
+                DdotsMedia<span className="text-brand-600">Jobs</span>
               </span>
             </Link>
 
-            {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center gap-6 h-16">
-              <NavLink to="/">
-                <span className="flex items-center gap-1.5">
-                  <Home size={13} /> Home
-                </span>
-              </NavLink>
-              <NavLink to="/jobs">
-                <span className="flex items-center gap-1.5">
-                  <Search size={13} /> Browse Jobs
-                </span>
-              </NavLink>
-              <NavLink to="/companies">
-                <span className="flex items-center gap-1.5">
-                  <Building2 size={13} /> Companies
-                </span>
-              </NavLink>
-              <Link
-                to="/community"
-                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-sm"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                Community
-              </Link>
-              <Link
-                to="/whatsapp-groups"
-                className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20bc5a] text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow-sm animate-pulse hover:animate-none"
-              >
-                {WHATSAPP_SVG} WA Groups
-              </Link>
-              {user && (
-                <Link
-                  to="/post-job"
-                  className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
-                >
-                  <Briefcase size={12} /> Post a Job
-                </Link>
-              )}
+            {/* Center — Desktop nav */}
+            <nav className="hidden lg:flex items-center h-16">
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/jobs', label: 'Browse Jobs' },
+                { to: '/companies', label: 'Companies' },
+                { to: '/contact', label: 'Contact' },
+              ].map(({ to, label }, i, arr) => (
+                <React.Fragment key={to}>
+                  <NavLink to={to}>{label}</NavLink>
+                  {i < arr.length - 1 && (
+                    <span className="text-gray-300 mx-4 select-none">|</span>
+                  )}
+                </React.Fragment>
+              ))}
             </nav>
 
-            {/* Auth */}
-            <div className="hidden md:flex items-center gap-2.5">
+            {/* Right — Post a Job + Auth */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                to="/post-job"
+                className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
+              >
+                <Briefcase size={13} /> Post a Job
+              </Link>
+
               {user ? (
                 <div className="relative" ref={menuRef}>
                   <button
+                    type="button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl border border-gray-200 hover:border-brand-300 hover:bg-brand-50 text-sm font-medium text-gray-700 transition-all duration-150"
                   >
@@ -226,20 +212,12 @@ export function PublicLayout() {
                   )}
                 </div>
               ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-sm font-medium text-gray-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-150"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="text-sm font-semibold bg-gradient-to-r from-brand-600 to-brand-500 text-white px-4 py-2 rounded-xl hover:from-brand-700 hover:to-brand-600 transition-all duration-150 shadow-sm hover:shadow-glow-brand"
-                  >
-                    Get Started →
-                  </Link>
-                </>
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-gray-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-150"
+                >
+                  Sign In
+                </Link>
               )}
             </div>
 
