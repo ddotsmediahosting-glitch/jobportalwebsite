@@ -3,8 +3,13 @@ import prisma from '../../lib/prisma';
 
 const router = Router();
 
-// FRONTEND_URL may be comma-separated (multiple origins); use only the first as canonical base
-const BASE_URL = (process.env.FRONTEND_URL || 'https://ddotsmediajobs.com').split(',')[0].trim();
+// FRONTEND_URL may be comma-separated (multiple origins); use only the first as canonical base.
+// Always force https:// — sitemap and robots must never emit http:// URLs.
+const BASE_URL = (process.env.FRONTEND_URL || 'https://ddotsmediajobs.com')
+  .split(',')[0]
+  .trim()
+  .replace(/^http:\/\//, 'https://')
+  .replace(/\/$/, ''); // strip trailing slash
 
 // ── Robots.txt ─────────────────────────────────────────────────────────────────
 router.get('/robots.txt', (_req: Request, res: Response) => {
@@ -14,21 +19,41 @@ router.get('/robots.txt', (_req: Request, res: Response) => {
     `User-agent: *
 Allow: /
 
-# Private / dynamic sections — no crawl value
+# ── Private / authenticated sections ────────────────────────────────────────
 Disallow: /admin/
 Disallow: /employer/
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /seeker/
+Disallow: /seeker-dashboard
+Disallow: /profile
+Disallow: /my-applications
+Disallow: /application-tracker
+Disallow: /saved-jobs
+Disallow: /job-alerts
+Disallow: /notifications
+Disallow: /post-job
+Disallow: /my-posts
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /verify-email
-Disallow: /?s=
-Disallow: /search?
 
-# Static assets — crawlable (CDN/build artefacts)
+# ── Query-parameter URL patterns with no SEO value ──────────────────────────
+# Wildcard * matches any path prefix so these rules apply site-wide
+Disallow: /*?s=
+Disallow: /*?search=
+Disallow: /*?sort=
+Disallow: /*?order=
+Disallow: /*?page=
+Disallow: /*?ref=
+Disallow: /*?utm_
+Disallow: /*?isFeatured=
+Disallow: /*?isUrgent=
+Disallow: /*?isEmiratization=
+
+# ── Static assets — always crawlable ────────────────────────────────────────
 Allow: /assets/
 Allow: /static/
 
@@ -87,8 +112,8 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     { url: '/cv-analyzer',       priority: '0.6', changefreq: 'weekly'  },
     { url: '/cv-builder',        priority: '0.6', changefreq: 'weekly'  },
     // Static info pages
-    { url: '/pages/about',           priority: '0.5', changefreq: 'monthly' },
-    { url: '/pages/contact',         priority: '0.5', changefreq: 'monthly' },
+    { url: '/about',                 priority: '0.5', changefreq: 'monthly' },
+    { url: '/contact',               priority: '0.5', changefreq: 'monthly' },
     { url: '/pages/pricing',         priority: '0.6', changefreq: 'monthly' },
     { url: '/pages/faq',             priority: '0.5', changefreq: 'monthly' },
     { url: '/pages/privacy-policy',  priority: '0.3', changefreq: 'yearly'  },
