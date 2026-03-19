@@ -92,6 +92,8 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
           <img
             src={job.employer.logoUrl}
             alt={job.employer.companyName}
+            width="44"
+            height="44"
             className="h-11 w-11 rounded-xl object-contain border border-gray-100 bg-gray-50 flex-shrink-0 shadow-sm"
           />
         ) : (
