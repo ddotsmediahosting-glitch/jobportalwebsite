@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
-import { CompanyTicker } from '../../components/CompanyTicker';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -161,8 +160,6 @@ export function Home() {
 
       </section>
 
-      {/* ─── Company Ticker ──────────────────────────────────────────────── */}
-      <CompanyTicker />
 
       {/* ─── Browse by Category ──────────────────────────────────────────── */}
       {featuredCategories?.length > 0 && (
