@@ -22,10 +22,7 @@ const DOUBLED = [...COMPANIES, ...COMPANIES];
 export function CompanyTicker() {
   return (
     <div className="bg-white border-y border-gray-100 py-4 overflow-hidden">
-      <p className="text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-        Trusted by professionals from
-      </p>
-      <div className="relative">
+<div className="relative">
         {/* Fade edges */}
         <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
         <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
