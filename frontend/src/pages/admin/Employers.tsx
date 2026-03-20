@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Search, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ExternalLink, Pencil } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { Input, Textarea } from '../../components/ui/Input';
 import { VerificationBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 
@@ -55,12 +56,38 @@ export function AdminEmployers() {
   const [searchInput, setSearchInput] = useState('');
   const [verFilter, setVerFilter] = useState('');
   const [selected, setSelected] = useState<Employer | null>(null);
+  const [editEmployer, setEditEmployer] = useState<Employer | null>(null);
+  const [editForm, setEditForm] = useState({ companyName: '', industry: '', description: '', website: '', emirate: '', logoUrl: '', size: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-employers', page, search, verFilter],
     queryFn: () =>
       api.get(`/admin/employers?page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}${verFilter ? `&verificationStatus=${verFilter}` : ''}`).then((r) => r.data.data),
   });
+
+  const updateEmployerMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: typeof editForm }) =>
+      api.patch(`/admin/employers/${id}`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-employers'] });
+      toast.success('Company updated.');
+      setEditEmployer(null);
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  const openEditEmployer = (emp: Employer) => {
+    setEditEmployer(emp);
+    setEditForm({
+      companyName: emp.companyName,
+      industry: emp.industry || '',
+      description: '',
+      website: '',
+      emirate: emp.emirate || '',
+      logoUrl: emp.logoUrl || '',
+      size: '',
+    });
+  };
 
   const verifyMutation = useMutation({
     mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
@@ -168,6 +195,14 @@ export function AdminEmployers() {
                           </>
                         )}
                         <button
+                          type="button"
+                          onClick={() => openEditEmployer(emp)}
+                          className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50"
+                          title="Edit company"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => setSelected(emp)}
                           className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
                           title="View details"
@@ -187,6 +222,64 @@ export function AdminEmployers() {
           <Pagination page={page} totalPages={data?.totalPages} total={data?.total} limit={data?.limit} onPageChange={setPage} />
         </>
       )}
+
+      {/* Edit Company modal */}
+      <Modal isOpen={!!editEmployer} onClose={() => setEditEmployer(null)} title="Edit Company" size="lg">
+        {editEmployer && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+              Editing: <span className="font-semibold">{editEmployer.companyName}</span>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input label="Company Name" value={editForm.companyName}
+                onChange={(e) => setEditForm((p) => ({ ...p, companyName: e.target.value }))} />
+              <Input label="Industry" value={editForm.industry}
+                onChange={(e) => setEditForm((p) => ({ ...p, industry: e.target.value }))}
+                placeholder="e.g. Technology, Finance" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input label="Website" value={editForm.website}
+                onChange={(e) => setEditForm((p) => ({ ...p, website: e.target.value }))}
+                placeholder="https://company.com" />
+              <Input label="Logo URL" value={editForm.logoUrl}
+                onChange={(e) => setEditForm((p) => ({ ...p, logoUrl: e.target.value }))}
+                placeholder="https://..." />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
+                <select title="Emirate" value={editForm.emirate}
+                  onChange={(e) => setEditForm((p) => ({ ...p, emirate: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <option value="">— Select —</option>
+                  {['DUBAI','ABU_DHABI','SHARJAH','AJMAN','RAS_AL_KHAIMAH','FUJAIRAH','UMM_AL_QUWAIN'].map((e) => (
+                    <option key={e} value={e}>{e.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                <select title="Company Size" value={editForm.size}
+                  onChange={(e) => setEditForm((p) => ({ ...p, size: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <option value="">— Select —</option>
+                  {['1-10','11-50','51-200','201-500','501-1000','1000+'].map((s) => (
+                    <option key={s} value={s}>{s} employees</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <Textarea label="Description" value={editForm.description}
+              onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+              rows={3} placeholder="Brief company description..." />
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+              <Button type="button" variant="ghost" onClick={() => setEditEmployer(null)}>Cancel</Button>
+              <Button onClick={() => updateEmployerMutation.mutate({ id: editEmployer.id, data: editForm })}
+                loading={updateEmployerMutation.isPending}>Save Changes</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Detail modal */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Employer Details" size="lg">

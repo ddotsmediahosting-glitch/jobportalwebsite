@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   Search, MoreVertical, ShieldOff, ShieldCheck, Trash2, KeyRound,
-  Download, CheckSquare, Square, Users as UsersIcon, X, UserPlus, Copy, Eye, EyeOff,
+  Download, CheckSquare, Square, Users as UsersIcon, X, UserPlus, Copy, Eye, EyeOff, Pencil,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
@@ -98,6 +98,9 @@ export function AdminUsers() {
   const [showSubAdminPass, setShowSubAdminPass] = useState(false);
   // Reset password result
   const [resetResult, setResetResult] = useState<{ email: string; password: string } | null>(null);
+  // Edit user profile
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editUserForm, setEditUserForm] = useState({ email: '', firstName: '', lastName: '', phone: '', role: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users', page, search, statusFilter, roleFilter],
@@ -138,6 +141,29 @@ export function AdminUsers() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast.success('User deleted.'); setMenuOpen(null); setDetailUser(null); },
     onError: (err) => toast.error(getApiError(err)),
   });
+
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: typeof editUserForm }) =>
+      api.patch(`/admin/users/${id}/profile`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('User profile updated.');
+      setEditUser(null);
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  const openEditUser = (user: User) => {
+    setEditUser(user);
+    setEditUserForm({
+      email: user.email,
+      firstName: user.seekerProfile?.firstName || '',
+      lastName: user.seekerProfile?.lastName || '',
+      phone: '',
+      role: user.role,
+    });
+    setMenuOpen(null);
+  };
 
   const bulkMutation = useMutation({
     mutationFn: ({ userIds, status }: { userIds: string[]; status: string }) =>
@@ -308,6 +334,14 @@ export function AdminUsers() {
                             </button>
                             {menuOpen === user.id && (
                               <div className="absolute right-0 top-8 z-10 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[180px]">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditUser(user)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                                >
+                                  <Pencil className="h-4 w-4" /> Edit Profile
+                                </button>
+                                <hr className="my-1 border-gray-100" />
                                 {user.status === 'ACTIVE' ? (
                                   <button
                                     onClick={() => statusMutation.mutate({ id: user.id, status: 'SUSPENDED' })}
@@ -400,6 +434,45 @@ export function AdminUsers() {
               >
                 Delete User
               </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit User modal */}
+      <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title="Edit User Profile" size="sm">
+        {editUser && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+              Editing: <span className="font-semibold">{editUser.email}</span>
+            </div>
+            <Input label="Email" type="email" value={editUserForm.email}
+              onChange={(e) => setEditUserForm((p) => ({ ...p, email: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="First Name" value={editUserForm.firstName}
+                onChange={(e) => setEditUserForm((p) => ({ ...p, firstName: e.target.value }))}
+                placeholder="First name" />
+              <Input label="Last Name" value={editUserForm.lastName}
+                onChange={(e) => setEditUserForm((p) => ({ ...p, lastName: e.target.value }))}
+                placeholder="Last name" />
+            </div>
+            <Input label="Phone" value={editUserForm.phone}
+              onChange={(e) => setEditUserForm((p) => ({ ...p, phone: e.target.value }))}
+              placeholder="+971 50 000 0000" />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select title="Role" value={editUserForm.role}
+                onChange={(e) => setEditUserForm((p) => ({ ...p, role: e.target.value }))}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="SEEKER">Seeker</option>
+                <option value="EMPLOYER">Employer</option>
+                <option value="SUB_ADMIN">Sub-Admin</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+              <Button type="button" variant="ghost" onClick={() => setEditUser(null)}>Cancel</Button>
+              <Button onClick={() => updateUserMutation.mutate({ id: editUser.id, data: editUserForm })}
+                loading={updateUserMutation.isPending}>Save Changes</Button>
             </div>
           </div>
         )}

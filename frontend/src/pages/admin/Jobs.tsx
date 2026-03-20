@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import {
   Search, CheckCircle, XCircle, Eye, Star, CheckSquare, Square,
   MapPin, Clock, Users, X, ExternalLink, Plus, Trash2, Briefcase,
-  SlidersHorizontal, ArrowUpDown,
+  SlidersHorizontal, ArrowUpDown, Pencil,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
@@ -126,6 +126,12 @@ export function AdminJobs() {
   const [bulkModal, setBulkModal] = useState(false);
   const [postJobModal, setPostJobModal] = useState(false);
   const [postJobForm, setPostJobForm] = useState({ ...emptyForm });
+  const [editJob, setEditJob] = useState<Job | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '', location: '', emirate: 'DUBAI', workMode: 'ONSITE',
+    employmentType: 'FULL_TIME', salaryMin: '', salaryMax: '',
+    isFeatured: false, isUrgent: false, description: '',
+  });
 
   const hasFilters = !!(search || statusFilter || categoryFilter || emirateFilter || sortBy);
 
@@ -227,6 +233,37 @@ export function AdminJobs() {
     },
     onError: (err) => toast.error(getApiError(err)),
   });
+
+  const updateJobMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: typeof editForm }) =>
+      api.patch(`/admin/jobs/${id}`, {
+        ...data,
+        salaryMin: data.salaryMin ? Number(data.salaryMin) : null,
+        salaryMax: data.salaryMax ? Number(data.salaryMax) : null,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-jobs'] });
+      toast.success('Job updated.');
+      setEditJob(null);
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  const openEditJob = (job: Job) => {
+    setEditJob(job);
+    setEditForm({
+      title: job.title,
+      location: job.location || '',
+      emirate: (job as any).emirate || 'DUBAI',
+      workMode: (job as any).workMode || 'ONSITE',
+      employmentType: job.employmentType || 'FULL_TIME',
+      salaryMin: job.salaryMin ? String(job.salaryMin) : '',
+      salaryMax: job.salaryMax ? String(job.salaryMax) : '',
+      isFeatured: job.isFeatured,
+      isUrgent: (job as any).isUrgent || false,
+      description: job.description || '',
+    });
+  };
 
   const createJobMutation = useMutation({
     mutationFn: (data: typeof postJobForm) =>
@@ -409,6 +446,9 @@ export function AdminJobs() {
                             title={job.isFeatured ? 'Remove featured' : 'Mark as featured'}
                           >
                             <Star className="h-4 w-4" fill={job.isFeatured ? 'currentColor' : 'none'} />
+                          </button>
+                          <button onClick={() => openEditJob(job)} className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50" title="Edit job">
+                            <Pencil className="h-4 w-4" />
                           </button>
                           <button onClick={() => setPreviewJob(job)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100" title="Preview">
                             <Eye className="h-4 w-4" />
@@ -697,6 +737,83 @@ export function AdminJobs() {
                 onClick={() => moderateMutation.mutate({ id: rejectModal.job.id, status: 'REJECTED', notes: rejectReason || undefined })}
                 loading={moderateMutation.isPending}>
                 Confirm Reject
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Edit Job Modal ────────────────────────────────────────────────── */}
+      <Modal isOpen={!!editJob} onClose={() => setEditJob(null)} title="Edit Job" size="xl">
+        {editJob && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700">
+              Editing: <span className="font-semibold">{editJob.title}</span> — {editJob.employer.companyName}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+              <input title="Job Title" placeholder="Job title" value={editForm.title} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
+                <select title="Emirate" value={editForm.emirate} onChange={(e) => setEditForm((p) => ({ ...p, emirate: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  {EMIRATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Work Mode</label>
+                <select title="Work Mode" value={editForm.workMode} onChange={(e) => setEditForm((p) => ({ ...p, workMode: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  {WORK_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
+                <select title="Employment Type" value={editForm.employmentType} onChange={(e) => setEditForm((p) => ({ ...p, employmentType: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  {EMPLOYMENT_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input value={editForm.location} onChange={(e) => setEditForm((p) => ({ ...p, location: e.target.value }))}
+                placeholder="e.g. Dubai Marina" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Min (AED/mo)</label>
+                <input title="Salary Min" placeholder="e.g. 5000" type="number" value={editForm.salaryMin} onChange={(e) => setEditForm((p) => ({ ...p, salaryMin: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Max (AED/mo)</label>
+                <input title="Salary Max" placeholder="e.g. 10000" type="number" value={editForm.salaryMax} onChange={(e) => setEditForm((p) => ({ ...p, salaryMax: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea title="Description" placeholder="Job description..." value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                rows={5} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
+            </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.isFeatured} onChange={(e) => setEditForm((p) => ({ ...p, isFeatured: e.target.checked }))} className="rounded" />
+                <span className="text-sm text-gray-700 flex items-center gap-1"><Star className="h-3.5 w-3.5 text-yellow-400" fill="currentColor" /> Featured</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.isUrgent} onChange={(e) => setEditForm((p) => ({ ...p, isUrgent: e.target.checked }))} className="rounded" />
+                <span className="text-sm text-gray-700">Urgent Hiring</span>
+              </label>
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+              <Button type="button" variant="ghost" onClick={() => setEditJob(null)}>Cancel</Button>
+              <Button onClick={() => updateJobMutation.mutate({ id: editJob.id, data: editForm })} loading={updateJobMutation.isPending}>
+                Save Changes
               </Button>
             </div>
           </div>

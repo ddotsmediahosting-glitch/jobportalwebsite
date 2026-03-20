@@ -32,6 +32,27 @@ export function PublicLayout() {
     staleTime: 5 * 60_000,
   });
 
+  const { data: allSettings } = useQuery<Record<string, string>>({
+    queryKey: ['site-settings-all-public'],
+    queryFn: () => api.get('/admin/settings').then((r) => r.data.data),
+    staleTime: 5 * 60_000,
+  });
+
+  const announcement = {
+    active: allSettings?.['announcement_active'] === 'true',
+    text: allSettings?.['announcement_text'] || '',
+    type: allSettings?.['announcement_type'] || 'info',
+    link: allSettings?.['announcement_link'] || '',
+    linkLabel: allSettings?.['announcement_link_label'] || '',
+  };
+
+  const announcementColors: Record<string, string> = {
+    info:    'bg-brand-600 text-white',
+    success: 'bg-green-600 text-white',
+    warning: 'bg-amber-500 text-white',
+    error:   'bg-red-600 text-white',
+  };
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -79,6 +100,17 @@ export function PublicLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Announcement banner */}
+      {announcement.active && announcement.text && (
+        <div className={`${announcementColors[announcement.type] ?? announcementColors.info} text-sm py-2 px-4 text-center flex items-center justify-center gap-3`}>
+          <span>{announcement.text}</span>
+          {announcement.link && announcement.linkLabel && (
+            <Link to={announcement.link} className="underline font-semibold whitespace-nowrap">
+              {announcement.linkLabel} →
+            </Link>
+          )}
+        </div>
+      )}
       {/* Header */}
       <header
         className={`sticky top-0 z-40 transition-all duration-200 ${

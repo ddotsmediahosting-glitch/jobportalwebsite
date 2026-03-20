@@ -507,6 +507,86 @@ export class AdminService {
     return job;
   }
 
+  async updateJob(actorId: string, jobId: string, data: {
+    title?: string; description?: string; location?: string; emirate?: string;
+    salaryMin?: number | null; salaryMax?: number | null; employmentType?: string;
+    workMode?: string; isFeatured?: boolean; isEmiratization?: boolean; isUrgent?: boolean;
+  }) {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundError('Job');
+    const updated = await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.location !== undefined && { location: data.location }),
+        ...(data.emirate !== undefined && { emirate: data.emirate as Emirates }),
+        ...(data.salaryMin !== undefined && { salaryMin: data.salaryMin }),
+        ...(data.salaryMax !== undefined && { salaryMax: data.salaryMax }),
+        ...(data.employmentType !== undefined && { employmentType: data.employmentType as EmploymentType }),
+        ...(data.workMode !== undefined && { workMode: data.workMode as WorkMode }),
+        ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
+        ...(data.isEmiratization !== undefined && { isEmiratization: data.isEmiratization }),
+        ...(data.isUrgent !== undefined && { isUrgent: data.isUrgent }),
+      },
+    });
+    await auditLog(actorId, 'ADMIN', 'JOB_UPDATED', 'Job', jobId, { changes: data });
+    await cacheDel(HOME_CACHE_KEY);
+    return updated;
+  }
+
+  async updateUserProfile(actorId: string, userId: string, data: {
+    email?: string; role?: string; phone?: string; firstName?: string; lastName?: string;
+  }) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { seekerProfile: true } });
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'ADMIN' && actorId !== userId) throw new AppError(403, 'Cannot modify admin users');
+
+    if (data.email || data.role || data.phone) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(data.email && { email: data.email }),
+          ...(data.role && { role: data.role as 'SEEKER' | 'EMPLOYER' | 'ADMIN' | 'SUB_ADMIN' }),
+          ...(data.phone !== undefined && { phone: data.phone }),
+        },
+      });
+    }
+    if ((data.firstName || data.lastName) && user.seekerProfile) {
+      await prisma.seekerProfile.update({
+        where: { userId },
+        data: {
+          ...(data.firstName !== undefined && { firstName: data.firstName }),
+          ...(data.lastName !== undefined && { lastName: data.lastName }),
+        },
+      });
+    }
+    await auditLog(actorId, 'ADMIN', 'USER_PROFILE_UPDATED', 'User', userId, { changes: data });
+    return { message: 'User updated' };
+  }
+
+  async updateEmployer(actorId: string, employerId: string, data: {
+    companyName?: string; industry?: string; description?: string; website?: string;
+    emirate?: string; logoUrl?: string; size?: string;
+  }) {
+    const employer = await prisma.employer.findUnique({ where: { id: employerId } });
+    if (!employer) throw new NotFoundError('Employer');
+    const updated = await prisma.employer.update({
+      where: { id: employerId },
+      data: {
+        ...(data.companyName !== undefined && { companyName: data.companyName }),
+        ...(data.industry !== undefined && { industry: data.industry }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.website !== undefined && { website: data.website }),
+        ...(data.emirate !== undefined && { emirate: data.emirate as Emirates }),
+        ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl }),
+        ...(data.size !== undefined && { size: data.size }),
+      },
+    });
+    await auditLog(actorId, 'ADMIN', 'EMPLOYER_UPDATED', 'Employer', employerId, { changes: data });
+    return updated;
+  }
+
   async toggleJobFeatured(actorId: string, jobId: string) {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) throw new NotFoundError('Job');
