@@ -72,6 +72,21 @@ export class AdminController {
     res.status(201).json({ success: true, data });
   }
 
+  async updateJob(req: AuthRequest, res: Response) {
+    const data = await service.updateJob(req.user!.sub, req.params.id, req.body);
+    res.json({ success: true, data });
+  }
+
+  async updateUserProfile(req: AuthRequest, res: Response) {
+    const data = await service.updateUserProfile(req.user!.sub, req.params.id, req.body);
+    res.json({ success: true, ...data });
+  }
+
+  async updateEmployer(req: AuthRequest, res: Response) {
+    const data = await service.updateEmployer(req.user!.sub, req.params.id, req.body);
+    res.json({ success: true, data });
+  }
+
   async toggleJobFeatured(req: AuthRequest, res: Response) {
     const data = await service.toggleJobFeatured(req.user!.sub, req.params.id);
     res.json({ success: true, data });

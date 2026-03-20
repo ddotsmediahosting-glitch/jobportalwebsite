@@ -21,12 +21,14 @@ router.get('/users/export', ctrl.exportUsers.bind(ctrl));
 router.post('/users/bulk-status', ctrl.bulkUpdateUserStatus.bind(ctrl));
 router.get('/users/:id', ctrl.getUserDetail.bind(ctrl));
 router.patch('/users/:id/status', ctrl.updateUserStatus.bind(ctrl));
+router.patch('/users/:id/profile', ctrl.updateUserProfile.bind(ctrl));
 router.post('/users/:id/reset-password', ctrl.resetUserPassword.bind(ctrl));
 router.delete('/users/:id', ctrl.deleteUser.bind(ctrl));
 
 // Employers
 router.get('/employers', ctrl.listEmployers.bind(ctrl));
 router.patch('/employers/:id/verify', ctrl.verifyEmployer.bind(ctrl));
+router.patch('/employers/:id', ctrl.updateEmployer.bind(ctrl));
 
 // Jobs
 router.get('/jobs', ctrl.listJobs.bind(ctrl));
@@ -34,6 +36,7 @@ router.post('/jobs', ctrl.createJob.bind(ctrl));
 router.post('/jobs/bulk-moderate', ctrl.bulkModerateJobs.bind(ctrl));
 router.patch('/jobs/:id/moderate', ctrl.moderateJob.bind(ctrl));
 router.patch('/jobs/:id/feature', ctrl.toggleJobFeatured.bind(ctrl));
+router.patch('/jobs/:id', ctrl.updateJob.bind(ctrl));
 router.delete('/jobs/:id', ctrl.deleteJob.bind(ctrl));
 
 // Reports
