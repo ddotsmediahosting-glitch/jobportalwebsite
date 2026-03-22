@@ -6,6 +6,7 @@ import {
   Search, MapPin, Briefcase, ArrowRight, Star,
   Zap, CheckCircle,
   Code2, HeartPulse, Building, BarChart3, ShoppingBag, Plane, Building2,
+  Video, Megaphone, Palette, PenTool, Camera, Radio, TrendingUp,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
@@ -18,6 +19,14 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Finance': <BarChart3 size={18} />,
   'Retail': <ShoppingBag size={18} />,
   'Tourism': <Plane size={18} />,
+  'Media': <Video size={18} />,
+  'Marketing': <Megaphone size={18} />,
+  'Design': <Palette size={18} />,
+  'Content': <PenTool size={18} />,
+  'Photography': <Camera size={18} />,
+  'Broadcasting': <Radio size={18} />,
+  'PR': <TrendingUp size={18} />,
+  'Social Media': <TrendingUp size={18} />,
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -27,7 +36,27 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Finance': 'from-emerald-500 to-teal-600',
   'Retail': 'from-violet-500 to-purple-600',
   'Tourism': 'from-cyan-500 to-sky-600',
+  'Media': 'from-pink-500 to-rose-600',
+  'Marketing': 'from-orange-500 to-amber-600',
+  'Design': 'from-violet-500 to-purple-600',
+  'Content': 'from-indigo-500 to-blue-600',
+  'Photography': 'from-gray-600 to-gray-800',
+  'Broadcasting': 'from-red-500 to-rose-600',
+  'PR': 'from-teal-500 to-emerald-600',
+  'Social Media': 'from-pink-400 to-fuchsia-600',
 };
+
+// Media-industry quick-links shown below hero
+const MEDIA_QUICK_LINKS = [
+  { label: 'Media & TV', q: 'media' },
+  { label: 'Marketing', q: 'marketing' },
+  { label: 'Design', q: 'design' },
+  { label: 'Content Writing', q: 'content' },
+  { label: 'Video Production', q: 'video production' },
+  { label: 'Social Media', q: 'social media' },
+  { label: 'PR & Comms', q: 'public relations' },
+  { label: 'Photography', q: 'photography' },
+];
 
 function getCategoryColor(name: string): string {
   const key = Object.keys(CATEGORY_COLORS).find((k) => name.toLowerCase().includes(k.toLowerCase()));
@@ -160,6 +189,26 @@ export function Home() {
 
       </section>
 
+
+      {/* ─── Media Industry Quick Links ──────────────────────────────────── */}
+      <section className="border-b border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
+              Browse:
+            </span>
+            {MEDIA_QUICK_LINKS.map(({ label, q }) => (
+              <Link
+                key={q}
+                to={`/jobs?q=${encodeURIComponent(q)}`}
+                className="flex-shrink-0 text-xs font-medium text-gray-600 hover:text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-full border border-gray-200 hover:border-brand-300 transition-all duration-150 whitespace-nowrap"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ─── Browse by Category ──────────────────────────────────────────── */}
       {featuredCategories?.length > 0 && (
