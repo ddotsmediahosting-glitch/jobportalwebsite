@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, Users, Building2, Briefcase, Tag, Flag, ScrollText,
   Settings, LogOut, Menu, Shield, BarChart3, CreditCard, X, ChevronRight,
-  Bell, User, RefreshCw, Share2, MessageCircle,
+  Bell, RefreshCw, Share2, MessageCircle, BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
@@ -22,6 +22,7 @@ const nav = [
   { to: '/admin/whatsapp-bot', label: 'WhatsApp Bot', icon: MessageCircle, badgeKey: '' },
   { to: '/admin/whatsapp-links', label: 'WA Groups Page', icon: Share2, badgeKey: '' },
   { to: '/admin/community', label: 'Community Q&A', icon: MessageCircle, badgeKey: 'pendingDiscussions' },
+  { to: '/admin/blog', label: 'Blog Manager', icon: BookOpen, badgeKey: '' },
   { to: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText, badgeKey: '' },
   { to: '/admin/settings', label: 'Settings', icon: Settings, badgeKey: '' },
 ];
