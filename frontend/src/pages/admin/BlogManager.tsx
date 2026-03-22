@@ -205,6 +205,8 @@ export function AdminBlogManager() {
         <select
           value={filterCat}
           onChange={(e) => setFilterCat(e.target.value)}
+          title="Filter by category"
+          aria-label="Filter by category"
           className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
           <option value="">All Categories</option>
@@ -238,7 +240,7 @@ export function AdminBlogManager() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<BookOpen className="h-8 w-8" />} title="No posts found" description="Create your first blog post to get started." action={<Button onClick={openCreate} size="sm"><Plus size={14} className="mr-1" /> New Post</Button>} />
+        <EmptyState title="No posts found" description="Create your first blog post to get started." />
       ) : (
         <div className="space-y-3">
           {filtered.map((post) => (
@@ -338,6 +340,8 @@ export function AdminBlogManager() {
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
+                title="Post category"
+                aria-label="Post category"
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -400,7 +404,7 @@ export function AdminBlogManager() {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={closeModal} className="flex-1">Cancel</Button>
-            <Button type="submit" isLoading={isPending} className="flex-1">
+            <Button type="submit" loading={isPending} className="flex-1">
               {editing ? 'Save Changes' : 'Create Post'}
             </Button>
           </div>
@@ -415,7 +419,7 @@ export function AdminBlogManager() {
           <Button
             type="button"
             variant="danger"
-            isLoading={deleteMutation.isPending}
+            loading={deleteMutation.isPending}
             onClick={() => deleteId && deleteMutation.mutate(deleteId)}
             className="flex-1"
           >
