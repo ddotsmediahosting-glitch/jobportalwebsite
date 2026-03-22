@@ -18,6 +18,7 @@ const VerifyEmail = lazy(() => import('../pages/public/VerifyEmail').then((m) =>
 const ContentPage = lazy(() => import('../pages/public/ContentPage').then((m) => ({ default: m.ContentPage })));
 const AboutUs = lazy(() => import('../pages/public/AboutUs').then((m) => ({ default: m.AboutUs })));
 const ContactUs = lazy(() => import('../pages/public/ContactUs').then((m) => ({ default: m.ContactUs })));
+const CareerServices = lazy(() => import('../pages/public/CareerServices').then((m) => ({ default: m.CareerServices })));
 const Companies = lazy(() => import('../pages/public/Companies').then((m) => ({ default: m.Companies })));
 const CompanyDetail = lazy(() => import('../pages/public/CompanyDetail').then((m) => ({ default: m.CompanyDetail })));
 const NotificationsPage = lazy(() => import('../pages/public/Notifications').then((m) => ({ default: m.NotificationsPage })));
@@ -59,6 +60,7 @@ const CandidateSearch = lazy(() => import('../pages/employer/CandidateSearch').t
 const InterviewScheduler = lazy(() => import('../pages/employer/InterviewScheduler').then((m) => ({ default: m.InterviewScheduler })));
 
 // Admin pages
+const AdminBlogManager = lazy(() => import('../pages/admin/BlogManager').then((m) => ({ default: m.AdminBlogManager })));
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard').then((m) => ({ default: m.AdminDashboard })));
 const AdminAnalytics = lazy(() => import('../pages/admin/Analytics').then((m) => ({ default: m.AdminAnalytics })));
 const AdminUsers = lazy(() => import('../pages/admin/Users').then((m) => ({ default: m.AdminUsers })));
@@ -114,6 +116,7 @@ export function AppRoutes() {
           <Route path="pages/:slug" element={<ContentPage />} />
           <Route path="about" element={<AboutUs />} />
           <Route path="contact" element={<ContactUs />} />
+          <Route path="career-services" element={<CareerServices />} />
           <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="register" element={<GuestOnly><Register /></GuestOnly>} />
           <Route path="forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
@@ -179,6 +182,7 @@ export function AppRoutes() {
           <Route path="whatsapp-links" element={<AdminWhatsAppLinks />} />
           <Route path="community" element={<AdminCommunityPage />} />
           <Route path="audit-logs" element={<AdminAuditLogs />} />
+          <Route path="blog" element={<AdminBlogManager />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 

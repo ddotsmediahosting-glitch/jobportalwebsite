@@ -138,6 +138,7 @@ export function PublicLayout() {
                 { to: '/', label: 'Home' },
                 { to: '/jobs', label: 'Browse Jobs' },
                 { to: '/companies', label: 'Companies' },
+                { to: '/career-services', label: 'Career Services' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }, i, arr) => (
                 <React.Fragment key={to}>
@@ -426,6 +427,7 @@ export function PublicLayout() {
                 <ul className="space-y-2.5 text-sm">
                   {[
                     { to: '/about', label: 'About Us' },
+                    { to: '/career-services', label: 'Career Services' },
                     { to: '/contact', label: 'Contact Us' },
                     { to: '/pages/privacy-policy', label: 'Privacy Policy' },
                     { to: '/pages/terms', label: 'Terms of Use' },
