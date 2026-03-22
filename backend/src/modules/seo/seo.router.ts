@@ -114,6 +114,7 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     // Static info pages
     { url: '/about',                 priority: '0.5', changefreq: 'monthly' },
     { url: '/contact',               priority: '0.5', changefreq: 'monthly' },
+    { url: '/career-services',       priority: '0.6', changefreq: 'monthly' },
     { url: '/pages/pricing',         priority: '0.6', changefreq: 'monthly' },
     { url: '/pages/faq',             priority: '0.5', changefreq: 'monthly' },
     { url: '/pages/privacy-policy',  priority: '0.3', changefreq: 'yearly'  },

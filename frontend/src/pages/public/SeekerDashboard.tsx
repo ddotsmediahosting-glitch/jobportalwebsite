@@ -11,6 +11,8 @@ import {
   Plus,
   Bell,
   CheckCircle,
+  ExternalLink,
+  Palette,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
@@ -245,6 +247,44 @@ export function SeekerDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Creative Portfolio Links — shown when at least one link is set */}
+      {(profile?.portfolioUrl || profile?.linkedInUrl) && (
+        <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 rounded-2xl p-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Palette className="h-4 w-4 text-violet-500" />
+            <span className="text-sm font-semibold text-gray-800">Your Creative Links</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {profile.portfolioUrl && (
+              <a
+                href={profile.portfolioUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-white text-violet-700 border border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <ExternalLink size={11} /> Portfolio
+              </a>
+            )}
+            {profile.linkedInUrl && (
+              <a
+                href={profile.linkedInUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-white text-blue-700 border border-blue-200 hover:border-blue-400 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <ExternalLink size={11} /> LinkedIn
+              </a>
+            )}
+          </div>
+          <Link
+            to="/profile"
+            className="ml-auto text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-1 flex-shrink-0"
+          >
+            Edit links <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
 
       {/* Main content grid */}
       <div className="grid lg:grid-cols-3 gap-6">

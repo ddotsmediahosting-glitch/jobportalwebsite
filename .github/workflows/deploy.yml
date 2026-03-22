@@ -17,8 +17,14 @@ jobs:
           host: 194.164.151.202
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 300s
+          command_timeout: 20m
           script: |
+            set -e
             cd /opt/jobportalwebsite
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             docker compose -f docker-compose.prod.yml up --build -d
             docker image prune -f
+            echo "✅ Deploy complete at $(date)"

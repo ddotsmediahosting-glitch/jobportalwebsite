@@ -106,7 +106,35 @@ export function Profile() {
             <Input {...register('desiredSalaryMin')} label="Min Expected Salary (AED)" type="number" />
             <Input {...register('desiredSalaryMax')} label="Max Expected Salary (AED)" type="number" />
             <Input {...register('noticePeriod')} label="Notice Period" placeholder="1 month / Immediate" />
-            <Input {...register('linkedInUrl')} label="LinkedIn URL" type="url" placeholder="https://linkedin.com/in/..." />
+          </div>
+        </div>
+
+        {/* Creative Portfolio & Links — media/creative industry focused */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-base font-semibold text-gray-900">Creative Portfolio &amp; Links</span>
+            <span className="text-[10px] bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">Media &amp; Creative</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">Add your portfolio and professional profile links. These are shown prominently to employers hiring for creative roles.</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Input
+                {...register('portfolioUrl')}
+                label="Portfolio URL"
+                type="url"
+                placeholder="https://behance.net/you  or  dribbble.com/you"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Behance, Dribbble, personal site, or any creative showcase</p>
+            </div>
+            <div>
+              <Input
+                {...register('linkedInUrl')}
+                label="LinkedIn URL"
+                type="url"
+                placeholder="https://linkedin.com/in/..."
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Your LinkedIn professional profile</p>
+            </div>
           </div>
         </div>
 
