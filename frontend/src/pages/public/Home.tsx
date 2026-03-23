@@ -104,11 +104,11 @@ export function Home() {
 
       {/* ─── Hero ──────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-hero text-white overflow-hidden">
-        {/* Decorative blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-400/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-brand-300/15 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/10 rounded-full blur-3xl" />
+        {/* Decorative blobs — transform-gpu promotes to own compositor layer, prevents GPU flicker */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none transform-gpu">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-400/20 rounded-full blur-3xl will-change-transform" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-brand-300/15 rounded-full blur-3xl will-change-transform" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/10 rounded-full blur-3xl will-change-transform" />
           {/* Grid pattern */}
           <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -193,7 +193,7 @@ export function Home() {
       {/* ─── Media Industry Quick Links ──────────────────────────────────── */}
       <section className="border-b border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
               Browse:
             </span>
