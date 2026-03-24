@@ -168,10 +168,25 @@ ${urlEntries.join('\n')}
   res.send(xml);
 });
 
-// ── Public site settings (social links, site name, etc.) ───────────────────────
+// ── Public site settings (social links, announcement banner — NO auth required) ─
+// IMPORTANT: This endpoint is called from PublicLayout on every page load.
+// It must remain unauthenticated. Do NOT move it behind auth middleware.
 router.get('/site-settings', async (_req: Request, res: Response) => {
   const settings = await prisma.siteSettings.findMany({
-    where: { key: { startsWith: 'social_' } },
+    where: {
+      key: {
+        in: [
+          // Social links
+          'social_linkedin', 'social_twitter', 'social_facebook',
+          'social_instagram', 'social_youtube', 'social_whatsapp',
+          // Announcement banner (used by PublicLayout)
+          'announcement_active', 'announcement_text', 'announcement_type',
+          'announcement_link', 'announcement_link_label',
+          // Site identity
+          'site_name', 'site_tagline',
+        ],
+      },
+    },
   });
   const data = Object.fromEntries(settings.map((s) => [s.key, String(s.value ?? '')]));
   res.set('Cache-Control', 'public, max-age=300');
