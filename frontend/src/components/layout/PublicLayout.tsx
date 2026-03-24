@@ -26,17 +26,16 @@ export function PublicLayout() {
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const { data: socialSettings } = useQuery<Record<string, string>>({
-    queryKey: ['site-settings-social'],
+  // Single public endpoint — includes social links + announcement banner.
+  // Must NOT use /admin/settings (requires auth → causes 401 redirect loop for guests).
+  const { data: allSettings } = useQuery<Record<string, string>>({
+    queryKey: ['site-settings-public'],
     queryFn: () => api.get('/seo/site-settings').then((r) => r.data.data),
     staleTime: 5 * 60_000,
   });
 
-  const { data: allSettings } = useQuery<Record<string, string>>({
-    queryKey: ['site-settings-all-public'],
-    queryFn: () => api.get('/admin/settings').then((r) => r.data.data),
-    staleTime: 5 * 60_000,
-  });
+  // Keep socialSettings as alias so footer social links still work
+  const socialSettings = allSettings;
 
   const announcement = {
     active: allSettings?.['announcement_active'] === 'true',
