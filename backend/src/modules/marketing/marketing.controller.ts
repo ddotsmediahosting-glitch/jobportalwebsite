@@ -67,7 +67,7 @@ export class MarketingController {
       employmentType: job.employmentType,
       salaryMin: job.salaryMin ?? undefined,
       salaryMax: job.salaryMax ?? undefined,
-      skills: job.skills,
+      skills: Array.isArray(job.skills) ? (job.skills as string[]) : undefined,
       platform,
       jobUrl,
     });

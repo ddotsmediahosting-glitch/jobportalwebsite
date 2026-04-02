@@ -298,7 +298,7 @@ router.get('/recommended-jobs', requireRole('SEEKER'), async (req: AuthRequest, 
 
   const profile = await prisma.jobSeekerProfile.findUnique({
     where: { userId: req.user!.sub },
-    select: { skills: true, yearsOfExperience: true, headline: true, bio: true, preferredWorkMode: true },
+    select: { skills: true, yearsOfExperience: true, headline: true, bio: true, desiredWorkModes: true },
   });
 
   if (!profile || !(Array.isArray(profile.skills) && profile.skills.length)) {
@@ -340,7 +340,7 @@ router.get('/recommended-jobs', requireRole('SEEKER'), async (req: AuthRequest, 
         yearsOfExperience: profile.yearsOfExperience || undefined,
         headline: profile.headline || undefined,
         bio: profile.bio || undefined,
-        preferredWorkMode: profile.preferredWorkMode || undefined,
+        preferredWorkMode: (Array.isArray(profile.desiredWorkModes) && profile.desiredWorkModes.length ? (profile.desiredWorkModes as string[])[0] : undefined),
       },
       recentJobs.map((j) => ({ id: j.id, title: j.title, description: j.description, skills: (Array.isArray(j.skills) ? j.skills as string[] : []) }))
     );
@@ -400,12 +400,12 @@ router.get('/profile-coach', requireRole('SEEKER'), async (req: AuthRequest, res
   const [profile, resumeCount, educationCount, experienceCount, certCount, user] = await Promise.all([
     prisma.jobSeekerProfile.findUnique({
       where: { userId },
-      select: { firstName: true, lastName: true, headline: true, bio: true, skills: true, yearsOfExperience: true, preferredWorkMode: true, avatarUrl: true },
+      select: { firstName: true, lastName: true, headline: true, bio: true, skills: true, yearsOfExperience: true, desiredWorkModes: true, avatarUrl: true },
     }),
-    prisma.resume.count({ where: { userId } }),
-    prisma.education.count({ where: { userId } }),
-    prisma.workExperience.count({ where: { userId } }),
-    prisma.certification.count({ where: { userId } }),
+    prisma.resume.count({ where: { profile: { userId } } }),
+    prisma.education.count({ where: { profile: { userId } } }),
+    prisma.workExperience.count({ where: { profile: { userId } } }),
+    prisma.certification.count({ where: { profile: { userId } } }),
     prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } }),
   ]);
 
@@ -432,7 +432,7 @@ router.get('/profile-coach', requireRole('SEEKER'), async (req: AuthRequest, res
     bio: profile.bio || undefined,
     skills: (Array.isArray(profile.skills) ? profile.skills as string[] : []),
     yearsOfExperience: profile.yearsOfExperience || undefined,
-    preferredWorkMode: profile.preferredWorkMode || undefined,
+    preferredWorkMode: (Array.isArray(profile.desiredWorkModes) && profile.desiredWorkModes.length ? (profile.desiredWorkModes as string[])[0] : undefined),
     hasAvatar: !!(profile.avatarUrl || user?.avatarUrl),
     resumeCount,
     educationCount,

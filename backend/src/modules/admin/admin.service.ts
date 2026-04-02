@@ -553,7 +553,7 @@ export class AdminService {
       });
     }
     if ((data.firstName || data.lastName) && user.seekerProfile) {
-      await prisma.seekerProfile.update({
+      await prisma.jobSeekerProfile.update({
         where: { userId },
         data: {
           ...(data.firstName !== undefined && { firstName: data.firstName }),

@@ -118,7 +118,7 @@ admin.put('/blog/:id', async (req: AuthRequest, res: Response) => {
       coverImage: coverImage ?? existing.coverImage,
       author: author || existing.author,
       category: category || existing.category,
-      tags: Array.isArray(tags) ? tags : existing.tags,
+      tags: Array.isArray(tags) ? tags : (existing.tags ?? []),
       isPublished: isPublished !== undefined ? !!isPublished : existing.isPublished,
       publishedAt: isPublished && !existing.publishedAt ? new Date() : existing.publishedAt,
       readTime: readTime ? parseInt(readTime) : existing.readTime,

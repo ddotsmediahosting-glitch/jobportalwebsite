@@ -78,7 +78,7 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     }),
     prisma.category.findMany({
       where: { isActive: true },
-      select: { slug: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
   ]);
 
