@@ -66,7 +66,7 @@ const worker = new Worker<JobAlertsData>(
               slug: j.slug,
               emirate: j.emirate,
             })),
-            config.cors.origin
+            config.cors.frontendUrl
           ),
         });
 

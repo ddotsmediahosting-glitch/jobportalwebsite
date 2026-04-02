@@ -246,10 +246,14 @@ export class JobsService {
 
     const baseSlug = `${job.slug}-copy-${Date.now().toString(36)}`;
 
-    const { id, slug, status, publishedAt, expiresAt, viewCount, applyCount, ...rest } = job as typeof job & {
+    const { id, slug, status, publishedAt, expiresAt, viewCount, applyCount, fraudFlags, skills, languages, ...rest } = job as typeof job & {
       id: string; slug: string; status: string; publishedAt: Date | null;
       expiresAt: Date | null; viewCount: number; applyCount: number;
+      fraudFlags: Prisma.JsonValue | null; skills: Prisma.JsonValue; languages: Prisma.JsonValue;
     };
+
+    const toInputJson = (v: Prisma.JsonValue | null): Prisma.NullTypes.JsonNull | Prisma.InputJsonValue =>
+      v === null ? Prisma.JsonNull : (v as Prisma.InputJsonValue);
 
     const cloned = await prisma.job.create({
       data: {
@@ -259,6 +263,9 @@ export class JobsService {
         slug: baseSlug,
         title: `Copy of ${job.title}`,
         status: 'DRAFT',
+        skills: toInputJson(skills),
+        languages: toInputJson(languages),
+        fraudFlags: toInputJson(fraudFlags),
       },
     });
 
