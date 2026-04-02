@@ -99,6 +99,29 @@ export function PublicLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Contact top bar */}
+      <div className="bg-gray-900 text-gray-300 text-xs py-1.5 px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-end gap-4">
+          <a
+            href="tel:+971509379212"
+            className="flex items-center gap-1.5 hover:text-white transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.0 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+            </svg>
+            +971 50 937 9212
+          </a>
+          <a
+            href="https://wa.me/971509379212"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-green-400 transition-colors"
+          >
+            {WHATSAPP_SVG}
+            WhatsApp Us
+          </a>
+        </div>
+      </div>
       {/* Announcement banner */}
       {announcement.active && announcement.text && (
         <div className={`${announcementColors[announcement.type] ?? announcementColors.info} text-sm py-2 px-4 text-center flex items-center justify-center gap-3`}>
