@@ -207,7 +207,7 @@ export function JobDetail() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-start gap-4">
               {job.employer.logoUrl ? (
-                <img src={job.employer.logoUrl} alt={job.employer.companyName} className="h-16 w-16 rounded-xl object-contain border border-gray-100 bg-gray-50" />
+                <img fetchPriority="high" decoding="async" src={job.employer.logoUrl} alt={job.employer.companyName} className="h-16 w-16 rounded-xl object-contain border border-gray-100 bg-gray-50" />
               ) : (
                 <div className="h-16 w-16 rounded-xl bg-brand-50 flex items-center justify-center text-2xl font-bold text-brand-600 flex-shrink-0">
                   {job.employer.companyName[0]}

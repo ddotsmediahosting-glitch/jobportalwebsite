@@ -2,7 +2,7 @@ import React, { useState, useRef, KeyboardEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
+// jsPDF loaded lazily — keeps it out of the initial bundle (~500KB)
 import {
   User, Briefcase, GraduationCap, Star, Plus, Trash2,
   Wand2, Loader2, ChevronRight, ChevronLeft, Copy, Download,
@@ -263,9 +263,10 @@ export function CVBuilder() {
   const effectiveBullets = (i: number) => editedBullets[i] || generatedCV?.enhancedExperience?.[i]?.bulletPoints || [];
 
   // ── PDF Export ──────────────────────────────────────────────────────────────
-  const downloadPDF = (data: BuilderFormData) => {
+  const downloadPDF = async (data: BuilderFormData) => {
     const gen = generatedCV;
     if (!gen) return;
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pi = data.personalInfo;
     const pageW = 210;

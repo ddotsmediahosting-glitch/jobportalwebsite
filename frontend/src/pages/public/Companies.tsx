@@ -61,7 +61,7 @@ function CompanyCard({ employer }: { employer: Employer }) {
       <div className="flex items-start gap-4">
         <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
           {employer.logoUrl ? (
-            <img src={employer.logoUrl} alt={employer.companyName} className="w-full h-full object-contain p-1" />
+            <img loading="lazy" decoding="async" src={employer.logoUrl} alt={employer.companyName} className="w-full h-full object-contain p-1" />
           ) : (
             <Building2 className="h-7 w-7 text-gray-400" />
           )}

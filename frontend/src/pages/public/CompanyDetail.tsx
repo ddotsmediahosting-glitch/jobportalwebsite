@@ -248,7 +248,7 @@ export function CompanyDetail() {
       <div className="relative">
         <div className="h-48 bg-gradient-to-r from-brand-800 to-indigo-700 overflow-hidden">
           {employer.coverUrl && (
-            <img src={employer.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+            <img fetchPriority="high" decoding="async" src={employer.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
           )}
         </div>
         <div className="absolute inset-0 bg-black/30" />
@@ -263,7 +263,7 @@ export function CompanyDetail() {
           <div className="flex items-start gap-5">
             <div className="w-20 h-20 rounded-xl bg-white border-2 border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {employer.logoUrl ? (
-                <img src={employer.logoUrl} alt={employer.companyName} className="w-full h-full object-contain p-1" />
+                <img loading="lazy" decoding="async" src={employer.logoUrl} alt={employer.companyName} className="w-full h-full object-contain p-1" />
               ) : (
                 <Building2 className="h-9 w-9 text-gray-400" />
               )}
@@ -423,7 +423,7 @@ export function CompanyDetail() {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     {review.reviewer.avatarUrl ? (
-                      <img src={review.reviewer.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+                      <img loading="lazy" decoding="async" src={review.reviewer.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
                     ) : (
                       <div className="h-9 w-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-700 font-bold text-sm">
                         {review.reviewer.name[0]}

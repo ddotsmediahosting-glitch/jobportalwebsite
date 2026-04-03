@@ -179,7 +179,7 @@ export function CompanyProfile() {
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="relative h-36 bg-gradient-to-r from-brand-50 to-brand-100">
             {employer?.coverUrl && (
-              <img src={employer.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={employer.coverUrl} alt="Cover" className="w-full h-full object-cover" />
             )}
             <label className="absolute bottom-3 right-3 cursor-pointer">
               <input type="file" accept="image/*" className="sr-only"
@@ -193,7 +193,7 @@ export function CompanyProfile() {
             <div className="flex items-end gap-4 -mt-8">
               <div className="relative flex-shrink-0">
                 <div className="h-20 w-20 rounded-xl border-4 border-white bg-brand-50 flex items-center justify-center text-brand-600 text-2xl font-bold shadow-sm overflow-hidden">
-                  {employer?.logoUrl ? <img src={employer.logoUrl} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="h-8 w-8" />}
+                  {employer?.logoUrl ? <img loading="lazy" decoding="async" src={employer.logoUrl} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="h-8 w-8" />}
                 </div>
                 <label className="absolute -bottom-1 -right-1 cursor-pointer">
                   <input type="file" accept="image/*" className="sr-only"
