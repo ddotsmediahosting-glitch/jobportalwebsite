@@ -494,7 +494,7 @@ export function AdminWhatsAppLinks() {
           <div className="bg-gradient-to-br from-emerald-950 via-teal-950 to-green-950 rounded-2xl p-6 text-center flex flex-col items-center justify-center min-h-48">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-3 shadow-xl">
               {pageForm.avatarUrl ? (
-                <img src={pageForm.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                <img loading="lazy" decoding="async" src={pageForm.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
                 <MessageCircle className="w-7 h-7 text-white" />
               )}

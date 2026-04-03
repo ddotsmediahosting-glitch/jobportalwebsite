@@ -248,7 +248,7 @@ export function AdminBlogManager() {
               {/* Cover image */}
               <div className="w-20 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
                 {post.coverImage ? (
-                  <img src={post.coverImage} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={post.coverImage} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <BookOpen className="h-5 w-5 text-gray-300" />

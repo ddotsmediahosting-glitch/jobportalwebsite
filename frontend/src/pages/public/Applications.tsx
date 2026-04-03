@@ -57,7 +57,7 @@ export function Applications() {
             }) => (
               <div key={app.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
                 {app.job.employer.logoUrl ? (
-                  <img src={app.job.employer.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
+                  <img loading="lazy" decoding="async" src={app.job.employer.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
                 ) : (
                   <div className="h-12 w-12 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold flex-shrink-0">
                     {app.job.employer.companyName[0]}

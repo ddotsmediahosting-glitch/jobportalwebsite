@@ -111,7 +111,7 @@ export function Blog() {
                 {posts.map(post => (
                   <Link key={post.id} to={`/blog/${post.slug}`} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-brand-200 transition-all group">
                     {post.coverImage ? (
-                      <img src={post.coverImage} alt={post.title} className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img loading="lazy" decoding="async" src={post.coverImage} alt={post.title} className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-44 bg-gradient-to-br from-brand-50 to-indigo-50 flex items-center justify-center">
                         <span className="text-4xl">📝</span>

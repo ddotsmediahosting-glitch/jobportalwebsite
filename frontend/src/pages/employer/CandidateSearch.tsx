@@ -196,7 +196,7 @@ export function CandidateSearch() {
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex items-center gap-3">
                         {c.avatarUrl ? (
-                          <img src={c.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
+                          <img loading="lazy" decoding="async" src={c.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
                         ) : (
                           <div className="h-11 w-11 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold">
                             {c.firstName[0]}{c.lastName[0]}

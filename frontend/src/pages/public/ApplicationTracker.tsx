@@ -182,7 +182,7 @@ export function ApplicationTracker() {
                 return (
                   <div key={app.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                     {app.job.employer.logoUrl ? (
-                      <img src={app.job.employer.logoUrl} alt="" className="h-10 w-10 rounded-xl object-contain border border-gray-100 flex-shrink-0" />
+                      <img loading="lazy" decoding="async" src={app.job.employer.logoUrl} alt="" className="h-10 w-10 rounded-xl object-contain border border-gray-100 flex-shrink-0" />
                     ) : (
                       <div className="h-10 w-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
                         {app.job.employer.companyName[0]}
@@ -217,7 +217,7 @@ function ApplicationCard({ app, stage }: { app: Application; stage: typeof STAGE
     <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start gap-2.5 mb-2.5">
         {app.job.employer.logoUrl ? (
-          <img src={app.job.employer.logoUrl} alt="" className="h-8 w-8 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
+          <img loading="lazy" decoding="async" src={app.job.employer.logoUrl} alt="" className="h-8 w-8 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
         ) : (
           <div className="h-8 w-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
             {app.job.employer.companyName[0]}

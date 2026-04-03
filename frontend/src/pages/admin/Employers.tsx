@@ -150,7 +150,7 @@ export function AdminEmployers() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 text-sm font-bold flex-shrink-0 overflow-hidden">
-                          {emp.logoUrl ? <img src={emp.logoUrl} alt="" className="w-full h-full object-cover" /> : emp.companyName[0]}
+                          {emp.logoUrl ? <img loading="lazy" decoding="async" src={emp.logoUrl} alt="" className="w-full h-full object-cover" /> : emp.companyName[0]}
                         </div>
                         <div>
                           <button onClick={() => setSelected(emp)} className="font-medium text-gray-900 hover:text-brand-600 text-left">

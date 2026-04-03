@@ -104,7 +104,7 @@ export function RecommendedJobs() {
             <div className="flex gap-3 mb-3">
               <div className="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
                 {job.employer.logoUrl ? (
-                  <img src={job.employer.logoUrl} alt={job.employer.companyName} className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={job.employer.logoUrl} alt={job.employer.companyName} className="h-full w-full object-cover" />
                 ) : (
                   <Briefcase size={18} className="text-gray-400" />
                 )}
