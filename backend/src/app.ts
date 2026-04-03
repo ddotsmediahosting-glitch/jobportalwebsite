@@ -197,6 +197,58 @@ app.get('/api/v1/home', async (_req, res) => {
   res.json({ success: true, data });
 });
 
+// ── Public contact form ────────────────────────────────────────────────────────
+app.post('/api/v1/contact', async (req, res) => {
+  const { name, email, phone, service, subject, message } = req.body as Record<string, string>;
+  if (!name?.trim() || !email?.trim() || !message?.trim()) {
+    res.status(400).json({ success: false, error: 'name, email and message are required' });
+    return;
+  }
+
+  const { sendEmail, checkSmtpAvailable } = await import('./lib/email');
+  const smtpOk = await checkSmtpAvailable();
+
+  const serviceLabel = service || subject || 'General Enquiry';
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'support@ddotsmediajobs.com';
+
+  if (smtpOk) {
+    // Notify admin
+    await sendEmail({
+      to: adminEmail,
+      subject: `[Career Services] ${serviceLabel} — ${name}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <h2 style="color:#1e40af">New Career Services Enquiry</h2>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:8px;font-weight:bold;color:#374151;width:120px">Service</td><td style="padding:8px;color:#1d4ed8;font-weight:600">${serviceLabel}</td></tr>
+            <tr style="background:#f9fafb"><td style="padding:8px;font-weight:bold;color:#374151">Name</td><td style="padding:8px">${name}</td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#374151">Email</td><td style="padding:8px"><a href="mailto:${email}">${email}</a></td></tr>
+            ${phone ? `<tr style="background:#f9fafb"><td style="padding:8px;font-weight:bold;color:#374151">Phone</td><td style="padding:8px">${phone}</td></tr>` : ''}
+            <tr ${phone ? '' : 'style="background:#f9fafb"'}><td style="padding:8px;font-weight:bold;color:#374151;vertical-align:top">Message</td><td style="padding:8px;white-space:pre-wrap">${message}</td></tr>
+          </table>
+          <p style="margin-top:16px;color:#6b7280;font-size:13px">Reply directly to this email to respond to ${name}.</p>
+        </div>`,
+    });
+
+    // Confirmation to user
+    await sendEmail({
+      to: email,
+      subject: `We received your enquiry — DdotsmediaJobs`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <h2 style="color:#1e40af">Thanks, ${name}!</h2>
+          <p>We've received your <strong>${serviceLabel}</strong> enquiry and will get back to you within <strong>24 hours</strong> (Sunday–Thursday).</p>
+          <p>Your message:</p>
+          <blockquote style="border-left:3px solid #3b82f6;margin:0;padding:12px 16px;background:#eff6ff;border-radius:4px;color:#1e3a5f">${message}</blockquote>
+          <p style="margin-top:20px">Need urgent help? WhatsApp us at <a href="https://wa.me/971509379212">+971 50 937 9212</a></p>
+          <p style="color:#6b7280;font-size:13px;margin-top:20px">— The DdotsmediaJobs Team</p>
+        </div>`,
+    });
+  }
+
+  res.json({ success: true, message: 'Thank you! We\'ll get back to you within 24 hours.' });
+});
+
 // ── Routes ─────────────────────────────────────────────────────────────────────
 const v1 = '/api/v1';
 
