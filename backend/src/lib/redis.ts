@@ -2,8 +2,10 @@ import IORedis from 'ioredis';
 import { config } from '../config';
 
 export const redis = new IORedis(config.redis.url, {
-  maxRetriesPerRequest: null,
+  maxRetriesPerRequest: 0,  // fail fast so cache misses don't block requests
   enableReadyCheck: false,
+  connectTimeout: 2000,     // 2 s connect timeout
+  commandTimeout: 1000,     // 1 s per command
 });
 
 redis.on('error', (err) => {
