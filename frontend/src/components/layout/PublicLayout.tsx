@@ -160,6 +160,7 @@ export function PublicLayout() {
                 { to: '/', label: 'Home' },
                 { to: '/jobs', label: 'Browse Jobs' },
                 { to: '/companies', label: 'Companies' },
+                { to: '/market-insights', label: 'Market Insights' },
                 { to: '/career-services', label: 'Career Services' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }, i, arr) => (

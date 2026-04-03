@@ -34,6 +34,7 @@ import userJobsRouter from './modules/user-jobs/user-jobs.router';
 import { contentPublicRouter, contentAdminRouter } from './modules/content/content.router';
 import { whatsappLinksPublicRouter, whatsappLinksAdminRouter } from './modules/whatsapp-links/whatsapp-links.router';
 import { communityPublicRouter, communityAdminRouter } from './modules/community/community.router';
+import marketRouter from './modules/market/market.router';
 import { swaggerSpec } from './swagger';
 
 const app = express();
@@ -280,6 +281,7 @@ app.use(`${v1}`, whatsappLinksPublicRouter);
 app.use(`${v1}/admin`, whatsappLinksAdminRouter);
 app.use(`${v1}`, communityPublicRouter);
 app.use(`${v1}/admin`, communityAdminRouter);
+app.use(`${v1}/market`, marketRouter);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found' }));
