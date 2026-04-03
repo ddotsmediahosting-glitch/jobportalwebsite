@@ -968,3 +968,127 @@ Be direct, specific, and constructive. Focus on UAE media/creative market standa
 
   return callClaudeJSON<PortfolioReviewResult>(prompt, system);
 }
+
+// ─── Market Intelligence Narrative ────────────────────────────────────────────
+
+export interface MarketNarrativeResult {
+  headline: string;          // e.g. "Hiring is up 18% — digital roles driving demand"
+  marketMood: 'hot' | 'active' | 'steady' | 'slow';
+  summary: string;           // 3-4 sentence market overview
+  topOpportunities: Array<{ title: string; insight: string }>;
+  seekerAdvice: string;      // 2-sentence advice for job seekers
+  employerAdvice: string;    // 2-sentence advice for employers
+  weeklyOutlook: string;     // forward-looking sentence
+}
+
+export interface RoleIntelligenceResult {
+  demandLevel: 'very high' | 'high' | 'medium' | 'low';
+  demandTrend: 'rising' | 'stable' | 'declining';
+  salaryRange: { min: number; max: number; median: number; currency: string };
+  competitionScore: number;   // 0-100 (higher = more competitive)
+  topSkillsRequired: string[];
+  topEmiratesHiring: string[];
+  careerPath: string[];
+  tipsToStandOut: string[];
+  marketSummary: string;
+}
+
+export async function generateMarketNarrative(stats: {
+  totalActiveJobs: number;
+  newJobsThisWeek: number;
+  totalSeekers: number;
+  totalApplicationsThisWeek: number;
+  topHiringIndustries: Array<{ industry: string; count: number }>;
+  topHiringEmirates: Array<{ emirate: string; count: number }>;
+  topSkillsInDemand: Array<{ skill: string; count: number }>;
+  avgSalaryAED: number;
+  urgentJobsCount: number;
+  emiratizationJobsCount: number;
+}): Promise<MarketNarrativeResult> {
+  const system = `You are a senior UAE job market analyst writing a concise, authoritative market briefing.
+Focus on media, creative, marketing, and digital industries. Be specific, data-driven, and actionable.`;
+
+  const prompt = `Generate a UAE job market intelligence briefing based on real platform data.
+
+LIVE PLATFORM DATA:
+- Active job listings: ${stats.totalActiveJobs}
+- New jobs this week: ${stats.newJobsThisWeek}
+- Registered job seekers: ${stats.totalSeekers}
+- Applications submitted this week: ${stats.totalApplicationsThisWeek}
+- Avg salary offered (AED/month): ${Math.round(stats.avgSalaryAED)}
+- Urgent roles: ${stats.urgentJobsCount}
+- Emiratization roles: ${stats.emiratizationJobsCount}
+
+TOP HIRING INDUSTRIES:
+${stats.topHiringIndustries.slice(0, 6).map((i) => `- ${i.industry}: ${i.count} jobs`).join('\n')}
+
+TOP HIRING EMIRATES:
+${stats.topHiringEmirates.slice(0, 5).map((e) => `- ${e.emirate}: ${e.count} jobs`).join('\n')}
+
+TOP SKILLS IN DEMAND:
+${stats.topSkillsInDemand.slice(0, 10).map((s) => `- ${s.skill}: ${s.count} jobs`).join('\n')}
+
+Return JSON:
+{
+  "headline": "<punchy 8-12 word market headline using the data>",
+  "marketMood": "<hot|active|steady|slow>",
+  "summary": "<3-4 sentence market overview referencing actual numbers above>",
+  "topOpportunities": [
+    { "title": "<opportunity name>", "insight": "<1-2 sentence insight why this is a good opportunity now>" }
+  ],
+  "seekerAdvice": "<2 sentence actionable advice for job seekers based on current market>",
+  "employerAdvice": "<2 sentence actionable advice for employers to attract candidates>",
+  "weeklyOutlook": "<1 forward-looking sentence about the market in coming weeks>"
+}
+
+Include 3-4 top opportunities. Be specific and reference actual numbers from the data.`;
+
+  return callClaudeJSON<MarketNarrativeResult>(prompt, system);
+}
+
+export async function generateRoleIntelligence(roleData: {
+  title: string;
+  jobCount: number;
+  applicationCount: number;
+  avgSalaryMin: number;
+  avgSalaryMax: number;
+  topSkills: string[];
+  topEmirates: string[];
+  topIndustries: string[];
+  recentJobs: number; // jobs posted in last 30 days
+}): Promise<RoleIntelligenceResult> {
+  const system = `You are a UAE job market specialist. Provide data-driven intelligence about specific job roles in the UAE, focusing on media, creative, and marketing sectors.`;
+
+  const prompt = `Provide market intelligence for this job role based on UAE platform data.
+
+ROLE: ${roleData.title}
+Active job listings: ${roleData.jobCount}
+Total applications received: ${roleData.applicationCount}
+Average salary offered: AED ${Math.round(roleData.avgSalaryMin)}-${Math.round(roleData.avgSalaryMax)}/month
+Recent postings (last 30 days): ${roleData.recentJobs}
+Top skills required: ${roleData.topSkills.join(', ')}
+Top hiring emirates: ${roleData.topEmirates.join(', ')}
+Top hiring industries: ${roleData.topIndustries.join(', ')}
+
+Competition index = applications ÷ jobs = ${roleData.jobCount > 0 ? Math.round(roleData.applicationCount / roleData.jobCount) : 0} applicants per role.
+
+Return JSON:
+{
+  "demandLevel": "<very high|high|medium|low>",
+  "demandTrend": "<rising|stable|declining>",
+  "salaryRange": {
+    "min": <number AED/month>,
+    "max": <number AED/month>,
+    "median": <number AED/month>,
+    "currency": "AED"
+  },
+  "competitionScore": <0-100, higher = harder to get hired>,
+  "topSkillsRequired": ["<top 5 skills>"],
+  "topEmiratesHiring": ["<top 3 emirates>"],
+  "careerPath": ["<3-4 logical next role progression steps>"],
+  "tipsToStandOut": ["<4 specific tips to stand out for this role in UAE>"],
+  "marketSummary": "<2-3 sentence market summary specific to this role in UAE>"
+}`;
+
+  return callClaudeJSON<RoleIntelligenceResult>(prompt, system);
+}
