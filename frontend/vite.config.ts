@@ -1,27 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-// @ts-ignore — vite-plugin-compression has no bundled types
-import viteCompression from 'vite-plugin-compression';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    // Pre-compress with gzip (.gz) for nginx gzip_static
-    viteCompression({
-      algorithm: 'gzip',
-      ext: '.gz',
-      threshold: 1024,
-      deleteOriginFile: false,
-    }),
-    // Pre-compress with Brotli (.br) for nginx brotli_static
-    viteCompression({
-      algorithm: 'brotliCompress',
-      ext: '.br',
-      threshold: 1024,
-      deleteOriginFile: false,
-    }),
-  ],
+  plugins: [react()],
 
   resolve: {
     alias: {
@@ -47,45 +29,42 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Target modern browsers — smaller output, no legacy polyfill bloat
     target: 'es2020',
-    chunkSizeWarningLimit: 500,
-    // Inline assets < 4KB as base64 (fewer HTTP requests)
+    chunkSizeWarningLimit: 600,
     assetsInlineLimit: 4096,
     minify: 'esbuild',
     cssCodeSplit: true,
 
     rollupOptions: {
       output: {
-        // Split vendors into individually-cacheable chunks.
-        // App code changes ≠ re-download of React, icons, etc.
+        // Split large stable vendors into separately-cacheable chunks.
+        // Keep it conservative — only split packages that are:
+        //   a) large, b) stable (rarely change), c) have no cross-chunk deps.
         manualChunks(id) {
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+          // React runtime — tiny, ultra-stable, always cached
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/scheduler/')
+          ) {
             return 'vendor-react';
           }
-          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run/')) {
-            return 'vendor-router';
-          }
-          if (id.includes('node_modules/@tanstack/')) {
+          // React Query — stable data-fetching layer
+          if (id.includes('/node_modules/@tanstack/')) {
             return 'vendor-query';
           }
-          if (id.includes('node_modules/lucide-react/')) {
+          // Lucide icons — large tree-shaken icon set
+          if (id.includes('/node_modules/lucide-react/')) {
             return 'vendor-icons';
           }
-          if (id.includes('node_modules/jspdf/')) {
-            return 'vendor-pdf';
-          }
-          if (
-            id.includes('node_modules/react-hook-form/') ||
-            id.includes('node_modules/@hookform/') ||
-            id.includes('node_modules/zod/')
-          ) {
-            return 'vendor-forms';
-          }
-          if (id.includes('node_modules/axios/')) {
+          // HTTP client
+          if (id.includes('/node_modules/axios/')) {
             return 'vendor-axios';
           }
-          if (id.includes('node_modules/')) {
+          // All other node_modules in one chunk (router, forms, toast, etc.)
+          // Keeping router + app together avoids circular-chunk issues with
+          // react-router-dom's @remix-run/router internal dependency.
+          if (id.includes('/node_modules/')) {
             return 'vendor-misc';
           }
         },
