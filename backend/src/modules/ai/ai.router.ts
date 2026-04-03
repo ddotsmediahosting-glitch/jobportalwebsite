@@ -12,6 +12,7 @@ import {
   analyzeTrendingSkills,
   coachProfile,
   generateHiringInsights,
+  analyzePortfolio,
 } from '../../lib/ai';
 import { config } from '../../config';
 import prisma from '../../lib/prisma';
@@ -510,6 +511,21 @@ router.get('/hiring-insights', requireRole('EMPLOYER'), async (req: AuthRequest,
   }, 3600); // cache 1 hour
 
   res.json({ success: true, data });
+});
+
+// ── POST /ai/portfolio-review  (public — no auth required) ───────────────────
+router.post('/portfolio-review', async (req: Request, res: Response) => {
+  const { portfolioUrl, description, role, targetIndustry } = req.body;
+  if (!description || !role) {
+    res.status(400).json({ success: false, error: 'description and role are required' });
+    return;
+  }
+  if (description.trim().length < 30) {
+    res.status(400).json({ success: false, error: 'Please provide more detail about your portfolio (min 30 characters)' });
+    return;
+  }
+  const result = await analyzePortfolio({ portfolioUrl, description, role, targetIndustry });
+  res.json({ success: true, data: result });
 });
 
 export default router;

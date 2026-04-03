@@ -916,3 +916,55 @@ Generate 4-5 insights. Be specific and UAE-market relevant.`;
 
   return callClaudeJSON<HiringInsightsResult>(prompt, system);
 }
+
+// ─── Portfolio Review ──────────────────────────────────────────────────────────
+
+export interface PortfolioReviewResult {
+  overallScore: number;          // 0-100
+  overallLabel: 'Excellent' | 'Good' | 'Needs Work' | 'Major Issues';
+  presentationScore: number;
+  contentScore: number;
+  uaeMarketScore: number;
+  strengths: string[];
+  improvements: Array<{ area: string; priority: 'high' | 'medium' | 'low'; suggestion: string }>;
+  firstImpression: string;
+  platformTips: string[];
+  summary: string;
+}
+
+export async function analyzePortfolio(input: {
+  portfolioUrl?: string;
+  description: string;
+  role: string;
+  targetIndustry?: string;
+}): Promise<PortfolioReviewResult> {
+  const system = `You are a senior creative director and portfolio consultant with 15+ years of experience hiring for UAE and MENA media agencies, design studios, and marketing departments. You give direct, actionable portfolio feedback.`;
+
+  const prompt = `Review this creative portfolio and provide expert feedback for the UAE job market.
+
+ROLE TARGETING: ${input.role}
+INDUSTRY: ${input.targetIndustry || 'Media & Creative'}
+${input.portfolioUrl ? `PORTFOLIO URL: ${input.portfolioUrl}` : ''}
+
+PORTFOLIO DESCRIPTION / WORK SAMPLES:
+${input.description}
+
+Evaluate and return a JSON object:
+{
+  "overallScore": <0-100>,
+  "overallLabel": "<Excellent|Good|Needs Work|Major Issues>",
+  "presentationScore": <0-100>,
+  "contentScore": <0-100>,
+  "uaeMarketScore": <0-100>,
+  "strengths": ["<3-5 genuine strengths>"],
+  "improvements": [
+    { "area": "<area>", "priority": "<high|medium|low>", "suggestion": "<specific actionable suggestion>" }
+  ],
+  "firstImpression": "<honest 2-3 sentence first impression as a hiring manager>",
+  "platformTips": ["<2-3 platform-specific tips e.g. Behance, LinkedIn, personal site>"],
+  "summary": "<2-3 sentence overall assessment with the single most important action to take>"
+}
+Be direct, specific, and constructive. Focus on UAE media/creative market standards.`;
+
+  return callClaudeJSON<PortfolioReviewResult>(prompt, system);
+}

@@ -1,8 +1,30 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, MapPin, MessageSquare, Send, Clock, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Mail, MapPin, MessageSquare, Send, Clock, ChevronRight, Phone } from 'lucide-react';
 import { SEOHead } from '../../components/SEOHead';
+import { api, getApiError } from '../../lib/api';
 import toast from 'react-hot-toast';
+
+const SUBJECTS = [
+  'Job Seeker Support',
+  'Employer / Hiring Enquiry',
+  'Report a Fraudulent Listing',
+  'Technical Issue',
+  'Partnership / Advertising',
+  'CV Review',
+  'Portfolio Review',
+  'Interview Preparation',
+  'Career Coaching',
+  'Other',
+];
+
+const SERVICE_LABEL_MAP: Record<string, string> = {
+  'cv-review': 'CV Review',
+  'portfolio-review': 'Portfolio Review',
+  'interview-prep': 'Interview Preparation',
+  'career-coaching': 'Career Coaching',
+  'general': 'General Enquiry',
+};
 
 const FAQS = [
   { q: 'How do I post a job?', to: '/register', cta: 'Register as employer' },
@@ -12,8 +34,24 @@ const FAQS = [
 ];
 
 export function ContactUs() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [searchParams] = useSearchParams();
+  const serviceParam = searchParams.get('service') ?? '';
+  const initialSubject = SERVICE_LABEL_MAP[serviceParam] ?? '';
+
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: initialSubject,
+    message: '',
+  });
   const [submitting, setSubmitting] = useState(false);
+
+  // Update subject if query param changes (e.g. navigating from different service)
+  useEffect(() => {
+    const label = SERVICE_LABEL_MAP[serviceParam] ?? '';
+    if (label) setForm((f) => ({ ...f, subject: label }));
+  }, [serviceParam]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -21,16 +59,26 @@ export function ContactUs() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
-      toast.error('Please fill in all required fields.');
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      toast.error('Please fill in name, email and message.');
       return;
     }
     setSubmitting(true);
-    // Simulate submit — replace with real API call when backend endpoint is ready
-    await new Promise((r) => setTimeout(r, 1000));
-    toast.success('Message sent! We\'ll get back to you within 24 hours.');
-    setForm({ name: '', email: '', subject: '', message: '' });
-    setSubmitting(false);
+    try {
+      await api.post('/contact', {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        service: form.subject || undefined,
+        message: form.message.trim(),
+      });
+      toast.success("Message sent! We'll get back to you within 24 hours.");
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (err) {
+      toast.error(getApiError(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -72,6 +120,26 @@ export function ContactUs() {
                   <p className="text-xs text-gray-500 mb-0.5">Email</p>
                   <a href="mailto:support@ddotsmediajobs.com" className="text-sm text-brand-600 hover:underline font-medium">
                     support@ddotsmediajobs.com
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <Phone size={15} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Phone / WhatsApp</p>
+                  <a href="tel:+971509379212" className="text-sm text-gray-800 hover:text-brand-600 font-medium block">
+                    +971 50 937 9212
+                  </a>
+                  <a
+                    href="https://wa.me/971509379212"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-green-600 hover:underline font-medium"
+                  >
+                    Open in WhatsApp →
                   </a>
                 </div>
               </div>
@@ -132,7 +200,13 @@ export function ContactUs() {
           {/* ── Contact form ── */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-8">
-              <h2 className="font-bold text-gray-900 text-lg mb-6">Send Us a Message</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Send Us a Message</h2>
+              {form.subject && (
+                <p className="text-sm text-brand-600 font-medium mb-5">
+                  Re: <span className="bg-brand-50 px-2 py-0.5 rounded-full">{form.subject}</span>
+                </p>
+              )}
+              {!form.subject && <div className="mb-5" />}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
@@ -166,25 +240,38 @@ export function ContactUs() {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Subject
-                  </label>
-                  <select
-                    id="contact-subject"
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent bg-white hover:border-gray-300 transition-all"
-                  >
-                    <option value="">Select a subject…</option>
-                    <option value="Job Seeker Support">Job Seeker Support</option>
-                    <option value="Employer / Hiring">Employer / Hiring Enquiry</option>
-                    <option value="Report a Listing">Report a Fraudulent Listing</option>
-                    <option value="Technical Issue">Technical Issue</option>
-                    <option value="Partnership">Partnership / Advertising</option>
-                    <option value="Other">Other</option>
-                  </select>
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Phone / WhatsApp
+                    </label>
+                    <input
+                      id="contact-phone"
+                      name="phone"
+                      type="tel"
+                      value={form.phone}
+                      onChange={handleChange}
+                      placeholder="+971 50 000 0000"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent placeholder-gray-400 hover:border-gray-300 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Subject
+                    </label>
+                    <select
+                      id="contact-subject"
+                      name="subject"
+                      value={form.subject}
+                      onChange={handleChange}
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent bg-white hover:border-gray-300 transition-all"
+                    >
+                      <option value="">Select a subject…</option>
+                      {SUBJECTS.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
