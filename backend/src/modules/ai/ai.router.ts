@@ -27,6 +27,51 @@ router.get('/status', (_req: Request, res: Response) => {
   res.json({ success: true, data: { configured } });
 });
 
+// ── POST /ai/career-score  (public — no auth required) ───────────────────────
+router.post('/career-score', async (req: Request, res: Response) => {
+  const { currentRole, yearsOfExperience, skills, education, industry, targetRole, bio } = req.body;
+
+  if (!currentRole || currentRole.trim().length < 2) {
+    res.status(400).json({ success: false, error: 'currentRole is required' });
+    return;
+  }
+  if (typeof yearsOfExperience !== 'number' || yearsOfExperience < 0 || yearsOfExperience > 50) {
+    res.status(400).json({ success: false, error: 'yearsOfExperience must be a number between 0 and 50' });
+    return;
+  }
+  if (!education || !industry) {
+    res.status(400).json({ success: false, error: 'education and industry are required' });
+    return;
+  }
+
+  const result = await generateCareerScore({
+    currentRole: currentRole.trim(),
+    yearsOfExperience,
+    skills: Array.isArray(skills) ? skills.filter((s: unknown) => typeof s === 'string' && s.trim()) : [],
+    education,
+    industry,
+    targetRole: targetRole?.trim() || undefined,
+    bio: bio?.trim() || undefined,
+  });
+
+  res.json({ success: true, data: result });
+});
+
+// ── POST /ai/portfolio-review  (public — no auth required) ───────────────────
+router.post('/portfolio-review', async (req: Request, res: Response) => {
+  const { portfolioUrl, description, role, targetIndustry } = req.body;
+  if (!description || !role) {
+    res.status(400).json({ success: false, error: 'description and role are required' });
+    return;
+  }
+  if (description.trim().length < 30) {
+    res.status(400).json({ success: false, error: 'Please provide more detail about your portfolio (min 30 characters)' });
+    return;
+  }
+  const result = await analyzePortfolio({ portfolioUrl, description, role, targetIndustry });
+  res.json({ success: true, data: result });
+});
+
 router.use(authenticate);
 
 // ── POST /ai/job-description  (any authenticated user) ───────────────────────
@@ -512,51 +557,6 @@ router.get('/hiring-insights', requireRole('EMPLOYER'), async (req: AuthRequest,
   }, 3600); // cache 1 hour
 
   res.json({ success: true, data });
-});
-
-// ── POST /ai/career-score  (public — no auth required) ───────────────────────
-router.post('/career-score', async (req: Request, res: Response) => {
-  const { currentRole, yearsOfExperience, skills, education, industry, targetRole, bio } = req.body;
-
-  if (!currentRole || currentRole.trim().length < 2) {
-    res.status(400).json({ success: false, error: 'currentRole is required' });
-    return;
-  }
-  if (typeof yearsOfExperience !== 'number' || yearsOfExperience < 0 || yearsOfExperience > 50) {
-    res.status(400).json({ success: false, error: 'yearsOfExperience must be a number between 0 and 50' });
-    return;
-  }
-  if (!education || !industry) {
-    res.status(400).json({ success: false, error: 'education and industry are required' });
-    return;
-  }
-
-  const result = await generateCareerScore({
-    currentRole: currentRole.trim(),
-    yearsOfExperience,
-    skills: Array.isArray(skills) ? skills.filter((s: unknown) => typeof s === 'string' && s.trim()) : [],
-    education,
-    industry,
-    targetRole: targetRole?.trim() || undefined,
-    bio: bio?.trim() || undefined,
-  });
-
-  res.json({ success: true, data: result });
-});
-
-// ── POST /ai/portfolio-review  (public — no auth required) ───────────────────
-router.post('/portfolio-review', async (req: Request, res: Response) => {
-  const { portfolioUrl, description, role, targetIndustry } = req.body;
-  if (!description || !role) {
-    res.status(400).json({ success: false, error: 'description and role are required' });
-    return;
-  }
-  if (description.trim().length < 30) {
-    res.status(400).json({ success: false, error: 'Please provide more detail about your portfolio (min 30 characters)' });
-    return;
-  }
-  const result = await analyzePortfolio({ portfolioUrl, description, role, targetIndustry });
-  res.json({ success: true, data: result });
 });
 
 export default router;
