@@ -3,7 +3,7 @@ import { Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Menu, X, User, ChevronDown, LogOut, BookmarkCheck, FileText,
-  Zap, Wand2, Bot, Building2, Bell, Mic, Briefcase, BarChart2,
+  Zap, Wand2, Bot, Building2, Bell, Mic, Briefcase, BarChart2, MonitorPlay,
   Search, MapPin, LayoutList, Home,
   Linkedin, Twitter, Facebook, Instagram, Youtube,
 } from 'lucide-react';
@@ -248,6 +248,9 @@ export function PublicLayout() {
                           <Link to="/career-score" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors">
                             <BarChart2 className="h-3.5 w-3.5" /> AI Career Score
                           </Link>
+                          <Link to="/mock-interview" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors">
+                            <MonitorPlay className="h-3.5 w-3.5" /> AI Mock Interview
+                          </Link>
                         </>
                       )}
                       {user.role === 'EMPLOYER' && (
@@ -419,6 +422,7 @@ export function PublicLayout() {
                     { to: '/salary-explorer', label: 'Salary Explorer' },
                     { to: '/career-advisor', label: 'Career AI' },
                     { to: '/career-score', label: 'AI Career Score' },
+                    { to: '/mock-interview', label: 'AI Mock Interview' },
                     { to: '/community', label: 'Community Q&A' },
                     { to: '/whatsapp-groups', label: 'WhatsApp Groups' },
                     { to: '/cv-analyzer', label: 'ATS CV Analyzer' },
