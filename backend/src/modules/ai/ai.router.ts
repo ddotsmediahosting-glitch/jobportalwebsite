@@ -14,6 +14,9 @@ import {
   generateHiringInsights,
   analyzePortfolio,
   generateCareerScore,
+  generateMockInterviewQuestions,
+  evaluateMockAnswer,
+  generateInterviewDebrief,
 } from '../../lib/ai';
 import { config } from '../../config';
 import prisma from '../../lib/prisma';
@@ -54,6 +57,68 @@ router.post('/career-score', async (req: Request, res: Response) => {
     bio: bio?.trim() || undefined,
   });
 
+  res.json({ success: true, data: result });
+});
+
+// ── POST /ai/mock-interview/questions  (public) ───────────────────────────────
+router.post('/mock-interview/questions', async (req: Request, res: Response) => {
+  const { role, industry, yearsOfExperience, interviewType } = req.body;
+  if (!role || role.trim().length < 2) {
+    res.status(400).json({ success: false, error: 'role is required' });
+    return;
+  }
+  if (!['behavioral', 'technical', 'mixed', 'hr'].includes(interviewType)) {
+    res.status(400).json({ success: false, error: 'interviewType must be behavioral, technical, mixed, or hr' });
+    return;
+  }
+  const result = await generateMockInterviewQuestions({
+    role: role.trim(),
+    industry: industry || 'General',
+    yearsOfExperience: Number(yearsOfExperience) || 3,
+    interviewType,
+  });
+  res.json({ success: true, data: result });
+});
+
+// ── POST /ai/mock-interview/evaluate  (public) ────────────────────────────────
+router.post('/mock-interview/evaluate', async (req: Request, res: Response) => {
+  const { role, industry, question, questionType, answer, yearsOfExperience } = req.body;
+  if (!role || !question || !answer) {
+    res.status(400).json({ success: false, error: 'role, question, and answer are required' });
+    return;
+  }
+  if (!answer.trim() || answer.trim().length < 3) {
+    res.status(400).json({ success: false, error: 'Please provide a real answer' });
+    return;
+  }
+  const result = await evaluateMockAnswer({
+    role: role.trim(),
+    industry: industry || 'General',
+    question,
+    questionType: questionType || 'behavioral',
+    answer: answer.trim(),
+    yearsOfExperience: Number(yearsOfExperience) || 3,
+  });
+  res.json({ success: true, data: result });
+});
+
+// ── POST /ai/mock-interview/debrief  (public) ─────────────────────────────────
+router.post('/mock-interview/debrief', async (req: Request, res: Response) => {
+  const { role, questions, answers, scores } = req.body;
+  if (!role || !Array.isArray(questions) || !Array.isArray(answers) || !Array.isArray(scores)) {
+    res.status(400).json({ success: false, error: 'role, questions, answers, and scores arrays are required' });
+    return;
+  }
+  if (questions.length === 0 || questions.length !== answers.length || questions.length !== scores.length) {
+    res.status(400).json({ success: false, error: 'questions, answers, and scores must be equal-length non-empty arrays' });
+    return;
+  }
+  const result = await generateInterviewDebrief({
+    role: role.trim(),
+    questions,
+    answers,
+    scores,
+  });
   res.json({ success: true, data: result });
 });
 

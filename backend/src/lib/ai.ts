@@ -1192,3 +1192,158 @@ Scoring guide:
 
   return callClaudeJSON<CareerScoreResult>(prompt, system);
 }
+
+// ─── Mock Interview ────────────────────────────────────────────────────────────
+
+export interface MockInterviewQuestion {
+  id: string;
+  question: string;
+  type: 'behavioral' | 'technical' | 'situational' | 'motivational';
+  hint: string; // what the interviewer is really probing for
+}
+
+export interface MockInterviewSet {
+  interviewerPersona: string;
+  companyContext: string;
+  questions: MockInterviewQuestion[];
+}
+
+export interface AnswerEvaluation {
+  score: number;          // 0-10
+  scoreLabel: string;     // Excellent / Good / Fair / Needs Improvement
+  whatWorked: string[];
+  improvements: string[];
+  modelAnswer: string;
+  coachingTip: string;
+}
+
+export interface InterviewDebrief {
+  overallScore: number;   // 0-10
+  overallLabel: string;
+  summary: string;
+  topStrengths: string[];
+  topWeaknesses: string[];
+  hireRecommendation: string;
+  nextSteps: string[];
+}
+
+export async function generateMockInterviewQuestions(input: {
+  role: string;
+  industry: string;
+  yearsOfExperience: number;
+  interviewType: 'behavioral' | 'technical' | 'mixed' | 'hr';
+}): Promise<MockInterviewSet> {
+  const system = `You are an experienced UAE hiring manager conducting a real job interview. You are professional, direct, and use realistic interview questions that UAE employers actually ask. Generate questions that are specific and challenging but fair.`;
+
+  const questionCount = 6;
+  const typeGuide = {
+    behavioral: 'all behavioral (STAR-format) questions about past experiences',
+    technical: 'all technical/skill-based questions for this specific role',
+    hr: 'mix of motivation, culture fit, salary expectations, and situational questions',
+    mixed: 'mix of behavioral, technical, and situational questions',
+  }[input.interviewType];
+
+  const prompt = `Generate a realistic mock interview for this candidate in the UAE job market.
+
+ROLE: ${input.role}
+INDUSTRY: ${input.industry}
+EXPERIENCE: ${input.yearsOfExperience} years
+INTERVIEW TYPE: ${input.interviewType} — ${typeGuide}
+
+Return JSON with exactly this structure:
+{
+  "interviewerPersona": "<e.g. 'Sarah Al-Mahmoud, HR Manager at a leading Dubai tech firm'>",
+  "companyContext": "<1-2 sentences setting the scene, e.g. 'You are interviewing for a mid-level role at a rapidly growing fintech company in DIFC, Dubai.'>",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "<the actual interview question as the interviewer would ask it>",
+      "type": "<behavioral|technical|situational|motivational>",
+      "hint": "<what the interviewer is really assessing with this question — shown to candidate after they answer>"
+    }
+  ]
+}
+
+Rules:
+- Exactly ${questionCount} questions
+- Questions must be realistic for ${input.role} in UAE
+- Start with an opener (e.g. "Tell me about yourself")
+- Include at least one question specific to UAE/GCC work culture or regulations
+- Vary difficulty — start easier, get harder
+- For behavioral: use "Tell me about a time when..." or "Describe a situation where..."
+- For technical: ask about specific tools, methodologies, or scenarios relevant to ${input.role}
+- Make questions feel like a real interview, not a quiz`;
+
+  return callClaudeJSON<MockInterviewSet>(prompt, system);
+}
+
+export async function evaluateMockAnswer(input: {
+  role: string;
+  industry: string;
+  question: string;
+  questionType: string;
+  answer: string;
+  yearsOfExperience: number;
+}): Promise<AnswerEvaluation> {
+  const system = `You are an expert UAE career coach and interviewer. Evaluate interview answers honestly and constructively. Be specific — reference the actual content of the answer. Don't be overly generous.`;
+
+  const prompt = `Evaluate this interview answer for a ${input.role} role in ${input.industry} in the UAE.
+
+QUESTION: ${input.question}
+QUESTION TYPE: ${input.questionType}
+CANDIDATE'S ANSWER: ${input.answer}
+CANDIDATE EXPERIENCE: ${input.yearsOfExperience} years
+
+Score and give coaching feedback. Return JSON:
+{
+  "score": <0-10 integer — be honest, average answers score 5-6, weak answers 3-4, strong answers 8-9, exceptional 10>,
+  "scoreLabel": "<Exceptional|Strong|Good|Fair|Needs Improvement|Weak>",
+  "whatWorked": ["<1-3 specific things done well in this answer>"],
+  "improvements": ["<2-3 specific improvements with examples of how to say it better>"],
+  "modelAnswer": "<A strong 3-5 sentence model answer that demonstrates best practice for this question — specific to the role and UAE context>",
+  "coachingTip": "<One key coaching insight for this question type that will help in real interviews>"
+}
+
+Scoring guide:
+- 9-10: Concise, specific, quantified, directly answers the question with UAE-relevant context
+- 7-8: Good structure, relevant content, minor gaps in specificity or impact
+- 5-6: Addresses the question but lacks structure, specifics, or is too generic
+- 3-4: Vague, off-topic, or missing key elements the interviewer was looking for
+- 1-2: Does not answer the question, too short, or demonstrates a red flag
+- If answer is very short (under 20 words) or clearly placeholder text, score 1-2`;
+
+  return callClaudeJSON<AnswerEvaluation>(prompt, system);
+}
+
+export async function generateInterviewDebrief(input: {
+  role: string;
+  questions: string[];
+  answers: string[];
+  scores: number[];
+}): Promise<InterviewDebrief> {
+  const system = `You are a senior UAE career coach delivering a post-interview debrief. Be honest, specific, and constructive.`;
+
+  const avgScore = input.scores.reduce((a, b) => a + b, 0) / input.scores.length;
+
+  const qa = input.questions.map((q, i) => `Q${i + 1}: ${q}\nAnswer score: ${input.scores[i]}/10\nAnswer: ${input.answers[i]}`).join('\n\n');
+
+  const prompt = `Generate a comprehensive post-interview debrief for a ${input.role} candidate.
+
+INTERVIEW Q&A SUMMARY:
+${qa}
+
+AVERAGE SCORE: ${avgScore.toFixed(1)}/10
+
+Return JSON:
+{
+  "overallScore": <0-10, one decimal — weighted average slightly adjusted for consistency>,
+  "overallLabel": "<one of: Outstanding Candidate|Strong Candidate|Solid Candidate|Mixed Performance|Below Expectations|Not Ready>",
+  "summary": "<3-4 sentence overall assessment of this interview performance, specific to what was said>",
+  "topStrengths": ["<2-3 specific strengths demonstrated across the interview>"],
+  "topWeaknesses": ["<2-3 specific areas needing improvement based on the answers>"],
+  "hireRecommendation": "<What a real interviewer would conclude — e.g. 'Would proceed to next round' or 'Not suitable at this stage — needs X months of X experience'>",
+  "nextSteps": ["<3 specific actions this candidate should take before their next real interview>"]
+}`;
+
+  return callClaudeJSON<InterviewDebrief>(prompt, system);
+}
