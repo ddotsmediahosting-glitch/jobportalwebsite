@@ -1092,3 +1092,103 @@ Return JSON:
 
   return callClaudeJSON<RoleIntelligenceResult>(prompt, system);
 }
+
+// ─── Career Score ──────────────────────────────────────────────────────────────
+
+export interface CareerScoreResult {
+  overallScore: number;
+  grade: string;
+  scoreLabel: string;
+  breakdown: {
+    technicalSkills: number;
+    experience: number;
+    marketability: number;
+    education: number;
+    profileStrength: number;
+  };
+  strengths: string[];
+  skillGaps: Array<{
+    skill: string;
+    priority: 'critical' | 'high' | 'medium';
+    reason: string;
+    howToLearn: string;
+  }>;
+  actionItems: Array<{
+    action: string;
+    impact: 'high' | 'medium' | 'low';
+    timeframe: string;
+  }>;
+  marketPositioning: string;
+  salaryPotential: {
+    current: string;
+    withImprovements: string;
+  };
+}
+
+export async function generateCareerScore(input: {
+  currentRole: string;
+  yearsOfExperience: number;
+  skills: string[];
+  education: string;
+  industry: string;
+  targetRole?: string;
+  bio?: string;
+}): Promise<CareerScoreResult> {
+  const system = `You are an expert UAE career coach and talent assessment specialist with deep knowledge of the UAE job market across Dubai, Abu Dhabi, Sharjah, and all Emirates. You provide honest, data-driven career assessments with actionable insights tailored to the UAE market.`;
+
+  const prompt = `Assess this candidate's career profile and provide a comprehensive Career Score for the UAE job market.
+
+CANDIDATE PROFILE:
+- Current Role: ${input.currentRole}
+- Years of Experience: ${input.yearsOfExperience}
+- Industry: ${input.industry}
+- Education: ${input.education}
+- Skills: ${input.skills.length > 0 ? input.skills.join(', ') : 'Not specified'}
+${input.bio ? `- Bio/Summary: ${input.bio}` : ''}
+${input.targetRole ? `- Target Role: ${input.targetRole}` : ''}
+
+Evaluate against UAE market standards and demand. Be honest — a junior with few skills should score low, a strong senior should score high.
+
+Return JSON with exactly this structure:
+{
+  "overallScore": <0-100 integer>,
+  "grade": "<A+|A|B+|B|C+|C|D|F>",
+  "scoreLabel": "<one of: Elite Talent|Strong Candidate|Competitive Profile|Developing Professional|Entry Level|Needs Improvement>",
+  "breakdown": {
+    "technicalSkills": <0-100>,
+    "experience": <0-100>,
+    "marketability": <0-100>,
+    "education": <0-100>,
+    "profileStrength": <0-100>
+  },
+  "strengths": ["<3-5 specific strengths this candidate has in the UAE market>"],
+  "skillGaps": [
+    {
+      "skill": "<skill name>",
+      "priority": "<critical|high|medium>",
+      "reason": "<why this skill matters for their role/target in UAE>",
+      "howToLearn": "<specific course, certification, or method to acquire it>"
+    }
+  ],
+  "actionItems": [
+    {
+      "action": "<specific actionable step>",
+      "impact": "<high|medium|low>",
+      "timeframe": "<e.g. 1-2 weeks, 1 month, 3 months>"
+    }
+  ],
+  "marketPositioning": "<2-3 sentence assessment of how this candidate is positioned in the UAE job market right now, and what opportunities are available>",
+  "salaryPotential": {
+    "current": "<estimated current salary range in AED/month based on profile, e.g. AED 8,000-12,000/month>",
+    "withImprovements": "<estimated salary range after addressing top skill gaps, e.g. AED 15,000-20,000/month>"
+  }
+}
+
+Scoring guide:
+- overallScore: weighted (technical 30%, experience 25%, marketability 25%, education 10%, profile 10%)
+- skillGaps: focus on ${input.targetRole ? `skills needed for ${input.targetRole}` : 'high-demand UAE market skills missing from their current set'}
+- actionItems: 3-5 items, most impactful first
+- Be specific to UAE market conditions`;
+
+  return callClaudeJSON<CareerScoreResult>(prompt, system);
+}

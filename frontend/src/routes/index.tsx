@@ -26,6 +26,7 @@ const SalaryExplorer = lazy(() => import('../pages/public/SalaryExplorer').then(
 const TrendingJobs = lazy(() => import('../pages/public/TrendingJobs').then((m) => ({ default: m.TrendingJobs })));
 const ApplicationTracker = lazy(() => import('../pages/public/ApplicationTracker').then((m) => ({ default: m.ApplicationTracker })));
 const MarketInsights = lazy(() => import('../pages/public/MarketInsights').then((m) => ({ default: m.MarketInsights })));
+const CareerScore = lazy(() => import('../pages/public/CareerScore').then((m) => ({ default: m.CareerScore })));
 
 // Seeker pages
 const SeekerDashboard = lazy(() => import('../pages/public/SeekerDashboard').then((m) => ({ default: m.SeekerDashboard })));
@@ -141,6 +142,7 @@ export function AppRoutes() {
           <Route path="salary-explorer" element={<SalaryExplorer />} />
           <Route path="trending" element={<TrendingJobs />} />
           <Route path="market-insights" element={<MarketInsights />} />
+          <Route path="career-score" element={<CareerScore />} />
           <Route path="application-tracker" element={<RequireAuth roles={['SEEKER']}><ApplicationTracker /></RequireAuth>} />
           <Route path="post-job" element={<RequireAuth><PostJobAsUser /></RequireAuth>} />
           <Route path="my-posts" element={<RequireAuth><MyPosts /></RequireAuth>} />
