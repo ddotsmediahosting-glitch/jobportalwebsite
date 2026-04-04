@@ -4,11 +4,13 @@ WORKDIR /app
 COPY package.json tsconfig.base.json ./
 COPY backend/package.json ./backend/
 COPY shared/package.json ./shared/
+# Copy prisma schema before npm install so this layer invalidates on schema changes
+COPY backend/prisma ./backend/prisma
 RUN npm install
 COPY . .
-# Run prisma generate explicitly from the backend directory so it can resolve
-# @prisma/client from the workspace root node_modules without confusion.
-RUN cd backend && npx prisma generate
+# Run prisma generate from workspace root with explicit schema path so the CLI
+# resolves @prisma/client from /app/node_modules (not a subdirectory).
+RUN npx prisma generate --schema=./backend/prisma/schema.prisma
 RUN npm run build -w @uaejobs/shared && npm run build -w @uaejobs/api
 
 # ── Production stage ──────────────────────────────────────────────────────────
@@ -21,6 +23,6 @@ COPY --from=builder /app/shared/package.json ./shared/
 COPY --from=builder /app/backend/prisma ./backend/prisma
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/shared/dist ./shared/dist
-RUN npm install --omit=dev && cd backend && npx prisma generate
+RUN npm install --omit=dev && npx prisma generate --schema=./backend/prisma/schema.prisma
 EXPOSE 4000
 CMD ["sh", "-c", "cd backend && npx prisma db push --accept-data-loss && node /app/backend/dist/src/server.js"]
