@@ -61,6 +61,11 @@ export default defineConfig({
           if (id.includes('/node_modules/axios/')) {
             return 'vendor-axios';
           }
+          // jsPDF is dynamically imported in CVBuilder — do NOT force it into
+          // a vendor chunk or it will load eagerly on every page (~500 KB).
+          if (id.includes('/node_modules/jspdf/') || id.includes('/node_modules/html2canvas/')) {
+            return undefined; // keep in the dynamic CVBuilder chunk
+          }
           // All other node_modules in one chunk (router, forms, toast, etc.)
           // Keeping router + app together avoids circular-chunk issues with
           // react-router-dom's @remix-run/router internal dependency.
