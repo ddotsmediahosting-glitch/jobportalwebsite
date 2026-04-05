@@ -11,7 +11,7 @@ export const defaultLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 30, // 30 attempts per 15 min per IP (was 10 — too tight for shared IPs / testing)
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many authentication attempts, please try again in 15 minutes' },
@@ -19,7 +19,7 @@ export const authLimiter = rateLimit({
 
 export const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 30,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Upload limit reached' },
