@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string }>;
+const pdfParseLib = require('pdf-parse');
+const pdfParse: (buf: Buffer) => Promise<{ text: string }> = pdfParseLib.default || pdfParseLib;
 import mammoth from 'mammoth';
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
