@@ -135,7 +135,7 @@ export function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-7 pb-7" noValidate>
+          <form onSubmit={handleSubmit(onSubmit, (errs) => { const msgs = Object.values(errs).map((e: any) => e?.message).filter(Boolean); if (msgs.length) toast.error(String(msgs[0])); })} className="space-y-4 px-7 pb-7" noValidate>
             {role === 'SEEKER' && (
               <div className="grid grid-cols-2 gap-3">
                 <Input {...register('firstName')} label="First Name" placeholder="Ahmed" error={errors.firstName?.message} required />
