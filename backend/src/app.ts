@@ -94,9 +94,12 @@ app.get('/health', async (_req, res) => {
 
   const db = checks[0].status === 'fulfilled' ? 'ok' : 'error';
   const cache = checks[1].status === 'fulfilled' ? 'ok' : 'error';
-  const healthy = db === 'ok' && cache === 'ok';
+  const healthy = db === 'ok';
 
-  res.status(healthy ? 200 : 503).json({
+  // Always return 200 so Docker health check passes as long as the server
+  // is running. DB/cache degraded state is reported in the body but does
+  // not kill the container — Prisma will reconnect automatically.
+  res.status(200).json({
     status: healthy ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
