@@ -19,18 +19,6 @@ export const registerSchema = z
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
-  })
-  .refine((d) => d.role !== 'EMPLOYER' || (d.companyName && d.companyName.trim().length >= 2), {
-    message: 'Company name is required for employer accounts',
-    path: ['companyName'],
-  })
-  .refine((d) => d.role !== 'SEEKER' || (d.firstName && d.firstName.trim().length >= 2), {
-    message: 'First name is required',
-    path: ['firstName'],
-  })
-  .refine((d) => d.role !== 'SEEKER' || (d.lastName && d.lastName.trim().length >= 2), {
-    message: 'Last name is required',
-    path: ['lastName'],
   });
 
 export const loginSchema = z.object({

@@ -28,6 +28,24 @@ export function Register() {
   };
 
   const onSubmit = async (data: RegisterInput) => {
+    // Role-specific validation
+    if (role === 'EMPLOYER') {
+      if (!data.companyName || data.companyName.trim().length < 2) {
+        toast.error('Company name is required');
+        return;
+      }
+    }
+    if (role === 'SEEKER') {
+      if (!data.firstName || data.firstName.trim().length < 2) {
+        toast.error('First name is required');
+        return;
+      }
+      if (!data.lastName || data.lastName.trim().length < 2) {
+        toast.error('Last name is required');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const res = await api.post('/auth/register', { ...data, role });
@@ -135,7 +153,7 @@ export function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit, (errs) => { const msgs = Object.values(errs).map((e: any) => e?.message).filter(Boolean); if (msgs.length) toast.error(String(msgs[0])); })} className="space-y-4 px-7 pb-7" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-7 pb-7" noValidate>
             {role === 'SEEKER' && (
               <div className="grid grid-cols-2 gap-3">
                 <Input {...register('firstName')} label="First Name" placeholder="Ahmed" error={errors.firstName?.message} required />
