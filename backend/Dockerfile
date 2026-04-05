@@ -30,4 +30,4 @@ COPY --from=builder /app/shared/dist ./shared/dist
 RUN npm install --omit=dev
 RUN cd backend && npm install --ignore-scripts prisma @prisma/client && npx prisma generate
 EXPOSE 4000
-CMD ["sh", "-c", "cd backend && until npx prisma db push --accept-data-loss; do echo 'DB not ready, retrying in 5s...'; sleep 5; done && node /app/backend/dist/src/server.js"]
+CMD ["node", "/app/backend/dist/src/server.js"]
