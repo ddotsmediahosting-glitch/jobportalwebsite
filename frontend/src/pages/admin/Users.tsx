@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import {
   Search, MoreVertical, ShieldOff, ShieldCheck, Trash2, KeyRound,
   Download, CheckSquare, Square, Users as UsersIcon, X, UserPlus, Copy, Eye, EyeOff, Pencil,
+  CheckCircle, Ban, UserCheck,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
@@ -210,6 +211,22 @@ export function AdminUsers() {
     setSelected(next);
   };
 
+  const pendingCount = data?.items?.filter((u: User) => u.status === 'PENDING_VERIFICATION').length ?? 0;
+
+  const approveAllPendingMutation = useMutation({
+    mutationFn: () => {
+      const pendingIds = data?.items
+        ?.filter((u: User) => u.status === 'PENDING_VERIFICATION')
+        .map((u: User) => u.id) ?? [];
+      return api.post('/admin/users/bulk-status', { userIds: pendingIds, status: 'ACTIVE' });
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(res.data.message ?? 'All pending users approved.');
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
   return (
     <div className="space-y-4 max-w-7xl">
       {/* Header */}
@@ -218,7 +235,18 @@ export function AdminUsers() {
           <h1 className="text-xl font-bold text-gray-900">Users</h1>
           <p className="text-sm text-gray-500">Manage platform users</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {pendingCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { if (confirm(`Approve all ${pendingCount} pending users on this page?`)) approveAllPendingMutation.mutate(); }}
+              loading={approveAllPendingMutation.isPending}
+              className="text-green-700 border-green-300 hover:bg-green-50"
+            >
+              <UserCheck className="h-4 w-4" /> Approve All Pending ({pendingCount})
+            </Button>
+          )}
           {selected.size > 0 && (
             <Button
               variant="outline"
@@ -260,8 +288,25 @@ export function AdminUsers() {
             </button>
           )}
         </form>
-        <div className="w-44">
-          <Select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} options={STATUS_OPTIONS} />
+        {/* Quick filter pills */}
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { label: 'Pending', value: 'PENDING_VERIFICATION', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+            { label: 'Active', value: 'ACTIVE', color: 'bg-green-50 text-green-700 border-green-200' },
+            { label: 'Suspended', value: 'SUSPENDED', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+            { label: 'Banned', value: 'BANNED', color: 'bg-red-50 text-red-700 border-red-200' },
+          ].map(({ label, value, color }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => { setStatusFilter(statusFilter === value ? '' : value); setPage(1); }}
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                statusFilter === value ? color + ' shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <div className="w-40">
           <Select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }} options={ROLE_OPTIONS} />
@@ -315,7 +360,37 @@ export function AdminUsers() {
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{user.role}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <StatusBadge status={user.status} />
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={user.status} />
+                          {/* Inline quick approve for pending users */}
+                          {user.status === 'PENDING_VERIFICATION' && (
+                            <button
+                              onClick={() => statusMutation.mutate({ id: user.id, status: 'ACTIVE' })}
+                              title="Approve user"
+                              className="flex items-center gap-1 text-xs text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-2 py-0.5 rounded-full font-medium transition-colors"
+                            >
+                              <CheckCircle className="h-3 w-3" /> Approve
+                            </button>
+                          )}
+                          {user.status === 'ACTIVE' && (
+                            <button
+                              onClick={() => statusMutation.mutate({ id: user.id, status: 'SUSPENDED' })}
+                              title="Suspend user"
+                              className="flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 px-2 py-0.5 rounded-full font-medium transition-colors"
+                            >
+                              <ShieldOff className="h-3 w-3" /> Suspend
+                            </button>
+                          )}
+                          {(user.status === 'SUSPENDED' || user.status === 'BANNED') && (
+                            <button
+                              onClick={() => statusMutation.mutate({ id: user.id, status: 'ACTIVE' })}
+                              title="Activate user"
+                              className="flex items-center gap-1 text-xs text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-2 py-0.5 rounded-full font-medium transition-colors"
+                            >
+                              <ShieldCheck className="h-3 w-3" /> Activate
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                         {new Date(user.createdAt).toLocaleDateString()}
@@ -324,7 +399,17 @@ export function AdminUsers() {
                         {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end">
+                        <div className="flex justify-end items-center gap-1">
+                          {/* Quick ban button */}
+                          {user.status !== 'BANNED' && user.role !== 'ADMIN' && (
+                            <button
+                              onClick={() => { if (confirm(`Ban ${user.email}?`)) statusMutation.mutate({ id: user.id, status: 'BANNED' }); }}
+                              title="Ban user"
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </button>
+                          )}
                           <div className="relative">
                             <button
                               onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}
@@ -341,28 +426,13 @@ export function AdminUsers() {
                                 >
                                   <Pencil className="h-4 w-4" /> Edit Profile
                                 </button>
-                                <hr className="my-1 border-gray-100" />
-                                {user.status === 'ACTIVE' ? (
-                                  <button
-                                    onClick={() => statusMutation.mutate({ id: user.id, status: 'SUSPENDED' })}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-yellow-700 hover:bg-yellow-50"
-                                  >
-                                    <ShieldOff className="h-4 w-4" /> Suspend
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => statusMutation.mutate({ id: user.id, status: 'ACTIVE' })}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-700 hover:bg-green-50"
-                                  >
-                                    <ShieldCheck className="h-4 w-4" /> Activate
-                                  </button>
-                                )}
                                 <button
-                                  onClick={() => statusMutation.mutate({ id: user.id, status: 'BANNED' })}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-orange-700 hover:bg-orange-50"
+                                  onClick={() => { setDetailUser(user); setMenuOpen(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                 >
-                                  <ShieldOff className="h-4 w-4" /> Ban
+                                  <UsersIcon className="h-4 w-4" /> View Details
                                 </button>
+                                <hr className="my-1 border-gray-100" />
                                 <button
                                   onClick={() => resetPasswordMutation.mutate({ id: user.id, email: user.email })}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
@@ -481,17 +551,27 @@ export function AdminUsers() {
       {/* Bulk action modal */}
       <Modal isOpen={bulkModal} onClose={() => setBulkModal(false)} title={`Bulk Update (${selected.size} users)`} size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">Set status for all {selected.size} selected users:</p>
-          <Select
-            value={bulkStatus}
-            onChange={(e) => setBulkStatus(e.target.value)}
-            options={[
-              { value: 'ACTIVE', label: 'Active' },
-              { value: 'SUSPENDED', label: 'Suspended' },
-              { value: 'BANNED', label: 'Banned' },
-            ]}
-          />
-          <div className="flex gap-2 justify-end">
+          <p className="text-sm text-gray-600">Apply action to all <strong>{selected.size}</strong> selected users:</p>
+          <div className="grid grid-cols-1 gap-2">
+            {[
+              { status: 'ACTIVE', label: 'Approve / Activate', color: 'border-green-300 bg-green-50 text-green-800 hover:bg-green-100' },
+              { status: 'SUSPENDED', label: 'Suspend', color: 'border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100' },
+              { status: 'BANNED', label: 'Ban', color: 'border-red-300 bg-red-50 text-red-800 hover:bg-red-100' },
+            ].map(({ status, label, color }) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setBulkStatus(status)}
+                className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  bulkStatus === status ? color + ' shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+                {bulkStatus === status && <CheckCircle className="h-4 w-4" />}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
             <Button variant="outline" size="sm" onClick={() => setBulkModal(false)}>Cancel</Button>
             <Button
               size="sm"
