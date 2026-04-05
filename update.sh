@@ -1,21 +1,30 @@
 #!/bin/bash
-# Simple update script — always uses docker-compose.yml (port 3001)
+# Auto-deploy script — runs every 2 minutes via cron, deploys only when there are new commits
 set -e
 
-cd /opt/jobportalwebsite
+DIR=/opt/jobportalwebsite
+LOG=$DIR/deploy.log
 
-echo "Pulling latest code..."
-git pull
+cd "$DIR"
 
-echo "Rebuilding and restarting containers..."
-docker compose down
-docker compose up -d --build
+# Fetch latest from remote
+git fetch origin main >> "$LOG" 2>&1
 
-echo "Waiting for containers..."
-sleep 10
+# Check if local is behind remote
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse origin/main)
 
-echo "Container status:"
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+if [ "$LOCAL" = "$REMOTE" ]; then
+  exit 0  # Nothing new, skip
+fi
 
-echo ""
-echo "Done! Site is live at https://ddotsmediajobs.com"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] New commits detected — deploying..." >> "$LOG"
+
+# Pull latest code
+git pull origin main >> "$LOG" 2>&1
+
+# Rebuild and restart containers
+docker compose down >> "$LOG" 2>&1
+docker compose up -d --build >> "$LOG" 2>&1
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deployment complete." >> "$LOG"
