@@ -1,54 +1,89 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { User, Building2 } from 'lucide-react';
-import { registerSchema, RegisterInput } from '@uaejobs/shared';
 import { api, getApiError } from '../../lib/api';
-import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { SocialLoginButtons, useSocialProviders } from '../../components/SocialLoginButtons';
 
 export function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<'SEEKER' | 'EMPLOYER'>('SEEKER');
-  const { any: hasSocialProviders } = useSocialProviders();
   const [emailSent, setEmailSent] = useState(false);
+  const { any: hasSocialProviders } = useSocialProviders();
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'SEEKER' },
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    companyName: '',
   });
 
-  const handleRoleChange = (r: 'SEEKER' | 'EMPLOYER') => {
-    setRole(r);
-    setValue('role', r);
-  };
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const onSubmit = async (data: RegisterInput) => {
-    // Role-specific validation
-    if (role === 'EMPLOYER') {
-      if (!data.companyName || data.companyName.trim().length < 2) {
-        toast.error('Company name is required');
-        return;
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate
+    if (!form.email || !form.email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      toast.error('Password must contain at least one uppercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(form.password)) {
+      toast.error('Password must contain at least one number');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
     }
     if (role === 'SEEKER') {
-      if (!data.firstName || data.firstName.trim().length < 2) {
+      if (!form.firstName || form.firstName.trim().length < 2) {
         toast.error('First name is required');
         return;
       }
-      if (!data.lastName || data.lastName.trim().length < 2) {
+      if (!form.lastName || form.lastName.trim().length < 2) {
         toast.error('Last name is required');
+        return;
+      }
+    }
+    if (role === 'EMPLOYER') {
+      if (!form.companyName || form.companyName.trim().length < 2) {
+        toast.error('Company name is required');
         return;
       }
     }
 
     setLoading(true);
     try {
-      const res = await api.post('/auth/register', { ...data, role });
+      const payload: Record<string, string> = {
+        email: form.email.trim(),
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+        role,
+      };
+      if (role === 'SEEKER') {
+        payload.firstName = form.firstName.trim();
+        payload.lastName = form.lastName.trim();
+      }
+      if (role === 'EMPLOYER') {
+        payload.companyName = form.companyName.trim();
+      }
+
+      const res = await api.post('/auth/register', payload);
       if (res.data?.data?.verified) {
         toast.success('Account created! You can now sign in.');
         navigate('/login');
@@ -118,7 +153,7 @@ export function Register() {
               <button
                 key={r}
                 type="button"
-                onClick={() => handleRoleChange(r)}
+                onClick={() => setRole(r)}
                 className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all duration-150 text-left ${
                   role === r
                     ? 'border-brand-500 bg-white shadow-sm'
@@ -153,21 +188,62 @@ export function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-7 pb-7" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4 px-7 pb-7">
             {role === 'SEEKER' && (
               <div className="grid grid-cols-2 gap-3">
-                <Input {...register('firstName')} label="First Name" placeholder="Ahmed" error={errors.firstName?.message} required />
-                <Input {...register('lastName')} label="Last Name" placeholder="Al Rashid" error={errors.lastName?.message} required />
+                <Input
+                  label="First Name"
+                  placeholder="Ahmed"
+                  value={form.firstName}
+                  onChange={set('firstName')}
+                  required
+                />
+                <Input
+                  label="Last Name"
+                  placeholder="Al Rashid"
+                  value={form.lastName}
+                  onChange={set('lastName')}
+                  required
+                />
               </div>
             )}
 
             {role === 'EMPLOYER' && (
-              <Input {...register('companyName')} label="Company Name" placeholder="ACME Corp LLC" error={errors.companyName?.message} required />
+              <Input
+                label="Company Name"
+                placeholder="ACME Corp LLC"
+                value={form.companyName}
+                onChange={set('companyName')}
+                required
+              />
             )}
 
-            <Input {...register('email')} label="Email address" type="email" placeholder="you@company.com" error={errors.email?.message} required autoComplete="email" />
-            <Input {...register('password')} label="Password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number" error={errors.password?.message} required autoComplete="new-password" />
-            <Input {...register('confirmPassword')} label="Confirm Password" type="password" placeholder="Repeat password" error={errors.confirmPassword?.message} required />
+            <Input
+              label="Email address"
+              type="email"
+              placeholder="you@company.com"
+              value={form.email}
+              onChange={set('email')}
+              required
+              autoComplete="email"
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Min 8 chars, 1 uppercase, 1 number"
+              value={form.password}
+              onChange={set('password')}
+              required
+              autoComplete="new-password"
+            />
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="Repeat password"
+              value={form.confirmPassword}
+              onChange={set('confirmPassword')}
+              required
+            />
 
             <Button type="submit" className="w-full" size="lg" loading={loading}>
               Create Account →
