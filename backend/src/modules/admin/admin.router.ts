@@ -50,6 +50,9 @@ router.get('/audit-logs', ctrl.listAuditLogs.bind(ctrl));
 router.get('/settings', ctrl.getSettings.bind(ctrl));
 router.put('/settings/:key', ctrl.updateSetting.bind(ctrl));
 
+// SMTP test
+router.post('/test-email', ctrl.testEmail.bind(ctrl));
+
 // Content pages (CMS)
 router.get('/pages', ctrl.listContentPages.bind(ctrl));
 router.get('/pages/:slug', ctrl.getContentPage.bind(ctrl));

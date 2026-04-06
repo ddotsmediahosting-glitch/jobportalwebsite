@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Save, Globe, FileText, Plus, Pencil, Trash2, Share2, ExternalLink, Megaphone } from 'lucide-react';
+import { Save, Globe, FileText, Plus, Pencil, Trash2, Share2, ExternalLink, Megaphone, Mail } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
@@ -88,6 +88,8 @@ function PagesSkeleton() {
 export function AdminSettings() {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<'settings' | 'social' | 'pages' | 'announcement'>('settings');
+  const [testEmailTo, setTestEmailTo] = useState('');
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [pageModal, setPageModal] = useState(false);
   const [editingPage, setEditingPage] = useState<ContentPage | null>(null);
   const [pageForm, setPageForm] = useState({ slug: '', title: '', content: '', isPublished: true });
@@ -172,6 +174,42 @@ export function AdminSettings() {
           <SettingsSkeleton />
         ) : (
           <div className="space-y-4">
+            {/* SMTP Test */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Mail className="h-4 w-4 text-brand-600" />
+                <h3 className="text-sm font-semibold text-gray-900">Test Email (SMTP)</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">Send a test email to verify your SMTP configuration is working. If this fails, verification emails will not be delivered.</p>
+              <div className="flex gap-2 flex-wrap">
+                <input
+                  type="email"
+                  placeholder="Send test to: you@example.com"
+                  value={testEmailTo}
+                  onChange={(e) => setTestEmailTo(e.target.value)}
+                  className="flex-1 min-w-[200px] text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <Button
+                  size="sm"
+                  loading={testEmailLoading}
+                  onClick={async () => {
+                    if (!testEmailTo.trim()) { toast.error('Enter an email address first'); return; }
+                    setTestEmailLoading(true);
+                    try {
+                      await api.post('/admin/test-email', { to: testEmailTo.trim() });
+                      toast.success(`Test email sent to ${testEmailTo}`);
+                    } catch (err) {
+                      toast.error(getApiError(err));
+                    } finally {
+                      setTestEmailLoading(false);
+                    }
+                  }}
+                >
+                  Send Test Email
+                </Button>
+              </div>
+            </div>
+
             {Object.entries(SETTING_LABELS).map(([key, { label, type, placeholder }]) => {
               const currentVal = localSettings[key] ?? '';
               return (

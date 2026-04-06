@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AdminService } from './admin.service';
 import { AuthRequest } from '../../middleware/auth';
 import { UserStatus, JobStatus } from '@prisma/client';
+import { sendEmail, checkSmtpAvailable } from '../../lib/email';
 
 const service = new AdminService();
 
@@ -183,5 +184,27 @@ export class AdminController {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="users.csv"');
     res.send(csv);
+  }
+
+  async testEmail(req: AuthRequest, res: Response) {
+    const to = (req.body.to as string) || req.user!.email;
+    const smtpOk = await checkSmtpAvailable();
+    if (!smtpOk) {
+      res.status(503).json({
+        success: false,
+        error: 'SMTP is not configured or unreachable. Set SMTP_HOST, SMTP_USER, SMTP_PASS in your .env file.',
+      });
+      return;
+    }
+    try {
+      await sendEmail({
+        to,
+        subject: 'Test Email — Ddotsmedia Jobs',
+        html: '<p>This is a test email from your Ddotsmedia Jobs admin panel. If you received this, SMTP is working correctly.</p>',
+      });
+      res.json({ success: true, message: `Test email sent to ${to}` });
+    } catch (err) {
+      res.status(500).json({ success: false, error: (err as Error).message });
+    }
   }
 }
