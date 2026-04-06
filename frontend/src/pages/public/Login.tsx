@@ -29,11 +29,7 @@ export function Login() {
     setLoading(true);
     try {
       const userData = await login(data.email, data.password);
-      if (userData.status === 'PENDING_VERIFICATION') {
-        toast('Welcome! Please check your email to verify your account.', { icon: '📧' });
-      } else {
-        toast.success('Welcome back!');
-      }
+      toast.success('Welcome back!');
       // Smart redirect based on role
       if (userData.role === 'ADMIN' || userData.role === 'SUB_ADMIN') {
         navigate('/admin/dashboard', { replace: true });
@@ -43,7 +39,13 @@ export function Login() {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      toast.error(getApiError(err));
+      const msg = getApiError(err);
+      if (msg.includes('verify your email')) {
+        toast('Please verify your email first.', { icon: '📧' });
+        navigate('/verify-email');
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }

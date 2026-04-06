@@ -108,6 +108,9 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedError('Invalid email or password');
 
+    if (user.status === UserStatus.PENDING_VERIFICATION) {
+      throw new AppError(403, 'Please verify your email before logging in. Check your inbox for the verification code.');
+    }
     if (user.status === UserStatus.BANNED) throw new AppError(403, 'Account banned');
     if (user.status === UserStatus.SUSPENDED) throw new AppError(403, 'Account suspended');
 
