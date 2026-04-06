@@ -191,13 +191,13 @@ export class EmployersService {
       take: 10,
     });
 
-    // Daily applications (last 30 days)
-    const dailyRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
-      SELECT DATE_TRUNC('day', a."createdAt") AS day, COUNT(*) AS count
-      FROM "Application" a
-      JOIN "Job" j ON j.id = a."jobId"
-      WHERE j."employerId" = ${member.employerId}
-        AND a."createdAt" >= ${since30d}
+    // Daily applications (last 30 days) — MariaDB/MySQL syntax
+    const dailyRaw = await prisma.$queryRaw<{ day: string; count: bigint }[]>`
+      SELECT DATE(a.createdAt) AS day, COUNT(*) AS count
+      FROM Application a
+      JOIN Job j ON j.id = a.jobId
+      WHERE j.employerId = ${member.employerId}
+        AND a.createdAt >= ${since30d}
       GROUP BY day ORDER BY day ASC
     `;
 

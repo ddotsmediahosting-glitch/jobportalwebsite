@@ -399,41 +399,41 @@ export class AdminService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    // Daily new users
-    const usersRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
-      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
-      FROM "User"
-      WHERE "createdAt" >= ${since}
+    // Daily new users — MariaDB/MySQL syntax
+    const usersRaw = await prisma.$queryRaw<{ day: string; count: bigint }[]>`
+      SELECT DATE(createdAt) AS day, COUNT(*) AS count
+      FROM User
+      WHERE createdAt >= ${since}
       GROUP BY day ORDER BY day ASC
     `;
 
     // Daily new jobs
-    const jobsRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
-      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
-      FROM "Job"
-      WHERE "createdAt" >= ${since}
+    const jobsRaw = await prisma.$queryRaw<{ day: string; count: bigint }[]>`
+      SELECT DATE(createdAt) AS day, COUNT(*) AS count
+      FROM Job
+      WHERE createdAt >= ${since}
       GROUP BY day ORDER BY day ASC
     `;
 
     // Daily new applications
-    const appsRaw = await prisma.$queryRaw<{ day: Date; count: bigint }[]>`
-      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
-      FROM "Application"
-      WHERE "createdAt" >= ${since}
+    const appsRaw = await prisma.$queryRaw<{ day: string; count: bigint }[]>`
+      SELECT DATE(createdAt) AS day, COUNT(*) AS count
+      FROM Application
+      WHERE createdAt >= ${since}
       GROUP BY day ORDER BY day ASC
     `;
 
     // Job status distribution
     const jobStatusRaw = await prisma.$queryRaw<{ status: string; count: bigint }[]>`
-      SELECT status, COUNT(*) AS count FROM "Job" GROUP BY status
+      SELECT status, COUNT(*) AS count FROM Job GROUP BY status
     `;
 
     // Applications by emirate (from job location)
     const byEmirateRaw = await prisma.$queryRaw<{ location: string; count: bigint }[]>`
       SELECT j.location, COUNT(a.id) AS count
-      FROM "Application" a
-      JOIN "Job" j ON j.id = a."jobId"
-      WHERE a."createdAt" >= ${since}
+      FROM Application a
+      JOIN Job j ON j.id = a.jobId
+      WHERE a.createdAt >= ${since}
       GROUP BY j.location ORDER BY count DESC LIMIT 10
     `;
 
