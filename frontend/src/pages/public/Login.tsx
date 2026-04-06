@@ -29,11 +29,13 @@ export function Login() {
     setLoading(true);
     try {
       const userData = await login(data.email, data.password);
-      toast.success('Welcome back!');
-      // Smart redirect based on role
       if (userData.role === 'ADMIN' || userData.role === 'SUB_ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (userData.role === 'EMPLOYER') {
+        toast.error('Please use the Admin Portal to sign in.');
+        navigate('/admin/login', { replace: true });
+        return;
+      }
+      toast.success('Welcome back!');
+      if (userData.role === 'EMPLOYER') {
         navigate(from !== '/' ? from : '/employer/dashboard', { replace: true });
       } else {
         navigate(from, { replace: true });

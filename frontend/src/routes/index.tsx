@@ -62,6 +62,9 @@ const EmployerAnalyticsPage = lazy(() => import('../pages/employer/Analytics').t
 const CandidateSearch = lazy(() => import('../pages/employer/CandidateSearch').then((m) => ({ default: m.CandidateSearch })));
 const InterviewScheduler = lazy(() => import('../pages/employer/InterviewScheduler').then((m) => ({ default: m.InterviewScheduler })));
 
+// Admin login
+const AdminLogin = lazy(() => import('../pages/admin/AdminLogin').then((m) => ({ default: m.AdminLogin })));
+
 // Admin pages
 const AdminBlogManager = lazy(() => import('../pages/admin/BlogManager').then((m) => ({ default: m.AdminBlogManager })));
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard').then((m) => ({ default: m.AdminDashboard })));
@@ -95,15 +98,31 @@ function RequireAuth({ children, roles }: { children: React.ReactElement; roles?
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return <PageSpinner />;
-  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!isAuthenticated) {
+    // Send admin routes to admin login, others to regular login
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    return <Navigate to={isAdminRoute ? '/admin/login' : '/login'} state={{ from: location }} replace />;
+  }
   if (roles && user && !roles.includes(user.role)) return <Navigate to="/" replace />;
   return children;
 }
 
 function GuestOnly({ children }: { children: React.ReactElement }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   if (isLoading) return <PageSpinner />;
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) {
+    if (user?.role === 'ADMIN' || user?.role === 'SUB_ADMIN') return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+function AdminGuestOnly({ children }: { children: React.ReactElement }) {
+  const { isAuthenticated, user, isLoading } = useAuth();
+  if (isLoading) return <PageSpinner />;
+  if (isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SUB_ADMIN')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
   return children;
 }
 
@@ -171,6 +190,9 @@ export function AppRoutes() {
           <Route path="interviews" element={<InterviewScheduler />} />
           <Route path="ai-insights" element={<EmployerAIInsights />} />
         </Route>
+
+        {/* Admin login — separate from public login */}
+        <Route path="/admin/login" element={<AdminGuestOnly><AdminLogin /></AdminGuestOnly>} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<RequireAuth roles={['ADMIN', 'SUB_ADMIN']}><AdminLayout /></RequireAuth>}>
