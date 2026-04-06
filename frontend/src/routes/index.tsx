@@ -56,7 +56,6 @@ const PostJob = lazy(() => import('../pages/employer/PostJob').then((m) => ({ de
 const ManageJobs = lazy(() => import('../pages/employer/ManageJobs').then((m) => ({ default: m.ManageJobs })));
 const ApplicationsPipeline = lazy(() => import('../pages/employer/ApplicationsPipeline').then((m) => ({ default: m.ApplicationsPipeline })));
 const CompanyProfile = lazy(() => import('../pages/employer/CompanyProfile').then((m) => ({ default: m.CompanyProfile })));
-const Billing = lazy(() => import('../pages/employer/Billing').then((m) => ({ default: m.Billing })));
 const Team = lazy(() => import('../pages/employer/Team').then((m) => ({ default: m.Team })));
 const EmployerAnalyticsPage = lazy(() => import('../pages/employer/Analytics').then((m) => ({ default: m.EmployerAnalyticsPage })));
 const CandidateSearch = lazy(() => import('../pages/employer/CandidateSearch').then((m) => ({ default: m.CandidateSearch })));
@@ -182,7 +181,6 @@ export function AppRoutes() {
           <Route path="jobs/:id/edit" element={<PostJob />} />
           <Route path="applications" element={<ApplicationsPipeline />} />
           <Route path="company" element={<CompanyProfile />} />
-          <Route path="billing" element={<Billing />} />
           <Route path="team" element={<Team />} />
           <Route path="social-marketing" element={<SocialMarketing />} />
           <Route path="analytics" element={<EmployerAnalyticsPage />} />

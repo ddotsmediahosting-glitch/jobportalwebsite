@@ -443,7 +443,6 @@ export function PublicLayout() {
                   {[
                     { to: '/register', label: 'Post a Job' },
                     { to: '/employer', label: 'Employer Dashboard' },
-                    { to: '/pages/pricing', label: 'Pricing' },
                   ].map(({ to, label }) => (
                     <li key={to}>
                       <Link to={to} className="hover:text-brand-400 transition-colors duration-150">{label}</Link>

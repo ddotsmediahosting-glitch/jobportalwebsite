@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
-  LayoutDashboard, Briefcase, Users, CreditCard, Building2, LogOut, Menu, X, Share2, Home, ExternalLink,
+  LayoutDashboard, Briefcase, Users, Building2, LogOut, Menu, X, Share2, Home, ExternalLink,
   BarChart3, Search, Calendar, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -17,7 +17,6 @@ const nav = [
   { to: '/employer/social-marketing', label: 'Social Marketing', icon: Share2 },
   { to: '/employer/company', label: 'Company Profile', icon: Building2 },
   { to: '/employer/team', label: 'Team', icon: Users },
-  { to: '/employer/billing', label: 'Billing', icon: CreditCard },
 ];
 
 export function EmployerLayout() {

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Briefcase, Users, Eye, TrendingUp, Plus, CheckCircle, AlertTriangle,
-  ArrowUpRight, FileText, BarChart3,
+  ArrowUpRight, FileText,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { JobStatusBadge, VerificationBadge } from '../../components/ui/Badge';
@@ -113,8 +113,6 @@ export function EmployerDashboard() {
   });
 
   const emp = employer?.employer;
-  const sub = emp?.subscription;
-  const usagePct = sub ? Math.min(100, (sub.jobPostsUsed / sub.jobPostsLimit) * 100) : 0;
 
   if (empLoading || analyticsLoading) return <DashboardSkeleton />;
 
@@ -164,33 +162,6 @@ export function EmployerDashboard() {
           );
         })}
       </div>
-
-      {/* Subscription usage bar */}
-      {sub && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-brand-500" />
-              <span className="font-semibold text-gray-900 text-sm">{sub.plan} Plan</span>
-            </div>
-            <Link to="/employer/billing" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
-              {sub.plan === 'FREE' ? 'Upgrade plan' : 'Manage'} →
-            </Link>
-          </div>
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <span>{sub.jobPostsUsed} of {sub.jobPostsLimit} job posts used</span>
-            <span className={usagePct >= 80 ? 'text-red-500 font-semibold' : 'text-gray-400'}>
-              {Math.round(usagePct)}%
-            </span>
-          </div>
-          <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
-            <div
-              style={{ width: `${usagePct}%` }}
-              className={`h-2.5 rounded-full transition-all duration-500 ${usagePct >= 80 ? 'bg-red-500' : 'bg-brand-500'}`}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Recent jobs + applications */}
       <div className="grid lg:grid-cols-2 gap-6">
