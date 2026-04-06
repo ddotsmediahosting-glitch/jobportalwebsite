@@ -14,7 +14,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 const VERIFICATION_OPTIONS = [
   { value: '', label: 'All statuses' },
   { value: 'PENDING', label: 'Pending' },
-  { value: 'VERIFIED', label: 'Verified' },
+  { value: 'APPROVED', label: 'Verified' },
   { value: 'REJECTED', label: 'Rejected' },
 ];
 
@@ -176,7 +176,7 @@ export function AdminEmployers() {
                         {emp.verificationStatus === 'PENDING' && (
                           <>
                             <button
-                              onClick={() => verifyMutation.mutate({ id: emp.id, status: 'VERIFIED' })}
+                              onClick={() => verifyMutation.mutate({ id: emp.id, status: 'APPROVED' })}
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50"
                               title="Verify"
                             >
@@ -304,11 +304,11 @@ export function AdminEmployers() {
                 </a>
               </div>
             )}
-            {selected.verificationStatus !== 'VERIFIED' && (
+            {selected.verificationStatus !== 'APPROVED' && (
               <div className="flex gap-2 pt-2 border-t border-gray-100">
                 <Button
                   size="sm"
-                  onClick={() => verifyMutation.mutate({ id: selected.id, status: 'VERIFIED' })}
+                  onClick={() => verifyMutation.mutate({ id: selected.id, status: 'APPROVED' })}
                   loading={verifyMutation.isPending}
                   icon={<CheckCircle className="h-4 w-4" />}
                 >
