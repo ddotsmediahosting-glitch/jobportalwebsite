@@ -12,6 +12,8 @@ import { emailQueue } from '../../lib/queue';
 import {
   emailVerificationTemplate,
   passwordResetTemplate,
+  sendEmail,
+  checkSmtpAvailable,
 } from '../../lib/email';
 import { config } from '../../config';
 import {
@@ -85,19 +87,27 @@ export class AuthService {
       });
     }
 
-    // Always send verification email — account cannot be used until verified
+    // Send verification email directly (not via queue) so failures are immediate and visible
     const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
-    try {
-      await emailQueue.add('send-verification', {
-        to: email,
-        subject: 'Verify your Ddotsmedia Jobs account',
-        html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
-      });
-    } catch {
-      // Queue failure is non-fatal — user can request a resend from the verify page
+    let emailSent = false;
+    const smtpOk = await checkSmtpAvailable();
+    if (smtpOk) {
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Verify your Ddotsmedia Jobs account',
+          html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
+        });
+        emailSent = true;
+        console.log(`[Auth] Verification email sent to ${email}`);
+      } catch (err) {
+        console.error(`[Auth] Failed to send verification email to ${email}:`, (err as Error).message);
+      }
+    } else {
+      console.warn(`[Auth] SMTP not available — verification email not sent to ${email}. Admin can manually verify via admin panel.`);
     }
 
-    return { id: user.id, email: user.email, role: user.role, verified: false };
+    return { id: user.id, email: user.email, role: user.role, verified: false, emailSent };
   }
 
   async login(email: string, password: string) {
@@ -210,7 +220,11 @@ export class AuthService {
     });
 
     const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
-    await emailQueue.add('resend-verification', {
+    const smtpOk = await checkSmtpAvailable();
+    if (!smtpOk) {
+      throw new AppError(503, 'Email service is currently unavailable. Please contact support to verify your account.');
+    }
+    await sendEmail({
       to: email,
       subject: 'Your new verification code — Ddotsmedia Jobs',
       html: emailVerificationTemplate(email, otp, verifyUrl),

@@ -12,6 +12,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<'SEEKER' | 'EMPLOYER'>('SEEKER');
   const [emailSent, setEmailSent] = useState(false);
+  const [emailDelivered, setEmailDelivered] = useState(true);
   const { any: hasSocialProviders } = useSocialProviders();
 
   const [form, setForm] = useState({
@@ -88,6 +89,7 @@ export function Register() {
         toast.success('Account created! You can now sign in.');
         navigate('/login');
       } else {
+        setEmailDelivered(res.data?.data?.emailSent !== false);
         setEmailSent(true);
       }
     } catch (err) {
@@ -101,26 +103,39 @@ export function Register() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <div className="text-5xl mb-4">📧</div>
+          <div className="text-5xl mb-4">{emailDelivered ? '📧' : '⚠️'}</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Account created!</h2>
-          <p className="text-gray-500 mb-2">
-            We're sending a 6-digit verification code to your email address.
-          </p>
-          <p className="text-gray-400 text-sm mb-8">
-            Emails may take a few minutes. You can sign in right away — we'll remind you to verify later.
-          </p>
+          {emailDelivered ? (
+            <>
+              <p className="text-gray-500 mb-2">
+                A verification link has been sent to your email address. Click it to activate your account.
+              </p>
+              <p className="text-gray-400 text-sm mb-8">
+                Can't find it? Check your spam folder or use the resend option below.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-amber-600 font-medium mb-2">
+                Your account was created but we couldn't send the verification email right now.
+              </p>
+              <p className="text-gray-400 text-sm mb-8">
+                Please contact support at <a href="mailto:support@ddotsmediajobs.com" className="text-brand-600 underline">support@ddotsmediajobs.com</a> or WhatsApp <a href="https://wa.me/971509379212" className="text-brand-600 underline">+971 50 937 9212</a> to activate your account.
+              </p>
+            </>
+          )}
           <div className="flex flex-col gap-3">
             <Link
-              to="/login"
+              to="/verify-email"
               className="inline-flex items-center justify-center gap-2 bg-brand-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-brand-700 transition-colors"
             >
-              Sign in to your account →
+              Verify my email →
             </Link>
             <Link
-              to="/verify-email"
-              className="text-sm text-brand-600 font-medium hover:text-brand-700 py-2"
+              to="/login"
+              className="text-sm text-gray-500 hover:text-gray-700 py-2"
             >
-              Enter verification code instead
+              Already verified? Sign in
             </Link>
           </div>
         </div>
