@@ -92,6 +92,9 @@ export function getApiError(err: unknown): string {
     const data = err.response?.data;
     if (data?.errors?.length) return data.errors.join(', ');
     if (data?.error) return data.error;
+    if (data?.message) return data.message;
+    if (err.message) return err.message;
   }
+  if (err instanceof Error) return err.message;
   return 'An unexpected error occurred';
 }
