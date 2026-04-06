@@ -1,6 +1,6 @@
 import redis from './redis';
 
-const DEFAULT_TTL = 60; // seconds
+const DEFAULT_TTL = 300; // seconds (5 min default)
 
 export async function cacheGet<T>(key: string): Promise<T | null> {
   try {

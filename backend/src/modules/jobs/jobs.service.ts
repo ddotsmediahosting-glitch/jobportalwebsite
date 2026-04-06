@@ -3,6 +3,7 @@ import { AppError, ForbiddenError, NotFoundError } from '../../middleware/errorH
 import { CreateJobInput, UpdateJobInput, JobFiltersInput } from '@uaejobs/shared';
 import slugify from 'slugify';
 import { JobStatus, Prisma } from '@prisma/client';
+import { cacheGetOrSet, cacheDel } from '../../lib/cache';
 
 const JOB_INCLUDE = {
   employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true, verificationStatus: true } },
@@ -60,22 +61,26 @@ export class JobsService {
         ? [{ salaryMin: 'desc' }]
         : [{ isFeatured: 'desc' }, { publishedAt: 'desc' }];
 
-    const [items, total] = await Promise.all([
-      prisma.job.findMany({
-        where,
-        include: JOB_INCLUDE,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.job.count({ where }),
-    ]);
+    const cacheKey = `jobs:list:${JSON.stringify({ q, categoryId, emirate, workMode, employmentType, visaStatus, salaryMin, salaryMax, experienceMin, level, isFeatured, isEmiratization, page, limit, sortBy })}`;
 
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return cacheGetOrSet(cacheKey, async () => {
+      const [items, total] = await Promise.all([
+        prisma.job.findMany({
+          where,
+          include: JOB_INCLUDE,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.job.count({ where }),
+      ]);
+      return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    }, 120); // 2 min cache for search results
   }
 
   async getJobBySlug(slug: string, userId?: string) {
-    const job = await prisma.job.findUnique({
+    // Only cache public (non-authenticated) views
+    const fetchJob = async () => prisma.job.findUnique({
       where: { slug },
       include: {
         ...JOB_INCLUDE,
@@ -84,11 +89,15 @@ export class JobsService {
       },
     });
 
+    const job = userId
+      ? await fetchJob()
+      : await cacheGetOrSet(`job:slug:${slug}`, fetchJob, 180); // 3 min cache for public views
+
     if (!job) throw new NotFoundError('Job');
     if (job.status !== 'PUBLISHED' && !userId) throw new NotFoundError('Job');
 
-    // Increment view count
-    await prisma.job.update({ where: { id: job.id }, data: { viewCount: { increment: 1 } } });
+    // Increment view count (fire-and-forget, non-blocking)
+    prisma.job.update({ where: { id: job.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
 
     return {
       ...job,

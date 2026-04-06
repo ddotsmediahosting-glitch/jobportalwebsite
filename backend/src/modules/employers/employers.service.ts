@@ -4,6 +4,7 @@ import { NotFoundError, ForbiddenError, AppError } from '../../middleware/errorH
 import { EmployerProfileInput } from '@uaejobs/shared';
 import { emailQueue } from '../../lib/queue';
 import bcrypt from 'bcryptjs';
+import { cacheGetOrSet, cacheDel } from '../../lib/cache';
 
 export class EmployersService {
   async getMyEmployer(userId: string) {
@@ -25,7 +26,7 @@ export class EmployersService {
   }
 
   async getEmployerBySlug(slug: string) {
-    const employer = await prisma.employer.findUnique({
+    const employer = await cacheGetOrSet(`employer:slug:${slug}`, () => prisma.employer.findUnique({
       where: { slug },
       include: {
         jobs: {
@@ -36,7 +37,7 @@ export class EmployersService {
         },
         _count: { select: { jobs: true } },
       },
-    });
+    }), 300); // 5 min
 
     if (!employer) throw new NotFoundError('Employer');
     return employer;
@@ -46,10 +47,12 @@ export class EmployersService {
     const member = await prisma.employerMember.findFirst({ where: { userId } });
     if (!member) throw new NotFoundError('Employer');
 
-    return prisma.employer.update({
+    const result = await prisma.employer.update({
       where: { id: member.employerId },
       data,
     });
+    await cacheDel(`employer:slug:${result.slug}`);
+    return result;
   }
 
   async uploadLogo(userId: string, fileBuffer: Buffer, fileName: string, mimeType: string) {

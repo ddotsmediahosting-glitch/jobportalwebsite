@@ -48,14 +48,14 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/uploads:/app/backend/uploads
-    command: >
-      sh -c "
-      echo '⏳ Waiting for DB...' &&
-      sleep 5 &&
-      npx prisma db push --schema=backend/prisma/schema.prisma &&
-      echo '🚀 Starting API...' &&
-      node backend/dist/src/server.js
-      "
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    command: node backend/dist/src/server.js
 
   web:
     build:
@@ -68,6 +68,11 @@ services:
       - "3001:80"
     depends_on:
       - api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
 volumes:
   mariadb_data:

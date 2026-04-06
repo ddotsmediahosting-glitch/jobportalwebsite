@@ -196,7 +196,7 @@ app.get('/api/v1/home', async (_req, res) => {
       emiratizationJobs,
       salaryInsights,
     };
-  }, 90);
+  }, 600); // 10 min cache
 
   res.json({ success: true, data });
 });
