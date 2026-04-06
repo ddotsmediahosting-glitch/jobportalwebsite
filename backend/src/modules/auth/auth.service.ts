@@ -12,7 +12,6 @@ import { emailQueue } from '../../lib/queue';
 import {
   emailVerificationTemplate,
   passwordResetTemplate,
-  checkSmtpAvailable,
 } from '../../lib/email';
 import { config } from '../../config';
 import {
@@ -40,20 +39,18 @@ export class AuthService {
     if (existing) throw new ConflictError('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, 12);
-    // Skip email verification when SMTP is not configured or not reachable
-    const smtpConfigured = await checkSmtpAvailable();
-    const otp = smtpConfigured ? generateOtp() : null;
-    const otpExpiry = smtpConfigured ? new Date(Date.now() + OTP_TTL_MS) : null;
+    const otp = generateOtp();
+    const otpExpiry = new Date(Date.now() + OTP_TTL_MS);
 
     const user = await prisma.user.create({
       data: {
         email,
         passwordHash,
         role: role as UserRole,
-        status: smtpConfigured ? UserStatus.PENDING_VERIFICATION : UserStatus.ACTIVE,
+        status: UserStatus.PENDING_VERIFICATION,
         emailOtp: otp,
         emailOtpExpiry: otpExpiry,
-        verifiedAt: smtpConfigured ? null : new Date(),
+        verifiedAt: null,
       },
     });
 
@@ -88,17 +85,19 @@ export class AuthService {
       });
     }
 
-    // Send verification email (skipped when SMTP is not configured)
-    if (smtpConfigured) {
-      const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
+    // Always send verification email — account cannot be used until verified
+    const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
+    try {
       await emailQueue.add('send-verification', {
         to: email,
         subject: 'Verify your Ddotsmedia Jobs account',
-        html: emailVerificationTemplate(firstName || email, otp!, verifyUrl),
+        html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
       });
+    } catch {
+      // Queue failure is non-fatal — user can request a resend from the verify page
     }
 
-    return { id: user.id, email: user.email, role: user.role, verified: !smtpConfigured };
+    return { id: user.id, email: user.email, role: user.role, verified: false };
   }
 
   async login(email: string, password: string) {
