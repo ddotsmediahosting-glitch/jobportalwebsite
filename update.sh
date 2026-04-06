@@ -24,7 +24,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] New commits detected — deploying..." >> "
 git pull origin main >> "$LOG" 2>&1
 
 # Rebuild and restart containers
-docker compose down >> "$LOG" 2>&1
-docker compose up -d --build >> "$LOG" 2>&1
+docker compose down --remove-orphans >> "$LOG" 2>&1
+docker compose up -d --build --remove-orphans >> "$LOG" 2>&1
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deployment complete." >> "$LOG"
