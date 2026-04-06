@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -112,15 +112,11 @@ export function EmployerDashboard() {
     queryFn: () => api.get('/employer/applications?limit=5').then((r) => r.data.data),
   });
 
-  if (empLoading || analyticsLoading) return <DashboardSkeleton />;
-
   const emp = employer?.employer;
   const sub = emp?.subscription;
   const usagePct = sub ? Math.min(100, (sub.jobPostsUsed / sub.jobPostsLimit) * 100) : 0;
-  const barRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (barRef.current) barRef.current.style.width = `${usagePct}%`;
-  }, [usagePct]);
+
+  if (empLoading || analyticsLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -189,7 +185,7 @@ export function EmployerDashboard() {
           </div>
           <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
             <div
-              ref={barRef}
+              style={{ width: `${usagePct}%` }}
               className={`h-2.5 rounded-full transition-all duration-500 ${usagePct >= 80 ? 'bg-red-500' : 'bg-brand-500'}`}
             />
           </div>
