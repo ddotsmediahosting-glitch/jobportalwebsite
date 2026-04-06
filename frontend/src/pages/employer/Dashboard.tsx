@@ -145,7 +145,7 @@ export function EmployerDashboard() {
             <p className="text-sm font-semibold text-amber-800">Company verification pending</p>
             <p className="text-xs text-amber-600 mt-0.5">
               Upload your trade license and our team will verify your company within 1–2 business days.{' '}
-              <Link to="/employer/profile" className="underline font-medium">Complete profile →</Link>
+              <Link to="/employer/company" className="underline font-medium">Complete profile →</Link>
             </p>
           </div>
         </div>
@@ -225,7 +225,7 @@ export function EmployerDashboard() {
               }) => (
                 <Link
                   key={job.id}
-                  to={`/employer/jobs/${job.id}`}
+                  to={`/employer/jobs/${job.id}/edit`}
                   className="flex items-center justify-between py-2.5 px-2 rounded-xl hover:bg-gray-50 transition-colors group"
                 >
                   <div className="min-w-0 flex-1">
