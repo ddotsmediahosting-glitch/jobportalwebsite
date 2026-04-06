@@ -90,10 +90,11 @@ export class AuthService {
 
     // Send verification email (skipped when SMTP is not configured)
     if (smtpConfigured) {
+      const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
       await emailQueue.add('send-verification', {
         to: email,
-        subject: 'Verify your UAE Jobs Portal account',
-        html: emailVerificationTemplate(firstName || email, otp!),
+        subject: 'Verify your Ddotsmedia Jobs account',
+        html: emailVerificationTemplate(firstName || email, otp!, verifyUrl),
       });
     }
 
@@ -209,10 +210,11 @@ export class AuthService {
       data: { emailOtp: otp, emailOtpExpiry: new Date(Date.now() + OTP_TTL_MS) },
     });
 
+    const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
     await emailQueue.add('resend-verification', {
       to: email,
-      subject: 'Your new verification code',
-      html: emailVerificationTemplate(email, otp),
+      subject: 'Your new verification code — Ddotsmedia Jobs',
+      html: emailVerificationTemplate(email, otp, verifyUrl),
     });
 
     return { message: 'Verification email sent' };

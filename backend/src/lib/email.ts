@@ -101,13 +101,17 @@ function baseTemplate(content: string): string {
 </html>`;
 }
 
-export function emailVerificationTemplate(name: string, otp: string): string {
+export function emailVerificationTemplate(name: string, otp: string, verifyUrl: string): string {
   return baseTemplate(`
     <h3>Verify Your Email Address</h3>
     <p>Hi ${name},</p>
-    <p>Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
+    <p>Click the button below to verify your email and activate your account:</p>
+    <p style="text-align:center;margin:28px 0;">
+      <a href="${verifyUrl}" class="btn" style="font-size:16px;padding:14px 36px;">✅ Verify My Email</a>
+    </p>
+    <p style="color:#666;font-size:13px;text-align:center;">Or enter this code manually on the verification page:</p>
     <div class="otp">${otp}</div>
-    <p style="color:#888;font-size:13px;">If you didn't create an account with Ddotsmedia Jobs, you can safely ignore this email.</p>
+    <p style="color:#888;font-size:12px;text-align:center;">This link expires in <strong>15 minutes</strong>.<br>If you didn't create an account, you can safely ignore this email.</p>
   `);
 }
 
