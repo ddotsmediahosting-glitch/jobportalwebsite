@@ -262,7 +262,7 @@ app.use(`${v1}/seeker`, usersRouter);
 app.use(`${v1}`, publicEmployerRouter);
 app.use(`${v1}/employer`, employerRouter);
 app.use(`${v1}/jobs`, jobsRouter);
-app.use(`${v1}/employer`, employerJobsRouter);
+app.use(`${v1}/employer/jobs`, employerJobsRouter);
 app.use(`${v1}`, applicationSeekerRouter);
 app.use(`${v1}/employer`, applicationEmployerRouter);
 app.use(`${v1}/categories`, categoriesRouter);
