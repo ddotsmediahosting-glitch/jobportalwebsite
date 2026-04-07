@@ -220,20 +220,31 @@ export class AdminService {
       : sortBy === 'views'     ? { viewCount: 'desc' }
       : { createdAt: 'desc' };
 
+    const jobInclude = {
+      employer: { select: { id: true, companyName: true } },
+      category: { select: { id: true, name: true } },
+      _count: { select: { applications: true } },
+    };
+
     const [items, total] = await Promise.all([
-      prisma.job.findMany({
-        where,
-        include: {
-          employer: { select: { id: true, companyName: true } },
-          category: { select: { id: true, name: true } },
-          _count: { select: { applications: true } },
-        },
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
+      prisma.job.findMany({ where, include: jobInclude, orderBy, skip: (page - 1) * limit, take: limit }),
       prisma.job.count({ where }),
     ]);
+
+    // Lazily backfill shortCode for legacy jobs
+    const missing = items.filter((j) => !j.shortCode);
+    if (missing.length) {
+      await Promise.all(
+        missing.map((j) =>
+          prisma.job.update({
+            where: { id: j.id },
+            data: { shortCode: Math.random().toString(36).slice(2, 6) + Date.now().toString(36).slice(-4) },
+          })
+        )
+      );
+      const updated = await prisma.job.findMany({ where, include: jobInclude, orderBy, skip: (page - 1) * limit, take: limit });
+      return { items: updated, total, page, limit, totalPages: Math.ceil(total / limit) };
+    }
 
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }

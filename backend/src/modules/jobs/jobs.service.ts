@@ -139,6 +139,7 @@ export class JobsService {
 
     const baseSlug = slugify(data.title, { lower: true, strict: true });
     const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
+    const shortCode = Math.random().toString(36).slice(2, 6) + Date.now().toString(36).slice(-4);
 
     const { tags, screeningQuestions, ...jobData } = data;
 
@@ -147,6 +148,7 @@ export class JobsService {
         ...jobData,
         employerId: employer.id,
         slug: uniqueSlug,
+        shortCode,
         status: requireApproval ? 'PENDING_APPROVAL' : 'DRAFT',
         tags: tags?.length
           ? {
@@ -255,8 +257,8 @@ export class JobsService {
 
     const baseSlug = `${job.slug}-copy-${Date.now().toString(36)}`;
 
-    const { id, slug, status, publishedAt, expiresAt, viewCount, applyCount, fraudFlags, skills, languages, ...rest } = job as typeof job & {
-      id: string; slug: string; status: string; publishedAt: Date | null;
+    const { id, slug, shortCode: _sc, status, publishedAt, expiresAt, viewCount, applyCount, fraudFlags, skills, languages, ...rest } = job as typeof job & {
+      id: string; slug: string; shortCode: string | null; status: string; publishedAt: Date | null;
       expiresAt: Date | null; viewCount: number; applyCount: number;
       fraudFlags: Prisma.JsonValue | null; skills: Prisma.JsonValue; languages: Prisma.JsonValue;
     };
@@ -264,12 +266,15 @@ export class JobsService {
     const toInputJson = (v: Prisma.JsonValue | null): Prisma.NullTypes.JsonNull | Prisma.InputJsonValue =>
       v === null ? Prisma.JsonNull : (v as Prisma.InputJsonValue);
 
+    const cloneShortCode = Math.random().toString(36).slice(2, 6) + Date.now().toString(36).slice(-4);
+
     const cloned = await prisma.job.create({
       data: {
         ...(rest as Omit<typeof rest, 'tags' | 'screeningQuestions' | '_count' | 'employer' | 'category'>),
         employerId: (rest as { employerId: string }).employerId,
         categoryId: (rest as { categoryId: string }).categoryId,
         slug: baseSlug,
+        shortCode: cloneShortCode,
         title: `Copy of ${job.title}`,
         status: 'DRAFT',
         skills: toInputJson(skills),
@@ -301,6 +306,28 @@ export class JobsService {
       prisma.job.count({ where }),
     ]);
 
+    // Lazily backfill shortCode for legacy jobs that don't have one
+    const missing = items.filter((j) => !j.shortCode);
+    if (missing.length) {
+      await Promise.all(
+        missing.map((j) =>
+          prisma.job.update({
+            where: { id: j.id },
+            data: { shortCode: Math.random().toString(36).slice(2, 6) + Date.now().toString(36).slice(-4) },
+          })
+        )
+      );
+      // Re-fetch to get the updated shortCodes
+      const updated = await prisma.job.findMany({
+        where,
+        include: { ...JOB_INCLUDE, applications: { select: { id: true, status: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+      return { items: updated, total, page, limit, totalPages: Math.ceil(total / limit) };
+    }
+
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
@@ -319,6 +346,12 @@ export class JobsService {
     });
 
     return report;
+  }
+
+  async getSlugByShortCode(shortCode: string) {
+    const job = await prisma.job.findUnique({ where: { shortCode }, select: { slug: true } });
+    if (!job) throw new NotFoundError('Job');
+    return job;
   }
 
   private async assertOwnership(userId: string, jobId: string) {

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import {
   Search, CheckCircle, XCircle, Eye, Star, CheckSquare, Square,
   MapPin, Clock, Users, X, ExternalLink, Plus, Trash2, Briefcase,
-  SlidersHorizontal, ArrowUpDown, Pencil,
+  SlidersHorizontal, ArrowUpDown, Pencil, Link2,
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
@@ -465,6 +465,18 @@ export function AdminJobs() {
                             <Eye className="h-4 w-4" />
                           </button>
                           <FraudCheckButton jobId={job.id} existingRiskLevel={job.fraudRiskLevel} compact />
+                          {job.shortCode && (
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/s/${job.shortCode}`);
+                                toast.success('Short link copied!');
+                              }}
+                              className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50"
+                              title="Copy short link"
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => { if (confirm(`Delete "${job.title}"?`)) deleteMutation.mutate(job.id); }}
                             className="p-1.5 rounded-lg text-red-300 hover:bg-red-50 hover:text-red-500"

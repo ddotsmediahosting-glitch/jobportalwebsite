@@ -353,6 +353,7 @@ model Job {
   category         Category       @relation(fields: [categoryId], references: [id])
   title            String
   slug             String         @unique
+  shortCode        String?        @unique
   description      String         @db.LongText
   requirements     String?        @db.Text
   benefits         String?        @db.Text
@@ -409,6 +410,7 @@ model Job {
   @@index([isFeatured])
   @@index([isEmiratization])
   @@index([fraudRiskLevel])
+  @@index([shortCode])
 }
 
 model Tag {

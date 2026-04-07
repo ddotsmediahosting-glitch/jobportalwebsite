@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Play, Pause, Copy, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Pause, Copy, Users, Link2 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { JobStatusBadge } from '../../components/ui/Badge';
@@ -129,7 +129,7 @@ export function ManageJobs() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {data.items.map((job: {
-                  id: string; title: string; status: string; viewCount: number;
+                  id: string; title: string; status: string; viewCount: number; shortCode?: string;
                   _count?: { applications: number }; applications?: { id: string }[];
                 }) => (
                   <tr key={job.id} className="hover:bg-gray-50">
@@ -173,6 +173,18 @@ export function ManageJobs() {
                             title="Republish"
                           >
                             <Play className="h-4 w-4" />
+                          </button>
+                        )}
+                        {job.shortCode && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/s/${job.shortCode}`);
+                              toast.success('Short link copied!');
+                            }}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"
+                            title="Copy short link"
+                          >
+                            <Link2 className="h-4 w-4" />
                           </button>
                         )}
                         <button

@@ -56,6 +56,11 @@ export class JobsController {
     res.json({ success: true, data });
   }
 
+  async getJobByShortCode(req: Request, res: Response) {
+    const data = await service.getSlugByShortCode(req.params.shortCode);
+    res.json({ success: true, data });
+  }
+
   async reportJob(req: AuthRequest, res: Response) {
     const { reason, details } = req.body;
     const data = await service.reportJob(req.user!.sub, req.params.slug, reason, details);

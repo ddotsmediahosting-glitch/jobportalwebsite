@@ -10,6 +10,7 @@ const ctrl = new JobsController();
 
 // ── Public ─────────────────────────────────────────────────────────────────────
 router.get('/', validate(jobFiltersSchema, 'query'), ctrl.listPublicJobs.bind(ctrl));
+router.get('/short/:shortCode', ctrl.getJobByShortCode.bind(ctrl));
 router.get('/:slug', optionalAuth, ctrl.getJobBySlug.bind(ctrl));
 
 // ── Seeker actions ─────────────────────────────────────────────────────────────
