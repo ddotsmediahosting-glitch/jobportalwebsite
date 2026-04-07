@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 interface SocialShareProps {
   jobId?: string;
   url: string;
+  shortCode?: string;
   title: string;
   description?: string;
   utmCampaign?: string;
@@ -115,8 +116,9 @@ async function trackClick(jobId: string | undefined, platform: Platform, campaig
   }
 }
 
-export function SocialShare({ jobId, url, title, description, utmCampaign, compact = false }: SocialShareProps) {
+export function SocialShare({ jobId, url, shortCode, title, description, utmCampaign, compact = false }: SocialShareProps) {
   const [copied, setCopied] = useState(false);
+  const [shortCopied, setShortCopied] = useState(false);
 
   const handleShare = async (platform: Platform) => {
     await trackClick(jobId, platform, utmCampaign);
@@ -132,6 +134,14 @@ export function SocialShare({ jobId, url, title, description, utmCampaign, compa
 
     const shareUrl = buildShareUrl(platform, url, title, description, utmCampaign);
     window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
+  };
+
+  const handleCopyShort = async () => {
+    const shortUrl = `${window.location.origin}/s/${shortCode}`;
+    await navigator.clipboard.writeText(shortUrl);
+    setShortCopied(true);
+    toast.success('Short link copied!');
+    setTimeout(() => setShortCopied(false), 2000);
   };
 
   const platforms: Platform[] = ['linkedin', 'twitter', 'facebook', 'whatsapp', 'copy'];
@@ -153,6 +163,15 @@ export function SocialShare({ jobId, url, title, description, utmCampaign, compa
             </button>
           );
         })}
+        {shortCode && (
+          <button
+            onClick={handleCopyShort}
+            title="Copy short link"
+            className="p-2 rounded-lg border transition-all duration-150 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-600"
+          >
+            {shortCopied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4" />}
+          </button>
+        )}
       </div>
     );
   }
@@ -176,6 +195,20 @@ export function SocialShare({ jobId, url, title, description, utmCampaign, compa
           );
         })}
       </div>
+      {shortCode && (
+        <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+          <span className="text-xs text-gray-400 font-mono flex-1 truncate">
+            {window.location.origin}/s/{shortCode}
+          </span>
+          <button
+            onClick={handleCopyShort}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-600 whitespace-nowrap"
+          >
+            {shortCopied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4" />}
+            {shortCopied ? 'Copied!' : 'Copy Short Link'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

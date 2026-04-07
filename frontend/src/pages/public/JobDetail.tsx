@@ -409,6 +409,7 @@ export function JobDetail() {
             <SocialShare
               jobId={job.id}
               url={jobUrl}
+              shortCode={job.shortCode}
               title={`${job.title} at ${job.employer.companyName} – ${EMIRATES_LABELS[job.emirate as Emirates] || job.emirate}, UAE`}
               description={metaDesc}
               utmCampaign="job-detail-share"
