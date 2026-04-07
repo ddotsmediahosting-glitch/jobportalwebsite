@@ -567,19 +567,21 @@ export class AdminService {
   }
 
   async createEmployer(actorId: string, data: {
-    email: string; password: string; companyName: string;
+    companyName: string;
     industry?: string; emirate?: string; website?: string; description?: string;
   }) {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) throw new AppError(409, 'An account with this email already exists');
+    // Auto-generate login credentials — admin shares these with the employer
+    const timestamp = Date.now().toString(36);
+    const generatedEmail = `employer-${timestamp}@ddotsmediajobs.com`;
+    const generatedPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10).toUpperCase() + '!';
 
-    const passwordHash = await bcrypt.hash(data.password, 12);
+    const passwordHash = await bcrypt.hash(generatedPassword, 12);
     const slug = data.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+    const uniqueSlug = `${slug}-${timestamp}`;
 
     const user = await prisma.user.create({
       data: {
-        email: data.email,
+        email: generatedEmail,
         passwordHash,
         role: 'EMPLOYER',
         status: 'ACTIVE',
@@ -607,8 +609,8 @@ export class AdminService {
       data: { employerId: employer.id, userId: user.id, role: 'OWNER', joinedAt: new Date() },
     });
 
-    await auditLog(actorId, 'ADMIN', 'EMPLOYER_CREATED', 'Employer', employer.id, { email: data.email, companyName: data.companyName });
-    return { employer, user: { id: user.id, email: user.email } };
+    await auditLog(actorId, 'ADMIN', 'EMPLOYER_CREATED', 'Employer', employer.id, { companyName: data.companyName, generatedEmail });
+    return { employer, credentials: { email: generatedEmail, password: generatedPassword } };
   }
 
   async updateEmployer(actorId: string, employerId: string, data: {

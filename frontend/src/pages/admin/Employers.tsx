@@ -49,7 +49,7 @@ function EmployersSkeleton() {
   );
 }
 
-const emptyCreateForm = { email: '', password: '', companyName: '', industry: '', emirate: '', website: '', description: '' };
+const emptyCreateForm = { companyName: '', industry: '', emirate: '', website: '', description: '' };
 
 export function AdminEmployers() {
   const qc = useQueryClient();
@@ -62,6 +62,7 @@ export function AdminEmployers() {
   const [editForm, setEditForm] = useState({ companyName: '', industry: '', description: '', website: '', emirate: '', logoUrl: '', size: '' });
   const [createModal, setCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-employers', page, search, verFilter],
@@ -95,11 +96,11 @@ export function AdminEmployers() {
 
   const createEmployerMutation = useMutation({
     mutationFn: (data: typeof emptyCreateForm) => api.post('/admin/employers', data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['admin-employers'] });
-      toast.success('Employer account created.');
       setCreateModal(false);
       setCreateForm(emptyCreateForm);
+      setCreatedCredentials(res.data.data.credentials);
     },
     onError: (err) => toast.error(getApiError(err)),
   });
@@ -244,18 +245,10 @@ export function AdminEmployers() {
       )}
 
       {/* Create Employer modal */}
-      <Modal isOpen={createModal} onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }} title="Create Employer Account" size="lg">
+      <Modal isOpen={createModal} onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }} title="Create Employer" size="lg">
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
-            Creates a verified employer account instantly. The employer can log in and start posting jobs.
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Email" type="email" required value={createForm.email}
-              onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-              placeholder="owner@company.com" />
-            <Input label="Password" type="password" required value={createForm.password}
-              onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
-              placeholder="Temporary password" />
+            Login credentials will be auto-generated. Share them with the employer after creation.
           </div>
           <Input label="Company Name" required value={createForm.companyName}
             onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
@@ -289,12 +282,45 @@ export function AdminEmployers() {
             <Button
               onClick={() => createEmployerMutation.mutate(createForm)}
               loading={createEmployerMutation.isPending}
-              disabled={!createForm.email || !createForm.password || !createForm.companyName}
+              disabled={!createForm.companyName}
             >
               Create Employer
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Generated credentials modal */}
+      <Modal isOpen={!!createdCredentials} onClose={() => setCreatedCredentials(null)} title="Employer Created" size="md">
+        {createdCredentials && (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800 font-medium">
+              Employer account created successfully. Share these credentials with the employer.
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Login Email</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono break-all">{createdCredentials.email}</code>
+                  <button onClick={() => { navigator.clipboard.writeText(createdCredentials.email); toast.success('Copied!'); }}
+                    className="text-xs text-brand-600 hover:underline whitespace-nowrap">Copy</button>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Password</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono">{createdCredentials.password}</code>
+                  <button onClick={() => { navigator.clipboard.writeText(createdCredentials.password); toast.success('Copied!'); }}
+                    className="text-xs text-brand-600 hover:underline whitespace-nowrap">Copy</button>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400">The employer can update their email and password after logging in.</p>
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <Button onClick={() => setCreatedCredentials(null)}>Done</Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Edit Company modal */}
