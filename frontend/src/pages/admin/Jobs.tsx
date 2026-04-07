@@ -186,7 +186,6 @@ export function AdminJobs() {
   const { data: employersList } = useQuery({
     queryKey: ['admin-employers-all'],
     queryFn: () => api.get('/admin/employers?limit=500').then((r) => r.data.data.items),
-    enabled: postJobModal,
   });
 
   // Auto-select first employer whenever modal opens or list loads
