@@ -49,7 +49,7 @@ function EmployersSkeleton() {
   );
 }
 
-const emptyCreateForm = { companyName: '', industry: '', emirate: '', website: '', description: '' };
+const emptyCreateForm = { companyName: '' };
 
 export function AdminEmployers() {
   const qc = useQueryClient();
@@ -245,44 +245,21 @@ export function AdminEmployers() {
       )}
 
       {/* Create Employer modal */}
-      <Modal isOpen={createModal} onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }} title="Create Employer" size="lg">
+      <Modal isOpen={createModal} onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }} title="Create Employer" size="sm">
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
             Login credentials will be auto-generated. Share them with the employer after creation.
           </div>
           <Input label="Company Name" required value={createForm.companyName}
             onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
-            placeholder="Acme Corporation" />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Industry" value={createForm.industry}
-              onChange={(e) => setCreateForm((p) => ({ ...p, industry: e.target.value }))}
-              placeholder="e.g. Technology, Finance" />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
-              <select
-                value={createForm.emirate}
-                onChange={(e) => setCreateForm((p) => ({ ...p, emirate: e.target.value }))}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="">— Select —</option>
-                {['DUBAI','ABU_DHABI','SHARJAH','AJMAN','RAS_AL_KHAIMAH','FUJAIRAH','UMM_AL_QUWAIN'].map((e) => (
-                  <option key={e} value={e}>{e.replace(/_/g, ' ')}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <Input label="Website" value={createForm.website}
-            onChange={(e) => setCreateForm((p) => ({ ...p, website: e.target.value }))}
-            placeholder="https://company.com" />
-          <Textarea label="Description" value={createForm.description}
-            onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-            rows={3} placeholder="Brief company description..." />
+            placeholder="Acme Corporation"
+            autoFocus />
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
             <Button type="button" variant="ghost" onClick={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }}>Cancel</Button>
             <Button
               onClick={() => createEmployerMutation.mutate(createForm)}
               loading={createEmployerMutation.isPending}
-              disabled={!createForm.companyName}
+              disabled={!createForm.companyName.trim()}
             >
               Create Employer
             </Button>
