@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AdminService } from './admin.service';
 import { AuthRequest } from '../../middleware/auth';
 import { UserStatus, JobStatus } from '@prisma/client';
-import { sendEmail, checkSmtpAvailable } from '../../lib/email';
+import { sendEmail } from '../../lib/email';
 
 const service = new AdminService();
 
@@ -193,14 +193,6 @@ export class AdminController {
 
   async testEmail(req: AuthRequest, res: Response) {
     const to = (req.body.to as string) || req.user!.email;
-    const smtpOk = await checkSmtpAvailable();
-    if (!smtpOk) {
-      res.status(503).json({
-        success: false,
-        error: 'SMTP is not configured or unreachable. Set SMTP_HOST, SMTP_USER, SMTP_PASS in your .env file.',
-      });
-      return;
-    }
     try {
       await sendEmail({
         to,
