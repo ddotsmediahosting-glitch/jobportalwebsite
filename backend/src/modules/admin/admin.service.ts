@@ -473,8 +473,9 @@ export class AdminService {
     emirate: string; workMode?: string; employmentType?: string; location?: string;
     salaryMin?: number; salaryMax?: number; skills?: string[]; isFeatured?: boolean;
   }) {
+    if (!data.employerId) throw new AppError(400, 'Please select an employer');
     const employer = await prisma.employer.findUnique({ where: { id: data.employerId } });
-    if (!employer) throw new NotFoundError('Employer');
+    if (!employer) throw new AppError(404, `Employer not found (id: ${data.employerId}). Select a valid employer from the list.`);
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
     if (!category) throw new NotFoundError('Category');
 

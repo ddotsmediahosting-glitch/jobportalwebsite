@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -189,6 +189,13 @@ export function AdminJobs() {
     enabled: postJobModal,
   });
 
+  // Auto-select first employer when list loads and none is selected
+  useEffect(() => {
+    if (employersList?.length && !postJobForm.employerId) {
+      setPostJobForm((p) => ({ ...p, employerId: employersList[0].id }));
+    }
+  }, [employersList]);
+
   const moderateMutation = useMutation({
     mutationFn: ({ id, status, notes }: { id: string; status: string; notes?: string }) =>
       api.patch(`/admin/jobs/${id}/moderate`, { status, notes }),
@@ -266,13 +273,15 @@ export function AdminJobs() {
   };
 
   const createJobMutation = useMutation({
-    mutationFn: (data: typeof postJobForm) =>
-      api.post('/admin/jobs', {
+    mutationFn: (data: typeof postJobForm) => {
+      if (!data.employerId) return Promise.reject(new Error('Please select an employer'));
+      return api.post('/admin/jobs', {
         ...data,
         salaryMin: data.salaryMin ? Number(data.salaryMin) : undefined,
         salaryMax: data.salaryMax ? Number(data.salaryMax) : undefined,
         skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
-      }),
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-jobs'] });
       qc.invalidateQueries({ queryKey: ['admin-stats'] });
