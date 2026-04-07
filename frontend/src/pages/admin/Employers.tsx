@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Search, CheckCircle, XCircle, ExternalLink, Pencil } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ExternalLink, Pencil, Plus } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
 import { Modal } from '../../components/ui/Modal';
@@ -49,6 +49,8 @@ function EmployersSkeleton() {
   );
 }
 
+const emptyCreateForm = { email: '', password: '', companyName: '', industry: '', emirate: '', website: '', description: '' };
+
 export function AdminEmployers() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -58,6 +60,8 @@ export function AdminEmployers() {
   const [selected, setSelected] = useState<Employer | null>(null);
   const [editEmployer, setEditEmployer] = useState<Employer | null>(null);
   const [editForm, setEditForm] = useState({ companyName: '', industry: '', description: '', website: '', emirate: '', logoUrl: '', size: '' });
+  const [createModal, setCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyCreateForm);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-employers', page, search, verFilter],
@@ -89,6 +93,17 @@ export function AdminEmployers() {
     });
   };
 
+  const createEmployerMutation = useMutation({
+    mutationFn: (data: typeof emptyCreateForm) => api.post('/admin/employers', data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-employers'] });
+      toast.success('Employer account created.');
+      setCreateModal(false);
+      setCreateForm(emptyCreateForm);
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
   const verifyMutation = useMutation({
     mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
       api.patch(`/admin/employers/${id}/verify`, { status, reason }),
@@ -102,9 +117,14 @@ export function AdminEmployers() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Employers</h1>
-        <p className="text-gray-500 mt-1">Review and verify employer profiles.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Employers</h1>
+          <p className="text-gray-500 mt-1">Review and verify employer profiles.</p>
+        </div>
+        <Button onClick={() => setCreateModal(true)} icon={<Plus className="h-4 w-4" />}>
+          Create Employer
+        </Button>
       </div>
 
       {/* Filters */}
@@ -222,6 +242,60 @@ export function AdminEmployers() {
           <Pagination page={page} totalPages={data?.totalPages} total={data?.total} limit={data?.limit} onPageChange={setPage} />
         </>
       )}
+
+      {/* Create Employer modal */}
+      <Modal isOpen={createModal} onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }} title="Create Employer Account" size="lg">
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+            Creates a verified employer account instantly. The employer can log in and start posting jobs.
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Input label="Email" type="email" required value={createForm.email}
+              onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
+              placeholder="owner@company.com" />
+            <Input label="Password" type="password" required value={createForm.password}
+              onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
+              placeholder="Temporary password" />
+          </div>
+          <Input label="Company Name" required value={createForm.companyName}
+            onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
+            placeholder="Acme Corporation" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Input label="Industry" value={createForm.industry}
+              onChange={(e) => setCreateForm((p) => ({ ...p, industry: e.target.value }))}
+              placeholder="e.g. Technology, Finance" />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
+              <select
+                value={createForm.emirate}
+                onChange={(e) => setCreateForm((p) => ({ ...p, emirate: e.target.value }))}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="">— Select —</option>
+                {['DUBAI','ABU_DHABI','SHARJAH','AJMAN','RAS_AL_KHAIMAH','FUJAIRAH','UMM_AL_QUWAIN'].map((e) => (
+                  <option key={e} value={e}>{e.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <Input label="Website" value={createForm.website}
+            onChange={(e) => setCreateForm((p) => ({ ...p, website: e.target.value }))}
+            placeholder="https://company.com" />
+          <Textarea label="Description" value={createForm.description}
+            onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+            rows={3} placeholder="Brief company description..." />
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+            <Button type="button" variant="ghost" onClick={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }}>Cancel</Button>
+            <Button
+              onClick={() => createEmployerMutation.mutate(createForm)}
+              loading={createEmployerMutation.isPending}
+              disabled={!createForm.email || !createForm.password || !createForm.companyName}
+            >
+              Create Employer
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Edit Company modal */}
       <Modal isOpen={!!editEmployer} onClose={() => setEditEmployer(null)} title="Edit Company" size="lg">

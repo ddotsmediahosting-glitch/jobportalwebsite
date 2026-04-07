@@ -27,6 +27,7 @@ router.delete('/users/:id', ctrl.deleteUser.bind(ctrl));
 
 // Employers
 router.get('/employers', ctrl.listEmployers.bind(ctrl));
+router.post('/employers', ctrl.createEmployer.bind(ctrl));
 router.patch('/employers/:id/verify', ctrl.verifyEmployer.bind(ctrl));
 router.patch('/employers/:id', ctrl.updateEmployer.bind(ctrl));
 

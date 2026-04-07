@@ -83,6 +83,11 @@ export class AdminController {
     res.json({ success: true, ...data });
   }
 
+  async createEmployer(req: AuthRequest, res: Response) {
+    const data = await service.createEmployer(req.user!.sub, req.body);
+    res.status(201).json({ success: true, data });
+  }
+
   async updateEmployer(req: AuthRequest, res: Response) {
     const data = await service.updateEmployer(req.user!.sub, req.params.id, req.body);
     res.json({ success: true, data });

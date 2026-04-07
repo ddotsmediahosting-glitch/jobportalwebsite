@@ -565,6 +565,51 @@ export class AdminService {
     return { message: 'User updated' };
   }
 
+  async createEmployer(actorId: string, data: {
+    email: string; password: string; companyName: string;
+    industry?: string; emirate?: string; website?: string; description?: string;
+  }) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) throw new AppError(409, 'An account with this email already exists');
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const slug = data.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        passwordHash,
+        role: 'EMPLOYER',
+        status: 'ACTIVE',
+        verifiedAt: new Date(),
+      },
+    });
+
+    const employer = await prisma.employer.create({
+      data: {
+        ownerUserId: user.id,
+        companyName: data.companyName,
+        slug: uniqueSlug,
+        ...(data.industry && { industry: data.industry }),
+        ...(data.emirate && { emirate: data.emirate as Emirates }),
+        ...(data.website && { website: data.website }),
+        ...(data.description && { description: data.description }),
+        verificationStatus: 'APPROVED',
+        verifiedAt: new Date(),
+        verifiedBy: actorId,
+        subscription: { create: { plan: 'FREE', jobPostsLimit: 3 } },
+      },
+    });
+
+    await prisma.employerMember.create({
+      data: { employerId: employer.id, userId: user.id, role: 'OWNER', joinedAt: new Date() },
+    });
+
+    await auditLog(actorId, 'ADMIN', 'EMPLOYER_CREATED', 'Employer', employer.id, { email: data.email, companyName: data.companyName });
+    return { employer, user: { id: user.id, email: user.email } };
+  }
+
   async updateEmployer(actorId: string, employerId: string, data: {
     companyName?: string; industry?: string; description?: string; website?: string;
     emirate?: string; logoUrl?: string; size?: string;

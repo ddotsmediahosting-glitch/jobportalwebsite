@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import {
   signAccessToken,
@@ -8,12 +7,10 @@ import {
   generateOtp,
   generateResetToken,
 } from '../../lib/jwt';
-import { emailQueue } from '../../lib/queue';
 import {
   emailVerificationTemplate,
   passwordResetTemplate,
   sendEmail,
-  checkSmtpAvailable,
 } from '../../lib/email';
 import { config } from '../../config';
 import {
@@ -87,24 +84,19 @@ export class AuthService {
       });
     }
 
-    // Send verification email directly (not via queue) so failures are immediate and visible
+    // Send verification email directly so failures are immediate and visible
     const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
     let emailSent = false;
-    const smtpOk = await checkSmtpAvailable();
-    if (smtpOk) {
-      try {
-        await sendEmail({
-          to: email,
-          subject: 'Verify your Ddotsmedia Jobs account',
-          html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
-        });
-        emailSent = true;
-        console.log(`[Auth] Verification email sent to ${email}`);
-      } catch (err) {
-        console.error(`[Auth] Failed to send verification email to ${email}:`, (err as Error).message);
-      }
-    } else {
-      console.warn(`[Auth] SMTP not available — verification email not sent to ${email}. Admin can manually verify via admin panel.`);
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Verify your Ddotsmedia Jobs account',
+        html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
+      });
+      emailSent = true;
+      console.log(`[Auth] Verification email sent to ${email}`);
+    } catch (err) {
+      console.error(`[Auth] Failed to send verification email to ${email}:`, (err as Error).message);
     }
 
     return { id: user.id, email: user.email, role: user.role, verified: false, emailSent };
@@ -220,10 +212,6 @@ export class AuthService {
     });
 
     const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
-    const smtpOk = await checkSmtpAvailable();
-    if (!smtpOk) {
-      throw new AppError(503, 'Email service is currently unavailable. Please contact support to verify your account.');
-    }
     await sendEmail({
       to: email,
       subject: 'Your new verification code — Ddotsmedia Jobs',
@@ -249,11 +237,15 @@ export class AuthService {
 
     const resetUrl = `${config.cors.frontendUrl}/reset-password?token=${token}`;
 
-    await emailQueue.add('forgot-password', {
-      to: email,
-      subject: 'Reset your UAE Jobs Portal password',
-      html: passwordResetTemplate(email, resetUrl),
-    });
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Reset your Ddotsmedia Jobs password',
+        html: passwordResetTemplate(email, resetUrl),
+      });
+    } catch (err) {
+      console.error(`[Auth] Failed to send password reset email to ${email}:`, (err as Error).message);
+    }
 
     return { message: 'If that email exists, a reset link has been sent' };
   }
