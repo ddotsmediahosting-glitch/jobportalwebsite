@@ -189,12 +189,12 @@ export function AdminJobs() {
     enabled: postJobModal,
   });
 
-  // Auto-select first employer when list loads and none is selected
+  // Auto-select first employer whenever modal opens or list loads
   useEffect(() => {
-    if (employersList?.length && !postJobForm.employerId) {
-      setPostJobForm((p) => ({ ...p, employerId: employersList[0].id }));
+    if (postJobModal && employersList?.length) {
+      setPostJobForm((p) => ({ ...p, employerId: p.employerId || employersList[0].id }));
     }
-  }, [employersList]);
+  }, [postJobModal, employersList]);
 
   const moderateMutation = useMutation({
     mutationFn: ({ id, status, notes }: { id: string; status: string; notes?: string }) =>
@@ -340,7 +340,10 @@ export function AdminJobs() {
               <CheckCircle className="h-4 w-4" /> Bulk action ({selected.size})
             </Button>
           )}
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setPostJobModal(true)}>
+          <Button icon={<Plus className="h-4 w-4" />} onClick={() => {
+            setPostJobForm((p) => ({ ...p, employerId: employersList?.[0]?.id || '' }));
+            setPostJobModal(true);
+          }}>
             Post Job
           </Button>
         </div>
