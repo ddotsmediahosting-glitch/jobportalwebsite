@@ -298,7 +298,7 @@ export function AdminJobs() {
     ...(filterCategories?.map((c: any) => ({ value: c.id, label: c.parentId ? `  └ ${c.name}` : c.name })) ?? []),
   ];
 
-  const postJobValid = postJobForm.categoryId && postJobForm.title.length >= 5 && postJobForm.description.length >= 50 && postJobForm.emirate;
+  const postJobValid = postJobForm.employerId && postJobForm.categoryId && postJobForm.title.length >= 5 && postJobForm.description.length >= 50 && postJobForm.emirate;
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -481,7 +481,7 @@ export function AdminJobs() {
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Employer <span className="text-gray-400 text-xs">(optional)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Employer <span className="text-red-500">*</span></label>
               <select
                 value={postJobForm.employerId}
                 onChange={(e) => setPostJobForm((p) => ({ ...p, employerId: e.target.value }))}
