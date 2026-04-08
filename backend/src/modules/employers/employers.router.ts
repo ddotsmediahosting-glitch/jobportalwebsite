@@ -43,9 +43,11 @@ employer.use(authenticate, requireRole('EMPLOYER', 'ADMIN', 'SUB_ADMIN'));
 
 employer.get('/me', ctrl.getMyEmployer.bind(ctrl));
 employer.put('/profile', validate(employerProfileSchema), ctrl.updateProfile.bind(ctrl));
-employer.post('/upload/logo', uploadLimiter, imageUpload.single('logo'), ctrl.uploadLogo.bind(ctrl));
-employer.post('/upload/cover', uploadLimiter, imageUpload.single('cover'), ctrl.uploadCover.bind(ctrl));
-employer.post('/upload/license', uploadLimiter, documentUpload.single('license'), ctrl.uploadTradeLicense.bind(ctrl));
+/* eslint-disable @typescript-eslint/no-explicit-any */
+employer.post('/upload/logo', uploadLimiter, imageUpload.single('logo') as any, ctrl.uploadLogo.bind(ctrl));
+employer.post('/upload/cover', uploadLimiter, imageUpload.single('cover') as any, ctrl.uploadCover.bind(ctrl));
+employer.post('/upload/license', uploadLimiter, documentUpload.single('license') as any, ctrl.uploadTradeLicense.bind(ctrl));
+/* eslint-enable @typescript-eslint/no-explicit-any */
 employer.get('/team', ctrl.getTeam.bind(ctrl));
 employer.post('/team/invite', ctrl.inviteTeamMember.bind(ctrl));
 employer.delete('/team/:memberId', ctrl.removeTeamMember.bind(ctrl));

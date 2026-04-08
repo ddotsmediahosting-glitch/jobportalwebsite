@@ -188,16 +188,20 @@ router.post('/screen-applications/:jobId', requireRole('EMPLOYER'), async (req: 
     return;
   }
 
-  const candidates = applications.map(app => ({
-    applicationId: app.id,
-    candidateName: app.user.seekerProfile
-      ? `${app.user.seekerProfile.firstName} ${app.user.seekerProfile.lastName}`
-      : app.user.email,
-    coverLetter: app.coverLetter || undefined,
-    skills: (Array.isArray(app.user.seekerProfile?.skills) ? app.user.seekerProfile!.skills as string[] : []),
-    headline: app.user.seekerProfile?.headline || undefined,
-    yearsOfExperience: app.user.seekerProfile?.yearsOfExperience || undefined,
-  }));
+  const candidates = applications.map(app => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const a = app as any;
+    return {
+      applicationId: app.id,
+      candidateName: a.user?.seekerProfile
+        ? `${a.user.seekerProfile.firstName} ${a.user.seekerProfile.lastName}`
+        : a.user?.email,
+      coverLetter: app.coverLetter || undefined,
+      skills: (Array.isArray(a.user?.seekerProfile?.skills) ? a.user.seekerProfile.skills as string[] : []),
+      headline: a.user?.seekerProfile?.headline || undefined,
+      yearsOfExperience: a.user?.seekerProfile?.yearsOfExperience || undefined,
+    };
+  });
 
   const results = await screenApplications(job.title, job.description, candidates);
 
@@ -358,10 +362,11 @@ router.post('/fraud-check/:jobId', requireRole('ADMIN', 'SUB_ADMIN'), async (req
     return;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await detectJobFraud(
     job.title,
     job.description,
-    job.employer.companyName,
+    (job as any).employer?.companyName ?? '',
     job.salaryMin,
     job.salaryMax,
   );

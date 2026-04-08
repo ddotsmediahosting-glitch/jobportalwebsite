@@ -14,10 +14,12 @@ router.use(requireRole('SEEKER'));
 // Profile
 router.get('/profile', ctrl.getProfile.bind(ctrl));
 router.put('/profile', validate(seekerProfileSchema), ctrl.updateProfile.bind(ctrl));
-router.post('/profile/avatar', uploadLimiter, imageUpload.single('avatar'), ctrl.uploadAvatar.bind(ctrl));
+/* eslint-disable @typescript-eslint/no-explicit-any */
+router.post('/profile/avatar', uploadLimiter, imageUpload.single('avatar') as any, ctrl.uploadAvatar.bind(ctrl));
 
 // Resumes
-router.post('/resumes', uploadLimiter, resumeUpload.single('resume'), ctrl.uploadResume.bind(ctrl));
+router.post('/resumes', uploadLimiter, resumeUpload.single('resume') as any, ctrl.uploadResume.bind(ctrl));
+/* eslint-enable @typescript-eslint/no-explicit-any */
 router.delete('/resumes/:resumeId', ctrl.deleteResume.bind(ctrl));
 router.patch('/resumes/:resumeId/primary', ctrl.setPrimaryResume.bind(ctrl));
 

@@ -331,15 +331,15 @@ export class JobsService {
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async reportJob(userId: string, jobId: string, reason: string, details?: string) {
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
+  async reportJob(userId: string, slug: string, reason: string, details?: string) {
+    const job = await prisma.job.findUnique({ where: { slug } });
     if (!job) throw new NotFoundError('Job');
 
     const report = await prisma.report.create({
       data: {
         reporterId: userId,
         targetType: 'JOB',
-        targetId: jobId,
+        targetId: job.id,
         reason,
         details,
       },

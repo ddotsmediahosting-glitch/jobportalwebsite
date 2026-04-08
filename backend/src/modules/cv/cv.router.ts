@@ -37,13 +37,15 @@ const upload = multer({
 router.use(authenticate);
 
 // ── AI endpoints ──────────────────────────────────────────────────────────────
-router.post('/analyze', upload.single('cvFile'), analyzeHandler);
+/* eslint-disable @typescript-eslint/no-explicit-any */
+router.post('/analyze', upload.single('cvFile') as any, analyzeHandler);
 router.post('/generate', generateHandler);
 router.post('/cover-letter', coverLetterHandler);
 router.post('/skills-gap', skillsGapHandler);
 router.post('/optimize', optimizeHandler);
 router.post('/interview-questions', interviewQsHandler);
-router.post('/parse-file', upload.single('cvFile'), parseFileHandler);
+router.post('/parse-file', upload.single('cvFile') as any, parseFileHandler);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 router.get('/profile', getProfileHandler);

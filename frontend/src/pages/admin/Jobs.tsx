@@ -62,6 +62,7 @@ interface Job {
   id: string;
   title: string;
   slug?: string;
+  shortCode?: string;
   status: string;
   isFeatured: boolean;
   viewCount: number;

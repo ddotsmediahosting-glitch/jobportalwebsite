@@ -87,15 +87,17 @@ export async function getDiscussion(req: Request, res: Response) {
   const ip = getIp(req);
   const voted = await prisma.discussionVote.findUnique({ where: { discussionId_voterIp: { discussionId: id, voterIp: ip } } });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const d = discussion as any;
   const safe = {
     ...discussion,
     authorName: discussion.isAnonymous ? 'Anonymous' : (discussion.authorName || 'Community Member'),
     authorEmail: undefined,
     authorIp: undefined,
     hasVoted: !!voted,
-    replies: discussion.replies.map((r) => ({
+    replies: (d.replies ?? []).map((r: Record<string, unknown>) => ({
       ...r,
-      authorName: r.isAnonymous ? 'Anonymous' : (r.authorName || 'Community Member'),
+      authorName: r['isAnonymous'] ? 'Anonymous' : (r['authorName'] || 'Community Member'),
     })),
   };
 

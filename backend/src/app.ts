@@ -61,7 +61,8 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.use(compression());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use(compression() as any);
 
 // ── Logging ────────────────────────────────────────────────────────────────────
 if (config.env !== 'test') {
@@ -78,9 +79,8 @@ app.use('/uploads', express.static(path.resolve(config.storage.uploadDir)));
 app.use('/', seoRouter);
 
 // ── API Docs ───────────────────────────────────────────────────────────────────
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'UAE Jobs Portal API',
-}));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use('/api/docs', ...[swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'UAE Jobs Portal API' })] as any[]);
 
 // ── Health ─────────────────────────────────────────────────────────────────────
 app.get('/health', async (_req, res) => {

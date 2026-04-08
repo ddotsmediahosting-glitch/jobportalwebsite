@@ -205,6 +205,8 @@ router.get('/job-schema/:slug', async (req: Request, res: Response) => {
 
   if (!job) return res.status(404).json({ success: false, error: 'Not found' });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const j = job as any;
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
@@ -217,9 +219,9 @@ router.get('/job-schema/:slug', async (req: Request, res: Response) => {
     url: `${BASE_URL}/jobs/${job.slug}`,
     hiringOrganization: {
       '@type': 'Organization',
-      name: job.employer.companyName,
-      sameAs: job.employer.website,
-      logo: job.employer.logoUrl,
+      name: j.employer?.companyName,
+      sameAs: j.employer?.website,
+      logo: j.employer?.logoUrl,
     },
     jobLocation: {
       '@type': 'Place',
@@ -244,7 +246,7 @@ router.get('/job-schema/:slug', async (req: Request, res: Response) => {
         }
       : {}),
     skills: (Array.isArray(job.skills) ? job.skills as string[] : []).join(', '),
-    occupationalCategory: job.category.name,
+    occupationalCategory: j.category?.name,
   };
 
   res.json({ success: true, data: schema });
