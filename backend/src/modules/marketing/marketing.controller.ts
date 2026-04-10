@@ -13,7 +13,8 @@ export class MarketingController {
     const { jobId, platform, utmSource, utmMedium, utmCampaign } = req.body;
     if (!platform) return res.status(400).json({ success: false, error: 'platform required' });
 
-    const click = await svc.trackShare({
+    // Fire-and-forget — tracking is non-critical; never return 500 for analytics failures
+    svc.trackShare({
       jobId: jobId || undefined,
       platform,
       utmSource,
@@ -22,8 +23,9 @@ export class MarketingController {
       referrer: req.headers.referer,
       userAgent: req.headers['user-agent'],
       ipAddress: req.ip,
-    });
-    res.json({ success: true, data: click });
+    }).catch((err) => console.error('[marketing/track] failed to record share click:', err));
+
+    res.json({ success: true });
   }
 
   // GET /marketing/job/:id/stats
