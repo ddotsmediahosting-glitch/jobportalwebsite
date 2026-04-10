@@ -78,6 +78,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     return;
   }
 
+  // Prisma FK / missing table / column errors — surface detail in all envs so the real cause is visible
+  const prismaErr = err as { code?: string; message?: string; meta?: { target?: string; column_name?: string; table?: string } };
+  if (prismaErr.code?.startsWith('P2')) {
+    console.error('[Prisma Error]', prismaErr.code, prismaErr.meta, prismaErr.message);
+    res.status(500).json({
+      success: false,
+      error: `Database error (${prismaErr.code})`,
+      detail: prismaErr.meta?.target ?? prismaErr.meta?.column_name ?? prismaErr.meta?.table ?? prismaErr.message,
+    });
+    return;
+  }
+
   // ── Anthropic / AI SDK errors ─────────────────────────────────────────────
   const anyErr = err as { status?: number; name?: string; message?: string };
 

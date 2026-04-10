@@ -65,16 +65,20 @@ export async function auditLog(
   meta?: Record<string, unknown>,
   req?: AuthRequest
 ): Promise<void> {
-  await prisma.auditLog.create({
-    data: {
-      actorUserId,
-      actorRole,
-      action,
-      targetType,
-      targetId,
-      metaJson: meta as Prisma.InputJsonValue | undefined,
-      ipAddress: req?.ip,
-      userAgent: req?.headers['user-agent'],
-    },
-  });
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actorUserId,
+        actorRole,
+        action,
+        targetType,
+        targetId,
+        metaJson: meta as Prisma.InputJsonValue | undefined,
+        ipAddress: req?.ip,
+        userAgent: req?.headers['user-agent'],
+      },
+    });
+  } catch (err) {
+    console.error('[auditLog] failed to write audit entry:', err);
+  }
 }
