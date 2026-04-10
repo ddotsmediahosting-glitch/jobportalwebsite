@@ -312,6 +312,12 @@ export function PostJob() {
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<CreateJobInput>({
     resolver: zodResolver(createJobSchema),
+    defaultValues: {
+      emirate: 'DUBAI',
+      workMode: 'ONSITE',
+      employmentType: 'FULL_TIME',
+      visaStatus: 'NOT_PROVIDED',
+    },
     values: existingJob as CreateJobInput,
   });
 
@@ -409,7 +415,7 @@ export function PostJob() {
           <Input {...register('title')} label="Job Title" placeholder="Senior Software Engineer" error={errors.title?.message} required />
           <CategorySelect
             value={watch('categoryId') || ''}
-            onChange={(id) => setValue('categoryId', id)}
+            onChange={(id) => setValue('categoryId', id, { shouldValidate: true })}
             error={errors.categoryId?.message}
             required
           />
