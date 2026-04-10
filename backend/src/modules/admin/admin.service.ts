@@ -579,37 +579,43 @@ export class AdminService {
 
   async createEmployer(actorId: string, data: {
     companyName: string;
+    mode: 'WITH_LOGIN' | 'ADMIN_MANAGED';
     email?: string;
     industry?: string; emirate?: string; website?: string; description?: string;
   }) {
     const timestamp = Date.now().toString(36);
-
-    // Use supplied email or auto-generate a placeholder
-    let loginEmail: string;
-    let loginPassword: string;
-    if (data.email?.trim()) {
-      const existing = await prisma.user.findUnique({ where: { email: data.email.trim() } });
-      if (existing) throw new AppError(409, 'Email already in use');
-      loginEmail = data.email.trim();
-      loginPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase() + '!';
-    } else {
-      loginEmail = `employer-${timestamp}@ddotsmediajobs.com`;
-      loginPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10).toUpperCase() + '!';
-    }
-
-    const generatedEmail = loginEmail;
-    const generatedPassword = loginPassword;
-
-    const passwordHash = await bcrypt.hash(generatedPassword, 12);
     const slug = data.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const uniqueSlug = `${slug}-${timestamp}`;
 
+    let loginEmail: string;
+    let loginPassword: string | null = null;
+    let userStatus: 'ACTIVE' | 'SUSPENDED';
+
+    if (data.mode === 'ADMIN_MANAGED') {
+      // No real login — placeholder user that cannot log in (SUSPENDED)
+      loginEmail = `internal-${timestamp}@system.ddotsmediajobs`;
+      userStatus = 'SUSPENDED';
+    } else {
+      // WITH_LOGIN — use supplied email or auto-generate
+      if (data.email?.trim()) {
+        const existing = await prisma.user.findUnique({ where: { email: data.email.trim() } });
+        if (existing) throw new AppError(409, 'Email already in use');
+        loginEmail = data.email.trim();
+      } else {
+        loginEmail = `employer-${timestamp}@ddotsmediajobs.com`;
+      }
+      loginPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase() + '!';
+      userStatus = 'ACTIVE';
+    }
+
+    const passwordHash = await bcrypt.hash(loginPassword || Math.random().toString(36).slice(2, 18), 12);
+
     const user = await prisma.user.create({
       data: {
-        email: generatedEmail,
+        email: loginEmail,
         passwordHash,
         role: 'EMPLOYER',
-        status: 'ACTIVE',
+        status: userStatus,
         verifiedAt: new Date(),
       },
     });
@@ -634,8 +640,14 @@ export class AdminService {
       data: { employerId: employer.id, userId: user.id, role: 'OWNER', joinedAt: new Date() },
     });
 
-    await auditLog(actorId, 'ADMIN', 'EMPLOYER_CREATED', 'Employer', employer.id, { companyName: data.companyName, generatedEmail });
-    return { employer, credentials: { email: generatedEmail, password: generatedPassword } };
+    await auditLog(actorId, 'ADMIN', 'EMPLOYER_CREATED', 'Employer', employer.id, {
+      companyName: data.companyName, mode: data.mode, loginEmail,
+    });
+
+    if (data.mode === 'ADMIN_MANAGED') {
+      return { employer, credentials: null };
+    }
+    return { employer, credentials: { email: loginEmail, password: loginPassword! } };
   }
 
   async updateEmployer(actorId: string, employerId: string, data: {
@@ -670,8 +682,16 @@ export class AdminService {
     const conflict = await prisma.user.findUnique({ where: { email } });
     if (conflict && conflict.id !== employer.ownerUserId) throw new AppError(409, 'Email already in use by another account');
 
+    const currentUser = await prisma.user.findUnique({ where: { id: employer.ownerUserId } });
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: Record<string, any> = { email };
+
+    // If this was an admin-managed company (suspended placeholder), activate it now
+    if (currentUser?.status === 'SUSPENDED') {
+      updateData.status = 'ACTIVE';
+    }
+
     if (password) {
       updateData.passwordHash = await bcrypt.hash(password, 12);
       await prisma.refreshToken.deleteMany({ where: { userId: employer.ownerUserId } });
@@ -680,7 +700,11 @@ export class AdminService {
     await prisma.user.update({ where: { id: employer.ownerUserId }, data: updateData });
     await auditLog(actorId, 'ADMIN', 'EMPLOYER_LOGIN_ASSIGNED', 'Employer', employerId, { email, companyName: employer.companyName });
 
-    return { message: 'Login email updated', email };
+    const wasAdminManaged = currentUser?.status === 'SUSPENDED';
+    return {
+      message: wasAdminManaged ? 'Company login access granted' : 'Login email updated',
+      email,
+    };
   }
 
   async toggleJobFeatured(actorId: string, jobId: string) {

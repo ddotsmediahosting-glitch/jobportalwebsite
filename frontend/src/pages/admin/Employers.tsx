@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Search, CheckCircle, XCircle, ExternalLink, Pencil, Plus, KeyRound } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ExternalLink, Pencil, Plus, KeyRound, UserCheck, Building2 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
 import { Modal } from '../../components/ui/Modal';
@@ -57,6 +57,8 @@ function EmployersSkeleton() {
   );
 }
 
+type CreateMode = 'WITH_LOGIN' | 'ADMIN_MANAGED';
+
 const emptyCreateForm = {
   companyName: '',
   email: '',
@@ -80,6 +82,7 @@ export function AdminEmployers() {
     companyName: '', industry: '', description: '', website: '', emirate: '', logoUrl: '', size: '',
   });
   const [createModal, setCreateModal] = useState(false);
+  const [createMode, setCreateMode] = useState<CreateMode>('WITH_LOGIN');
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
 
@@ -118,13 +121,22 @@ export function AdminEmployers() {
     });
   };
 
+  const closeCreateModal = () => {
+    setCreateModal(false);
+    setCreateForm(emptyCreateForm);
+    setCreateMode('WITH_LOGIN');
+  };
+
   const createEmployerMutation = useMutation({
-    mutationFn: (data: typeof emptyCreateForm) => api.post('/admin/employers', data),
+    mutationFn: (data: typeof emptyCreateForm & { mode: CreateMode }) => api.post('/admin/employers', data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['admin-employers'] });
-      setCreateModal(false);
-      setCreateForm(emptyCreateForm);
-      setCreatedCredentials(res.data.data.credentials);
+      closeCreateModal();
+      if (res.data.data.credentials) {
+        setCreatedCredentials(res.data.data.credentials);
+      } else {
+        toast.success('Company created. You can assign login access anytime.');
+      }
     },
     onError: (err) => toast.error(getApiError(err)),
   });
@@ -226,9 +238,13 @@ export function AdminEmployers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className="text-xs text-gray-500 font-mono">
-                        {emp.owner?.email || '—'}
-                      </span>
+                      {emp.owner?.status === 'SUSPENDED' ? (
+                        <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                          <Building2 className="h-3 w-3" /> Admin Managed
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500 font-mono">{emp.owner?.email || '—'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
@@ -304,86 +320,131 @@ export function AdminEmployers() {
       {/* ── Create Company modal ──────────────────────────────────────────────── */}
       <Modal
         isOpen={createModal}
-        onClose={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }}
+        onClose={closeCreateModal}
         title="Create Company"
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
-            Fill in the company details. If you provide a login email now, the employer can log in immediately.
-            Otherwise, credentials will be auto-generated and you can assign a real email later.
+        <div className="space-y-5">
+          {/* Mode selector */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setCreateMode('WITH_LOGIN')}
+              className={`flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition-colors ${
+                createMode === 'WITH_LOGIN'
+                  ? 'border-brand-500 bg-brand-50'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              }`}
+            >
+              <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${createMode === 'WITH_LOGIN' ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                <UserCheck className="h-4 w-4" />
+              </span>
+              <span className="font-semibold text-sm text-gray-900">Employer Login</span>
+              <span className="text-xs text-gray-500 leading-snug">
+                Create login credentials the employer can use to manage their own account.
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreateMode('ADMIN_MANAGED')}
+              className={`flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition-colors ${
+                createMode === 'ADMIN_MANAGED'
+                  ? 'border-brand-500 bg-brand-50'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              }`}
+            >
+              <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${createMode === 'ADMIN_MANAGED' ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                <Building2 className="h-4 w-4" />
+              </span>
+              <span className="font-semibold text-sm text-gray-900">Admin Managed</span>
+              <span className="text-xs text-gray-500 leading-snug">
+                Company used by the admin panel only. No login for the employer (you can grant access later).
+              </span>
+            </button>
           </div>
 
-          {/* Company info */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input
-              label="Company Name *"
-              required
-              value={createForm.companyName}
-              onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
-              placeholder="Acme Corporation"
-              autoFocus
-            />
-            <Input
-              label="Industry"
-              value={createForm.industry}
-              onChange={(e) => setCreateForm((p) => ({ ...p, industry: e.target.value }))}
-              placeholder="e.g. Technology, Finance"
-            />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
-              <select
-                title="Emirate"
-                value={createForm.emirate}
-                onChange={(e) => setCreateForm((p) => ({ ...p, emirate: e.target.value }))}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="">— Select —</option>
-                {EMIRATES.map((e) => (
-                  <option key={e} value={e}>{e.replace(/_/g, ' ')}</option>
-                ))}
-              </select>
+          {/* Company info — same for both modes */}
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input
+                label="Company Name *"
+                required
+                value={createForm.companyName}
+                onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
+                placeholder="Acme Corporation"
+                autoFocus
+              />
+              <Input
+                label="Industry"
+                value={createForm.industry}
+                onChange={(e) => setCreateForm((p) => ({ ...p, industry: e.target.value }))}
+                placeholder="e.g. Technology, Finance"
+              />
             </div>
-            <Input
-              label="Website"
-              value={createForm.website}
-              onChange={(e) => setCreateForm((p) => ({ ...p, website: e.target.value }))}
-              placeholder="https://company.com"
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emirate</label>
+                <select
+                  title="Emirate"
+                  value={createForm.emirate}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, emirate: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="">— Select —</option>
+                  {EMIRATES.map((e) => (
+                    <option key={e} value={e}>{e.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                label="Website"
+                value={createForm.website}
+                onChange={(e) => setCreateForm((p) => ({ ...p, website: e.target.value }))}
+                placeholder="https://company.com"
+              />
+            </div>
+            <Textarea
+              label="Description"
+              value={createForm.description}
+              onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+              rows={2}
+              placeholder="Brief company description..."
             />
           </div>
-          <Textarea
-            label="Description"
-            value={createForm.description}
-            onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-            rows={2}
-            placeholder="Brief company description..."
-          />
 
-          {/* Login credentials */}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Login Access</p>
-            <Input
-              label="Company Login Email (optional)"
-              type="email"
-              value={createForm.email}
-              onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-              placeholder="contact@company.com — leave blank to auto-generate"
-              hint="If left blank, a placeholder email is generated. You can assign a real email anytime later."
-            />
-          </div>
+          {/* Login email — only for WITH_LOGIN mode */}
+          {createMode === 'WITH_LOGIN' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Login Access</p>
+              <Input
+                label="Company Login Email (optional)"
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
+                placeholder="contact@company.com"
+                hint="Leave blank to auto-generate a placeholder. You can set a real email anytime."
+              />
+            </div>
+          )}
+
+          {createMode === 'ADMIN_MANAGED' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+              No login credentials will be created. The company will appear in your admin panel and can be used to post jobs.
+              Use the <KeyRound className="inline h-3 w-3 mx-0.5" /> <strong>Assign Login</strong> button later if you want to give this company access.
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <Button type="button" variant="ghost" onClick={() => { setCreateModal(false); setCreateForm(emptyCreateForm); }}>
+            <Button type="button" variant="ghost" onClick={closeCreateModal}>
               Cancel
             </Button>
             <Button
-              onClick={() => createEmployerMutation.mutate(createForm)}
+              onClick={() => createEmployerMutation.mutate({ ...createForm, mode: createMode })}
               loading={createEmployerMutation.isPending}
               disabled={!createForm.companyName.trim()}
             >
-              Create Company
+              {createMode === 'ADMIN_MANAGED' ? 'Create Company' : 'Create with Login'}
             </Button>
           </div>
         </div>
@@ -576,7 +637,10 @@ export function AdminEmployers() {
               <InfoRow label="Industry" value={selected.industry || '—'} />
               <InfoRow label="Emirate" value={selected.emirate || '—'} />
               <InfoRow label="Verification" value={selected.verificationStatus} />
-              <InfoRow label="Login Email" value={selected.owner?.email || '—'} />
+              <InfoRow
+                label="Login Email"
+                value={selected.owner?.status === 'SUSPENDED' ? 'Admin Managed (no login)' : (selected.owner?.email || '—')}
+              />
               <InfoRow label="Plan" value={selected.subscription?.plan || 'FREE'} />
               <InfoRow label="Jobs Posted" value={String(selected._count?.jobs ?? 0)} />
               <InfoRow label="Team Members" value={String(selected._count?.members ?? 0)} />
