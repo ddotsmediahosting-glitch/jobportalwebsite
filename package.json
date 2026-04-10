@@ -18,8 +18,12 @@
     "migrate": "npm run prisma:deploy -w @uaejobs/api",
     "studio": "npm run prisma:studio -w @uaejobs/api"
   },
+  "overrides": {
+    "@types/express": "4.17.25"
+  },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/express": "^4.17.25",
     "@types/express-serve-static-core": "^4.19.8",
     "concurrently": "^9.2.1",
     "jest": "^29.7.0"
