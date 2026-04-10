@@ -47,6 +47,12 @@ export const resetPasswordSchema = z
 
 // ─── Job schemas ───────────────────────────────────────────────────────────────
 
+// Coerces empty string / NaN (from valueAsNumber on an empty <input type="number">) to undefined
+const optionalPositiveInt = z.preprocess(
+  (v) => (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)),
+  z.number().int().positive().optional()
+);
+
 export const emirateEnum = z.enum([
   'ABU_DHABI',
   'DUBAI',
@@ -84,13 +90,16 @@ export const createJobSchema = z.object({
   workMode: workModeEnum.default('ONSITE'),
   employmentType: employmentTypeEnum.default('FULL_TIME'),
   visaStatus: visaStatusEnum.default('NOT_PROVIDED'),
-  salaryMin: z.number().int().positive().optional(),
-  salaryMax: z.number().int().positive().optional(),
+  salaryMin: optionalPositiveInt,
+  salaryMax: optionalPositiveInt,
   salaryCurrency: z.string().default('AED'),
   salaryNegotiable: z.boolean().default(false),
   isEmiratization: z.boolean().default(false),
-  experienceMin: z.number().int().min(0).default(0),
-  experienceMax: z.number().int().positive().optional(),
+  experienceMin: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)) ? 0 : Number(v)),
+    z.number().int().min(0).default(0)
+  ),
+  experienceMax: optionalPositiveInt,
   level: z.string().optional(),
   skills: z.array(z.string()).default([]),
   languages: z.array(z.string()).default([]),
