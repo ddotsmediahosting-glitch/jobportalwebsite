@@ -382,7 +382,6 @@ export function JobDetail() {
               {[
                 ['Visa', VISA_STATUS_LABELS[job.visaStatus as VisaStatus]],
                 ['Location', job.location || EMIRATES_LABELS[job.emirate as Emirates]],
-                ['Category', job.category.name],
                 ['Posted', job.publishedAt ? new Date(job.publishedAt).toLocaleDateString() : 'N/A'],
                 ['Applications', job._count?.applications ?? 0],
               ].map(([k, v]) => (
@@ -391,6 +390,36 @@ export function JobDetail() {
                   <span className="text-gray-900 font-medium">{v as string}</span>
                 </div>
               ))}
+              {/* Category breadcrumb */}
+              <div className="flex justify-between items-start pt-1 border-t border-gray-50">
+                <span className="text-gray-500">Category</span>
+                <div className="text-right">
+                  {job.category?.parent ? (
+                    <div className="flex items-center gap-1 text-sm justify-end flex-wrap">
+                      <Link
+                        to={`/jobs?categoryId=${job.category.parent.id}`}
+                        className="text-gray-500 hover:text-brand-600 transition-colors text-xs"
+                      >
+                        {job.category.parent.name}
+                      </Link>
+                      <span className="text-gray-300 text-xs">›</span>
+                      <Link
+                        to={`/jobs?categoryId=${job.category.id}`}
+                        className="font-semibold text-brand-600 hover:text-brand-700 transition-colors text-xs"
+                      >
+                        {job.category.name}
+                      </Link>
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/jobs?categoryId=${job.category.id}`}
+                      className="font-medium text-brand-600 hover:text-brand-700 transition-colors text-sm"
+                    >
+                      {job.category.name}
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

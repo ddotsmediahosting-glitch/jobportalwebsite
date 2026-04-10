@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS } from '@uaejobs/shared';
+import { CategorySelect } from '../../components/ui/CategorySelect';
 
 const EMIRATE_OPTS = Object.entries(EMIRATES_LABELS).map(([v, l]) => ({ value: v, label: l }));
 const WORK_MODE_OPTS = Object.entries(WORK_MODE_LABELS).map(([v, l]) => ({ value: v, label: l }));
@@ -224,18 +225,6 @@ export function PostJobAsUser() {
     experienceMin: '', experienceMax: '', level: '', requirements: '', benefits: '',
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api.get('/categories').then(r => r.data.data),
-  });
-
-  const flatCats = categories
-    ? categories.flatMap((c: any) =>
-        c.children?.length
-          ? c.children.map((ch: any) => ({ value: ch.id, label: `${c.name} › ${ch.name}` }))
-          : [{ value: c.id, label: c.name }]
-      )
-    : [];
 
   const submitMutation = useMutation({
     mutationFn: () => api.post('/user-jobs', { ...form, skills,
@@ -320,13 +309,11 @@ export function PostJobAsUser() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Job Title <span className="text-red-500">*</span></label>
             <input value={form.title} onChange={set('title')} placeholder="e.g. Electrician, React Developer" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-            <select value={form.categoryId} onChange={set('categoryId')} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-              <option value="">Select category</option>
-              {flatCats.map((c: any) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </div>
+          <CategorySelect
+            value={form.categoryId}
+            onChange={(id) => setForm((p) => ({ ...p, categoryId: id }))}
+            required
+          />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Emirate <span className="text-red-500">*</span></label>

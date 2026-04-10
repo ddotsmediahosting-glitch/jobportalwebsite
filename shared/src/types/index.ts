@@ -171,7 +171,7 @@ export interface JobListItem {
   publishedAt: string | null;
   expiresAt: string | null;
   employer: Pick<EmployerPublic, 'id' | 'companyName' | 'slug' | 'logoUrl' | 'emirate'>;
-  category: { id: string; name: string; slug: string };
+  category: { id: string; name: string; slug: string; parent?: { id: string; name: string; slug: string } | null };
   _count?: { applications: number };
 }
 

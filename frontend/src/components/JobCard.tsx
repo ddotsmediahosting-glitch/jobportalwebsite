@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, Banknote, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap } from 'lucide-react';
+import { MapPin, Briefcase, Banknote, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap, Tag } from 'lucide-react';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, JobListItem } from '@uaejobs/shared';
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'AED', negotiable = false) {
@@ -142,6 +142,22 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
           </span>
         )}
       </div>
+
+      {/* Category breadcrumb */}
+      {job.category && (
+        <div className="flex items-center gap-1 mb-3">
+          <Tag size={10} className="text-brand-400 flex-shrink-0" />
+          {job.category.parent ? (
+            <span className="text-[10px] text-gray-400">
+              <span className="text-gray-500">{job.category.parent.name}</span>
+              <span className="mx-1 text-gray-300">›</span>
+              <span className="font-medium text-brand-600">{job.category.name}</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-medium text-brand-600">{job.category.name}</span>
+          )}
+        </div>
+      )}
 
       {/* Skills */}
       {asArr(job.skills).length > 0 && (

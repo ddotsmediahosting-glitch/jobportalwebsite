@@ -14,6 +14,7 @@ import { createJobSchema, CreateJobInput, EMIRATES_LABELS, WORK_MODE_LABELS, EMP
 import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
+import { CategorySelect } from '../../components/ui/CategorySelect';
 function PostJobSkeleton() {
   return (
     <div className="max-w-3xl space-y-6">
@@ -300,11 +301,6 @@ export function PostJob() {
   const isEditing = !!id;
   const [wizardOpen, setWizardOpen] = useState(false);
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api.get('/categories').then((r) => r.data.data),
-  });
-
   const { data: existingJob, isLoading: jobLoading } = useQuery({
     queryKey: ['employer-job', id],
     queryFn: () => api.get(`/employer/jobs?id=${id}`).then((r) => r.data.data.items?.[0]),
@@ -368,12 +364,6 @@ export function PostJob() {
     setSkillInput('');
   };
 
-  const flatCats = categories ? categories.flatMap((c: { id: string; name: string; children?: { id: string; name: string }[] }) =>
-    c.children?.length
-      ? c.children.map((ch: { id: string; name: string }) => ({ value: ch.id, label: `${c.name} › ${ch.name}` }))
-      : [{ value: c.id, label: c.name }]
-  ) : [];
-
   if (isEditing && jobLoading) return <PostJobSkeleton />;
 
   return (
@@ -417,7 +407,12 @@ export function PostJob() {
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Basic Information</h2>
           <Input {...register('title')} label="Job Title" placeholder="Senior Software Engineer" error={errors.title?.message} required />
-          <Select {...register('categoryId')} label="Category" options={flatCats} placeholder="Select category" error={errors.categoryId?.message} required />
+          <CategorySelect
+            value={watch('categoryId') || ''}
+            onChange={(id) => setValue('categoryId', id)}
+            error={errors.categoryId?.message}
+            required
+          />
           <Select {...register('emirate')} label="Emirate" options={emirateOptions} error={errors.emirate?.message} required />
           <Input {...register('location')} label="Location" placeholder="Business Bay, Dubai" />
         </div>
