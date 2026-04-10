@@ -29,6 +29,7 @@ router.delete('/users/:id', ctrl.deleteUser.bind(ctrl));
 router.get('/employers', ctrl.listEmployers.bind(ctrl));
 router.post('/employers', ctrl.createEmployer.bind(ctrl));
 router.patch('/employers/:id/verify', ctrl.verifyEmployer.bind(ctrl));
+router.patch('/employers/:id/login', ctrl.assignEmployerLoginEmail.bind(ctrl));
 router.patch('/employers/:id', ctrl.updateEmployer.bind(ctrl));
 
 // Jobs

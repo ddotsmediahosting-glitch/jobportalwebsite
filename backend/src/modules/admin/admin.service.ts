@@ -579,12 +579,26 @@ export class AdminService {
 
   async createEmployer(actorId: string, data: {
     companyName: string;
+    email?: string;
     industry?: string; emirate?: string; website?: string; description?: string;
   }) {
-    // Auto-generate login credentials — admin shares these with the employer
     const timestamp = Date.now().toString(36);
-    const generatedEmail = `employer-${timestamp}@ddotsmediajobs.com`;
-    const generatedPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10).toUpperCase() + '!';
+
+    // Use supplied email or auto-generate a placeholder
+    let loginEmail: string;
+    let loginPassword: string;
+    if (data.email?.trim()) {
+      const existing = await prisma.user.findUnique({ where: { email: data.email.trim() } });
+      if (existing) throw new AppError(409, 'Email already in use');
+      loginEmail = data.email.trim();
+      loginPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase() + '!';
+    } else {
+      loginEmail = `employer-${timestamp}@ddotsmediajobs.com`;
+      loginPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10).toUpperCase() + '!';
+    }
+
+    const generatedEmail = loginEmail;
+    const generatedPassword = loginPassword;
 
     const passwordHash = await bcrypt.hash(generatedPassword, 12);
     const slug = data.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -644,6 +658,29 @@ export class AdminService {
     });
     await auditLog(actorId, 'ADMIN', 'EMPLOYER_UPDATED', 'Employer', employerId, { changes: data });
     return updated;
+  }
+
+  async assignEmployerLoginEmail(actorId: string, employerId: string, email: string, password?: string) {
+    const employer = await prisma.employer.findUnique({
+      where: { id: employerId },
+      select: { id: true, ownerUserId: true, companyName: true },
+    });
+    if (!employer) throw new NotFoundError('Employer');
+
+    const conflict = await prisma.user.findUnique({ where: { email } });
+    if (conflict && conflict.id !== employer.ownerUserId) throw new AppError(409, 'Email already in use by another account');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: Record<string, any> = { email };
+    if (password) {
+      updateData.passwordHash = await bcrypt.hash(password, 12);
+      await prisma.refreshToken.deleteMany({ where: { userId: employer.ownerUserId } });
+    }
+
+    await prisma.user.update({ where: { id: employer.ownerUserId }, data: updateData });
+    await auditLog(actorId, 'ADMIN', 'EMPLOYER_LOGIN_ASSIGNED', 'Employer', employerId, { email, companyName: employer.companyName });
+
+    return { message: 'Login email updated', email };
   }
 
   async toggleJobFeatured(actorId: string, jobId: string) {

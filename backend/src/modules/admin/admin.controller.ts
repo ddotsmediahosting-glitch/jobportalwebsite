@@ -93,6 +93,13 @@ export class AdminController {
     res.json({ success: true, data });
   }
 
+  async assignEmployerLoginEmail(req: AuthRequest, res: Response) {
+    const { email, password } = req.body;
+    if (!email) { res.status(400).json({ success: false, error: 'email is required' }); return; }
+    const data = await service.assignEmployerLoginEmail(req.user!.sub, req.params.id, email, password || undefined);
+    res.json({ success: true, ...data });
+  }
+
   async toggleJobFeatured(req: AuthRequest, res: Response) {
     const data = await service.toggleJobFeatured(req.user!.sub, req.params.id);
     res.json({ success: true, data });
