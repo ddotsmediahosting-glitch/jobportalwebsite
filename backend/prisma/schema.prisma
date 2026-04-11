@@ -388,6 +388,7 @@ model Job {
   moderationNotes  String?        @db.Text
   metaTitle        String?
   metaDescription  String?        @db.Text
+  metaKeywords     String?        @db.Text
 
   tags               JobTag[]
   screeningQuestions ScreeningQuestion[]

@@ -528,7 +528,7 @@ export class AdminService {
     const employmentType = data.employmentType || 'FULL_TIME';
     const isFeatured = data.isFeatured ? 1 : 0;
 
-    const { metaTitle, metaDescription } = generateJobSEO({
+    const { metaTitle, metaDescription, metaKeywords } = generateJobSEO({
       title: data.title.trim(),
       emirate: data.emirate || 'DUBAI',
       employmentType,
@@ -546,9 +546,9 @@ export class AdminService {
         id, employerId, categoryId, title, slug, description,
         emirate, location, workMode, employmentType,
         salaryMin, salaryMax, skills,
-        metaTitle, metaDescription,
+        metaTitle, metaDescription, metaKeywords,
         status, isFeatured, publishedAt, expiresAt, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PUBLISHED', ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PUBLISHED', ?, ?, ?, ?, ?)`,
       id,
       data.employerId,
       data.categoryId,
@@ -564,6 +564,7 @@ export class AdminService {
       skills,
       metaTitle,
       metaDescription,
+      metaKeywords,
       isFeatured,
       now,
       expiresAt,
@@ -887,10 +888,10 @@ export class AdminService {
 
     let updated = 0;
     for (const job of jobs) {
-      const { metaTitle, metaDescription } = generateJobSEO(job);
+      const { metaTitle, metaDescription, metaKeywords } = generateJobSEO(job);
       await prisma.job.update({
         where: { id: job.id },
-        data: { metaTitle, metaDescription },
+        data: { metaTitle, metaDescription, metaKeywords },
       });
       updated++;
     }

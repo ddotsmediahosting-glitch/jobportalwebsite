@@ -8,6 +8,7 @@ const DEFAULT_OG_IMAGE = `${BASE_URL}/og-default.svg`;
 export interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
@@ -67,6 +68,7 @@ function removeJsonLd() {
 export function SEOHead({
   title,
   description,
+  keywords,
   ogTitle,
   ogDescription,
   ogImage,
@@ -78,7 +80,8 @@ export function SEOHead({
   noIndex = false,
 }: SEOProps) {
   useEffect(() => {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} – UAE Jobs Portal`;
+    // Title is passed already formatted — don't double-append site name for job pages
+    const fullTitle = title || `${SITE_NAME} – UAE Jobs Portal`;
     document.title = fullTitle;
 
     const desc = description || DEFAULT_DESC;
@@ -90,6 +93,7 @@ export function SEOHead({
     // Standard
     setMetaName('description', desc);
     setMetaName('robots', noIndex ? 'noindex,nofollow' : 'index,follow');
+    if (keywords) setMetaName('keywords', keywords);
 
     // Open Graph
     setMetaProp('og:title', ogTit);
@@ -115,7 +119,7 @@ export function SEOHead({
     } else {
       removeJsonLd();
     }
-  }, [title, description, ogTitle, ogDescription, ogImage, ogUrl, ogType, twitterCard, jsonLd, canonical, noIndex]);
+  }, [title, description, keywords, ogTitle, ogDescription, ogImage, ogUrl, ogType, twitterCard, jsonLd, canonical, noIndex]);
 
   return null;
 }

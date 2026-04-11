@@ -132,12 +132,20 @@ export function JobDetail() {
     ? `AED ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}/mo`
     : null;
 
-  // Part 2c: "[Job Title] – [Company] | [City] Jobs – DdotsmediaJobs"
-  const seoTitle = job.metaTitle || `${job.title} – ${job.employer.companyName} | ${cityName} Jobs`;
+  const categoryName = job.category?.parent
+    ? `${job.category.parent.name} > ${job.category.name}`
+    : job.category?.name || '';
 
-  // Part 2d: "Apply for [Job Title] at [Company] in [City], UAE. [summary]. Browse more [City] vacancies."
+  // Title: "[Job Title] Jobs in [City] | ddotsmediajobs"
+  const seoTitle = job.metaTitle || `${job.title} Jobs in ${cityName} | ddotsmediajobs`;
+
+  // Description: "Apply for [Job Title] jobs in [City]. [Company] is hiring now. Apply today."
   const metaDesc = job.metaDescription ||
-    `Apply for ${job.title} at ${job.employer.companyName} in ${cityName}, UAE.${salaryText ? ` Salary: ${salaryText}.` : ''} Browse more ${cityName} vacancies at DdotsmediaJobs.`;
+    `Apply for ${job.title} jobs in ${cityName}. ${job.employer.companyName} is hiring now.${salaryText ? ` Salary: ${salaryText}.` : ''} Apply today.`;
+
+  // Keywords: use stored value or generate from job data
+  const metaKeywords = (job as { metaKeywords?: string }).metaKeywords ||
+    `${job.title}, jobs in ${cityName}, ${job.category?.name || ''} jobs UAE, ${job.employer.companyName} jobs, ${cityName} jobs`;
 
   // Part 2a: JobPosting schema with identifier + applicantLocationRequirements
   const jobPostingSchema = buildJobPostingSchema({
@@ -186,7 +194,8 @@ export function JobDetail() {
       <SEOHead
         title={seoTitle}
         description={metaDesc}
-        ogTitle={`${job.title} – ${job.employer.companyName} | ${cityName} Jobs – DdotsmediaJobs`}
+        keywords={metaKeywords}
+        ogTitle={seoTitle}
         ogDescription={metaDesc}
         ogImage={job.employer.logoUrl || undefined}
         ogUrl={jobUrl}
