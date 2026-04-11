@@ -484,37 +484,58 @@ export class AdminService {
     emirate: string; workMode?: string; employmentType?: string; location?: string;
     salaryMin?: number; salaryMax?: number; skills?: string[]; isFeatured?: boolean;
   }) {
-    console.log('[createJobAsAdmin] payload:', JSON.stringify({ ...data, description: data.description?.slice(0, 50) }));
     if (!data.employerId) throw new AppError(400, 'Please select an employer');
     if (!data.categoryId) throw new AppError(400, 'Please select a category');
+    if (!data.title?.trim()) throw new AppError(400, 'Job title is required');
+    if (!data.description?.trim()) throw new AppError(400, 'Job description is required');
+
     const employer = await prisma.employer.findUnique({ where: { id: data.employerId } });
-    if (!employer) throw new AppError(404, `Employer not found (id: ${data.employerId}). Select a valid employer from the list.`);
+    if (!employer) throw new AppError(404, 'Employer not found — select a valid employer from the list');
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
-    if (!category) throw new NotFoundError('Category');
+    if (!category) throw new AppError(404, 'Category not found — select a valid category');
 
     const baseSlug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const slug = `${baseSlug}-${Date.now().toString(36)}`;
+    const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const skills = JSON.stringify(Array.isArray(data.skills) ? data.skills : []);
+    const workMode = data.workMode || 'ONSITE';
+    const employmentType = data.employmentType || 'FULL_TIME';
+    const isFeatured = data.isFeatured ? 1 : 0;
 
-    const job = await prisma.job.create({
-      data: {
-        employerId: data.employerId,
-        categoryId: data.categoryId,
-        title: data.title,
-        slug,
-        description: data.description,
-        emirate: data.emirate as Emirates,
-        location: data.location,
-        workMode: (data.workMode || 'ONSITE') as WorkMode,
-        employmentType: (data.employmentType || 'FULL_TIME') as EmploymentType,
-        salaryMin: data.salaryMin,
-        salaryMax: data.salaryMax,
-        skills: Array.isArray(data.skills) ? data.skills : [],
-        status: 'PUBLISHED',
-        publishedAt: new Date(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        isFeatured: data.isFeatured || false,
-      },
-    });
+    // Use raw SQL so we only set columns that definitely exist in any DB version.
+    // Prisma's generated client sets ALL columns with @default() in its INSERT
+    // which fails if the table is missing those columns (schema not yet pushed).
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO \`Job\` (
+        id, employerId, categoryId, title, slug, description,
+        emirate, location, workMode, employmentType,
+        salaryMin, salaryMax, skills,
+        status, isFeatured, publishedAt, expiresAt, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PUBLISHED', ?, ?, ?, ?, ?)`,
+      id,
+      data.employerId,
+      data.categoryId,
+      data.title.trim(),
+      slug,
+      data.description.trim(),
+      data.emirate || 'DUBAI',
+      data.location || null,
+      workMode,
+      employmentType,
+      data.salaryMin ?? null,
+      data.salaryMax ?? null,
+      skills,
+      isFeatured,
+      now,
+      expiresAt,
+      now,
+      now,
+    );
+
+    const job = await prisma.job.findUnique({ where: { id } });
+    if (!job) throw new AppError(500, 'Job was created but could not be retrieved');
 
     await auditLog(actorId, 'ADMIN', 'JOB_CREATED', 'Job', job.id, { title: data.title, employer: employer.companyName });
     await cacheDel(HOME_CACHE_KEY);

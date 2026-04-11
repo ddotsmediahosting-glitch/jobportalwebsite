@@ -91,6 +91,7 @@ export function getApiError(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data;
     if (data?.errors?.length) return data.errors.join(', ');
+    if (data?.error && data?.detail) return `${data.error}: ${data.detail}`;
     if (data?.error) return data.error;
     if (data?.message) return data.message;
     if (err.message) return err.message;
