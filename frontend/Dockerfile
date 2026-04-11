@@ -1,10 +1,17 @@
-﻿# ── Build stage ──────────────────────────────────────────────────────────────
+# ── Build stage ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package.json tsconfig.base.json ./
+
+# Copy ALL workspace package.json files so npm can resolve the workspace graph
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 COPY shared/package.json ./shared/
-RUN npm install
+
+# Install all deps (npm ci uses lockfile — fast and deterministic)
+RUN npm ci
+
+# Copy source and build
 COPY . .
 ARG VITE_API_URL=""
 ARG VITE_FRONTEND_URL=https://ddotsmediajobs.com
