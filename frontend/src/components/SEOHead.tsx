@@ -122,6 +122,22 @@ export function SEOHead({
 
 // ── Helpers to build common JSON-LD schemas ────────────────────────────────────
 
+const EMIRATES_LABELS_LOCAL: Record<string, string> = {
+  ABU_DHABI: 'Abu Dhabi', DUBAI: 'Dubai', SHARJAH: 'Sharjah',
+  AJMAN: 'Ajman', UMM_AL_QUWAIN: 'Umm Al Quwain',
+  RAS_AL_KHAIMAH: 'Ras Al Khaimah', FUJAIRAH: 'Fujairah',
+};
+
+const EMP_TYPE_SCHEMA: Record<string, string> = {
+  FULL_TIME: 'FULL_TIME', PART_TIME: 'PART_TIME', CONTRACT: 'CONTRACTOR',
+  TEMPORARY: 'TEMPORARY', INTERNSHIP: 'INTERN', FREELANCE: 'OTHER',
+};
+
+function toDateString(iso?: string | null): string {
+  if (!iso) return new Date().toISOString().split('T')[0];
+  return iso.split('T')[0];
+}
+
 export function buildJobPostingSchema(job: {
   title: string;
   description: string;
@@ -137,49 +153,54 @@ export function buildJobPostingSchema(job: {
   salaryCurrency?: string;
   skills?: string[];
   employer: { companyName: string; logoUrl?: string | null; website?: string | null };
-  category: { name: string };
+  category: { name: string; parent?: { name: string } | null };
 }) {
+  const cityName = EMIRATES_LABELS_LOCAL[job.emirate] || job.emirate;
+  const plainDescription = job.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+
   const schema: Record<string, unknown> = {
-    '@context': 'https://schema.org',
+    '@context': 'https://schema.org/',
     '@type': 'JobPosting',
     title: job.title,
-    description: job.description.replace(/<[^>]+>/g, ' ').slice(0, 500),
-    datePosted: job.publishedAt ?? new Date().toISOString(),
-    validThrough: job.expiresAt,
-    employmentType: job.employmentType,
-    url: `${BASE_URL}/jobs/${job.slug}`,
+    description: plainDescription,
+    datePosted: toDateString(job.publishedAt),
+    validThrough: job.expiresAt ? toDateString(job.expiresAt) : undefined,
+    employmentType: EMP_TYPE_SCHEMA[job.employmentType] || job.employmentType,
     hiringOrganization: {
       '@type': 'Organization',
       name: job.employer.companyName,
-      sameAs: job.employer.website,
-      logo: job.employer.logoUrl,
+      ...(job.employer.website ? { sameAs: job.employer.website } : {}),
+      ...(job.employer.logoUrl ? { logo: job.employer.logoUrl } : {}),
     },
     jobLocation: {
       '@type': 'Place',
       address: {
         '@type': 'PostalAddress',
-        addressLocality: job.location || job.emirate,
-        addressRegion: job.emirate,
-        addressCountry: 'AE',
+        addressLocality: job.location || cityName,
+        addressRegion: cityName,
+        addressCountry: 'UAE',
       },
     },
     ...(job.workMode === 'REMOTE' ? { jobLocationType: 'TELECOMMUTE' } : {}),
-    ...(job.salaryMin && job.salaryMax
+    ...(job.salaryMin || job.salaryMax
       ? {
           baseSalary: {
             '@type': 'MonetaryAmount',
             currency: job.salaryCurrency || 'AED',
             value: {
               '@type': 'QuantitativeValue',
-              minValue: job.salaryMin,
-              maxValue: job.salaryMax,
+              ...(job.salaryMin ? { minValue: job.salaryMin } : {}),
+              ...(job.salaryMax ? { maxValue: job.salaryMax } : {}),
               unitText: 'MONTH',
             },
           },
         }
       : {}),
-    skills: job.skills?.join(', '),
-    occupationalCategory: job.category.name,
+    ...(job.skills?.length ? { skills: job.skills.join(', ') } : {}),
+    occupationalCategory: job.category.parent
+      ? `${job.category.parent.name} > ${job.category.name}`
+      : job.category.name,
+    url: `${BASE_URL}/jobs/${job.slug}`,
   };
   return schema;
 }

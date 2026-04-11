@@ -170,13 +170,12 @@ export function JobDetail() {
   const { '@context': _c1, ...jobPostingData } = jobPostingSchema as Record<string, unknown>;
   const { '@context': _c2, ...breadcrumbData } = breadcrumbSchema as Record<string, unknown>;
   const combinedSchema = {
-    '@context': 'https://schema.org',
+    '@context': 'https://schema.org/',
     '@graph': [
       {
         ...jobPostingData,
-        // Part 2a extras: identifier + applicantLocationRequirements
         identifier: { '@type': 'PropertyValue', name: 'DdotsmediaJobs', value: job.id },
-        applicantLocationRequirements: { '@type': 'Country', name: 'AE' },
+        applicantLocationRequirements: { '@type': 'Country', name: 'UAE' },
       },
       breadcrumbData,
     ],
