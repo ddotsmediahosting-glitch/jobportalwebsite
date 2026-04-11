@@ -64,7 +64,7 @@ export function Applications() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <Link to={`/jobs/${app.job.slug}`} className="font-semibold text-gray-900 hover:text-brand-600 text-sm">
+                  <Link to={`/job/${app.job.slug}`} className="font-semibold text-gray-900 hover:text-brand-600 text-sm">
                     {app.job.title}
                   </Link>
                   <div className="text-xs text-gray-500 mt-0.5">

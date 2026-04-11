@@ -98,7 +98,7 @@ export function RecommendedJobs() {
         {data.slice(0, 6).map((job: RecommendedJob) => (
           <Link
             key={job.id}
-            to={`/jobs/${job.id}`}
+            to={`/job/${job.slug ?? job.id}`}
             className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-purple-200 hover:shadow-md transition-all duration-200 group"
           >
             <div className="flex gap-3 mb-3">

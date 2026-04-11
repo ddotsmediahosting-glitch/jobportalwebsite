@@ -250,7 +250,7 @@ export function AdminMarketing() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-sm font-bold text-gray-900">{t.count}</span>
                     <a
-                      href={`/jobs/${t.job.slug}`}
+                      href={`/job/${t.job.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-300 hover:text-brand-500 transition-colors"

@@ -126,7 +126,7 @@ export function JobDetail() {
   );
 
   const job = data;
-  const jobUrl = `${BASE_URL}/jobs/${job.slug}`;
+  const jobUrl = `${BASE_URL}/job/${job.slug}`;
   const cityName = EMIRATES_LABELS[job.emirate as Emirates] || job.emirate;
   const salaryText = job.salaryMin && job.salaryMax
     ? `AED ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}/mo`

@@ -136,7 +136,7 @@ export function SocialMarketing() {
   const publishedJobs = jobs.filter((j) => j.status === 'PUBLISHED');
 
   const selectedJob = publishedJobs.find((j) => j.id === selectedJobId);
-  const jobUrl = selectedJob ? `${BASE_URL}/jobs/${selectedJob.slug}` : '';
+  const jobUrl = selectedJob ? `${BASE_URL}/job/${selectedJob.slug}` : '';
 
   function buildUtm() {
     if (!selectedJob || !utmSource || !utmMedium || !utmCampaign) {
@@ -401,7 +401,7 @@ export function SocialMarketing() {
               <div className="space-y-2">
                 {statsData.topJobs.map((t: { job: { title: string; slug: string }; count: number }, i: number) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <a href={`/jobs/${t.job.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-800 hover:text-brand-600 truncate max-w-xs">
+                    <a href={`/job/${t.job.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-800 hover:text-brand-600 truncate max-w-xs">
                       {t.job.title}
                     </a>
                     <span className="text-sm font-semibold text-gray-700 ml-2">{t.count} shares</span>

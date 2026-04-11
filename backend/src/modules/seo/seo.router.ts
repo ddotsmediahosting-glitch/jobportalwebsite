@@ -64,7 +64,7 @@ Sitemap: ${BASE_URL}/sitemap.xml
 
 // ── Sitemap XML ────────────────────────────────────────────────────────────────
 router.get('/sitemap.xml', async (_req: Request, res: Response) => {
-  const [jobs, employers, categories] = await Promise.all([
+  const [jobs, employers, categories, blogPosts] = await Promise.all([
     prisma.job.findMany({
       where: { status: 'PUBLISHED' },
       select: { slug: true, updatedAt: true },
@@ -78,11 +78,17 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     }),
     prisma.category.findMany({
       where: { isActive: true },
-      select: { id: true, slug: true, updatedAt: true },
+      select: { id: true, slug: true, name: true, updatedAt: true },
+    }),
+    prisma.blogPost.findMany({
+      where: { isPublished: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { publishedAt: 'desc' },
+      take: 1000,
     }),
   ]);
 
-  // ── City pages (emirate filter URLs) ──────────────────────────────────────
+  // ── City pages — /jobs/{category}-jobs-{city} SEO URL format ──────────────
   const cityPages = [
     { emirate: 'DUBAI',          slug: 'dubai' },
     { emirate: 'ABU_DHABI',      slug: 'abu-dhabi' },
@@ -93,17 +99,12 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     { emirate: 'UMM_AL_QUWAIN',  slug: 'umm-al-quwain' },
   ];
 
-  // ── Fixed category keyword pages ──────────────────────────────────────────
-  const fixedCategoryPages = [
-    'sales', 'it-technology', 'engineering', 'healthcare', 'hospitality',
-    'finance-accounting', 'construction', 'logistics', 'marketing',
-    'fresher-entry-level', 'part-time', 'remote', 'visa-sponsored',
-  ];
 
   const staticPages = [
     // Core
     { url: '/',                  priority: '1.0', changefreq: 'daily'   },
     { url: '/jobs',              priority: '0.9', changefreq: 'hourly'  },
+    { url: '/blog',              priority: '0.8', changefreq: 'daily'   },
     { url: '/companies',         priority: '0.8', changefreq: 'daily'   },
     // AI tools
     { url: '/salary-insights',   priority: '0.7', changefreq: 'weekly'  },
@@ -130,24 +131,30 @@ router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     // Static pages
     ...staticPages.map((p) => u(`${BASE_URL}${p.url}`, now, p.changefreq, p.priority)),
 
-    // City / emirate pages — high-value SEO targets
+    // City emirate overview pages — /jobs/jobs-in-{city}
     ...cityPages.map((c) =>
       u(`${BASE_URL}/jobs?emirate=${c.emirate}`, now, 'daily', '0.85'),
     ),
 
-    // Fixed keyword category pages
-    ...fixedCategoryPages.map((slug) =>
-      u(`${BASE_URL}/jobs?q=${slug}`, now, 'daily', '0.75'),
-    ),
+    // Category × city pages — /jobs/{category-slug}-jobs-{city-slug}
+    // e.g. /jobs/accounting-jobs-uae, /jobs/it-jobs-dubai
+    ...categories.flatMap((cat) => [
+      // UAE-wide category page
+      u(`${BASE_URL}/jobs/${cat.slug}-jobs-uae`, cat.updatedAt.toISOString().split('T')[0], 'daily', '0.8'),
+      // Per-city category pages for top 3 emirates
+      ...['dubai', 'abu-dhabi', 'sharjah'].map((city) =>
+        u(`${BASE_URL}/jobs/${cat.slug}-jobs-${city}`, cat.updatedAt.toISOString().split('T')[0], 'weekly', '0.75'),
+      ),
+    ]),
 
-    // Dynamic DB categories
-    ...categories.map((c) =>
-      u(`${BASE_URL}/jobs?categoryId=${c.id}`, c.updatedAt.toISOString().split('T')[0], 'daily', '0.75'),
-    ),
-
-    // Individual job listings
+    // Individual job listings — canonical URL is /job/:slug (singular)
     ...jobs.map((j) =>
-      u(`${BASE_URL}/jobs/${j.slug}`, j.updatedAt.toISOString().split('T')[0], 'weekly', '0.8'),
+      u(`${BASE_URL}/job/${j.slug}`, j.updatedAt.toISOString().split('T')[0], 'weekly', '0.8'),
+    ),
+
+    // Blog posts
+    ...blogPosts.map((p) =>
+      u(`${BASE_URL}/blog/${p.slug}`, p.updatedAt.toISOString().split('T')[0], 'weekly', '0.7'),
     ),
 
     // Company profiles

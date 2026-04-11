@@ -106,7 +106,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
 
         <div className="min-w-0 flex-1">
           <Link
-            to={`/jobs/${job.slug}`}
+            to={`/job/${job.slug}`}
             className="font-semibold text-gray-900 group-hover:text-brand-600 text-[15px] line-clamp-1 transition-colors leading-tight block"
           >
             {job.title}
@@ -187,7 +187,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
           </span>
         </div>
         <Link
-          to={`/jobs/${job.slug}`}
+          to={`/job/${job.slug}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 shadow-sm"
         >
           Apply Now <ArrowUpRight size={11} />
@@ -202,7 +202,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
               {(job as { description?: string }).description}
             </p>
             <Link
-              to={`/jobs/${job.slug}`}
+              to={`/job/${job.slug}`}
               className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
             >
               View full details <ArrowUpRight size={11} />

@@ -156,7 +156,7 @@ export function MyPosts() {
 
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {job.status === 'PUBLISHED' && (
-                      <Link to={`/jobs/${job.slug}`} target="_blank"
+                      <Link to={`/job/${job.slug}`} target="_blank"
                         className="flex items-center gap-1.5 text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
                         <Eye size={13} /> View
                       </Link>

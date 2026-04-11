@@ -725,7 +725,7 @@ export function AdminJobs() {
                   {previewJob.isFeatured ? 'Unfeature' : 'Feature'}
                 </Button>
                 {previewJob.slug && (
-                  <a href={`/jobs/${previewJob.slug}`} target="_blank" rel="noreferrer"
+                  <a href={`/job/${previewJob.slug}`} target="_blank" rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:underline ml-auto">
                     View on site <ExternalLink className="h-3.5 w-3.5" />
                   </a>

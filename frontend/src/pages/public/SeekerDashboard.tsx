@@ -357,7 +357,7 @@ export function SeekerDashboard() {
               {savedJobs.map((saved) => (
                 <li key={saved.id} className="py-3 first:pt-0 last:pb-0">
                   <Link
-                    to={`/jobs/${saved.job.id}`}
+                    to={`/job/${saved.job.slug ?? saved.job.id}`}
                     className="group block hover:text-brand-600"
                   >
                     <p className="text-sm font-medium text-gray-900 group-hover:text-brand-600 truncate">

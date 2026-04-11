@@ -204,7 +204,7 @@ export function buildJobPostingSchema(job: {
     occupationalCategory: job.category.parent
       ? `${job.category.parent.name} > ${job.category.name}`
       : job.category.name,
-    url: `${BASE_URL}/jobs/${job.slug}`,
+    url: `${BASE_URL}/job/${job.slug}`,
   };
   return schema;
 }

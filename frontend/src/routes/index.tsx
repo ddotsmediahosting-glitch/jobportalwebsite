@@ -10,6 +10,9 @@ import { PageSpinner } from '../components/ui/Spinner';
 const Home = lazy(() => import('../pages/public/Home').then((m) => ({ default: m.Home })));
 const Jobs = lazy(() => import('../pages/public/Jobs').then((m) => ({ default: m.Jobs })));
 const JobDetail = lazy(() => import('../pages/public/JobDetail').then((m) => ({ default: m.JobDetail })));
+const CategoryJobs = lazy(() => import('../pages/public/CategoryJobs').then((m) => ({ default: m.CategoryJobs })));
+const BlogDetail = lazy(() => import('../pages/public/BlogDetail').then((m) => ({ default: m.BlogDetail })));
+const BlogPage = lazy(() => import('../pages/public/Blog').then((m) => ({ default: m.Blog })));
 const Login = lazy(() => import('../pages/public/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('../pages/public/Register').then((m) => ({ default: m.Register })));
 const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
@@ -136,7 +139,14 @@ export function AppRoutes() {
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="jobs" element={<Jobs />} />
-          <Route path="jobs/:slug" element={<JobDetail />} />
+          {/* /job/:slug  — canonical individual job detail URL */}
+          <Route path="job/:slug" element={<JobDetail />} />
+          {/* /jobs/:categorySlug  — SEO category pages like /jobs/accounting-jobs-uae
+              Falls back to redirecting legacy /jobs/:slug job-detail URLs → /job/:slug */}
+          <Route path="jobs/:categorySlug" element={<CategoryJobs />} />
+          {/* Blog */}
+          <Route path="blog" element={<BlogPage />} />
+          <Route path="blog/:slug" element={<BlogDetail />} />
           <Route path="pages/:slug" element={<ContentPage />} />
           <Route path="about" element={<AboutUs />} />
           <Route path="contact" element={<ContactUs />} />

@@ -11,7 +11,7 @@ export function ShortRedirect() {
     if (!shortCode) { navigate('/', { replace: true }); return; }
     api
       .get(`/jobs/short/${shortCode}`)
-      .then((r) => navigate(`/jobs/${r.data.data.slug}`, { replace: true }))
+      .then((r) => navigate(`/job/${r.data.data.slug}`, { replace: true }))
       .catch(() => navigate('/', { replace: true }));
   }, [shortCode, navigate]);
 

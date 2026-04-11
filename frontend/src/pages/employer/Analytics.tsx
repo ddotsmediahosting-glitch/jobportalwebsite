@@ -130,7 +130,7 @@ export function EmployerAnalyticsPage() {
             {data?.topJobs?.slice(0, 5).map((job: { id: string; title: string; slug: string; viewCount: number; _count: { applications: number }; expiresAt: string | null }) => (
               <div key={job.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
                 <div className="flex-1 min-w-0">
-                  <Link to={`/jobs/${job.slug}`} className="text-sm font-semibold text-gray-900 hover:text-brand-600 truncate block">
+                  <Link to={`/job/${job.slug}`} className="text-sm font-semibold text-gray-900 hover:text-brand-600 truncate block">
                     {job.title}
                   </Link>
                   <div className="flex gap-3 mt-1">

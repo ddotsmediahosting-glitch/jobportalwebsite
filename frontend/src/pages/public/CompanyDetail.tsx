@@ -97,7 +97,7 @@ function JobRow({ job }: { job: CompanyJob }) {
   const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryNegotiable);
   return (
     <Link
-      to={`/jobs/${job.slug}`}
+      to={`/job/${job.slug}`}
       className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-4 hover:shadow-sm hover:border-brand-300 transition-all group"
     >
       <div className="flex-1 min-w-0">

@@ -318,7 +318,7 @@ function RoleSearchPanel() {
                 {data.sampleJobs.map((j) => (
                   <Link
                     key={j.id}
-                    to={`/jobs/${j.slug}`}
+                    to={`/job/${j.slug}`}
                     className="flex items-center justify-between gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-brand-200 hover:bg-brand-50 transition-all group"
                   >
                     <div className="min-w-0">

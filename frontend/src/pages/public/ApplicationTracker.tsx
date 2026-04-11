@@ -189,7 +189,7 @@ export function ApplicationTracker() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <Link to={`/jobs/${app.job.slug}`} className="font-semibold text-gray-900 hover:text-brand-600 text-sm truncate block">
+                      <Link to={`/job/${app.job.slug}`} className="font-semibold text-gray-900 hover:text-brand-600 text-sm truncate block">
                         {app.job.title}
                       </Link>
                       <p className="text-xs text-gray-500">{app.job.employer.companyName}</p>
@@ -198,7 +198,7 @@ export function ApplicationTracker() {
                       {stage.label}
                     </span>
                     <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block">{timeAgo(app.createdAt)}</span>
-                    <Link to={`/jobs/${app.job.slug}`} className="text-gray-300 hover:text-brand-500 flex-shrink-0 transition-colors">
+                    <Link to={`/job/${app.job.slug}`} className="text-gray-300 hover:text-brand-500 flex-shrink-0 transition-colors">
                       <ArrowUpRight size={15} />
                     </Link>
                   </div>
@@ -224,7 +224,7 @@ function ApplicationCard({ app, stage }: { app: Application; stage: typeof STAGE
           </div>
         )}
         <div className="min-w-0">
-          <Link to={`/jobs/${app.job.slug}`} className="text-sm font-semibold text-gray-900 hover:text-brand-600 line-clamp-1 transition-colors">
+          <Link to={`/job/${app.job.slug}`} className="text-sm font-semibold text-gray-900 hover:text-brand-600 line-clamp-1 transition-colors">
             {app.job.title}
           </Link>
           <p className="text-xs text-gray-500 truncate">{app.job.employer.companyName}</p>
@@ -235,7 +235,7 @@ function ApplicationCard({ app, stage }: { app: Application; stage: typeof STAGE
         <span className="flex items-center gap-1">
           <Clock size={10} /> {timeAgo(app.createdAt)}
         </span>
-        <Link to={`/jobs/${app.job.slug}`} className="text-brand-600 hover:underline">View ↗</Link>
+        <Link to={`/job/${app.job.slug}`} className="text-brand-600 hover:underline">View ↗</Link>
       </div>
 
       {app.interviewSlots?.filter((s) => s.status !== 'CANCELLED').map((slot) => (
