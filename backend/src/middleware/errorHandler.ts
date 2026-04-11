@@ -63,29 +63,33 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     return;
   }
 
-  // Prisma unique constraint
-  if ((err as { code?: string }).code === 'P2002') {
-    res.status(409).json({
-      success: false,
-      error: 'A record with these details already exists',
-    });
-    return;
-  }
+  // ── All Prisma errors (P1xxx connection, P2xxx query, P3xxx migration, etc.) ──
+  const prismaErr = err as { code?: string; name?: string; message?: string; meta?: Record<string, unknown> };
+  if (
+    prismaErr.name === 'PrismaClientKnownRequestError' ||
+    prismaErr.name === 'PrismaClientUnknownRequestError' ||
+    prismaErr.name === 'PrismaClientInitializationError' ||
+    prismaErr.name === 'PrismaClientValidationError' ||
+    (typeof prismaErr.code === 'string' && /^P\d/.test(prismaErr.code))
+  ) {
+    console.error('[Prisma Error]', prismaErr.name, prismaErr.code, prismaErr.meta, prismaErr.message);
 
-  // Prisma not-found
-  if ((err as { code?: string }).code === 'P2025') {
-    res.status(404).json({ success: false, error: 'Record not found' });
-    return;
-  }
-
-  // Prisma FK / missing table / column errors — surface detail in all envs so the real cause is visible
-  const prismaErr = err as { code?: string; message?: string; meta?: { target?: string; column_name?: string; table?: string } };
-  if (prismaErr.code?.startsWith('P2')) {
-    console.error('[Prisma Error]', prismaErr.code, prismaErr.meta, prismaErr.message);
+    if (prismaErr.code === 'P2002') {
+      res.status(409).json({ success: false, error: 'A record with these details already exists' });
+      return;
+    }
+    if (prismaErr.code === 'P2025') {
+      res.status(404).json({ success: false, error: 'Record not found' });
+      return;
+    }
+    // P1001 = can't reach DB, P2021 = table not found, P2022 = column not found, etc.
+    const detail = prismaErr.meta
+      ? JSON.stringify(prismaErr.meta)
+      : (prismaErr.message ?? 'Unknown database error');
     res.status(500).json({
       success: false,
-      error: `Database error (${prismaErr.code})`,
-      detail: prismaErr.meta?.target ?? prismaErr.meta?.column_name ?? prismaErr.meta?.table ?? prismaErr.message,
+      error: `Database error${prismaErr.code ? ` (${prismaErr.code})` : ''} — run "prisma db push" to sync schema`,
+      detail,
     });
     return;
   }
@@ -132,7 +136,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
 
   res.status(500).json({
     success: false,
-    error: 'Internal server error',
-    ...(config.env === 'development' ? { detail: String(err) } : {}),
+    error: err instanceof Error ? err.message : 'Internal server error',
+    detail: String(err),
   });
 }
