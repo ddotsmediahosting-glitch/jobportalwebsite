@@ -4,6 +4,7 @@ import { CreateJobInput, UpdateJobInput, JobFiltersInput } from '@uaejobs/shared
 import slugify from 'slugify';
 import { JobStatus, Prisma } from '@prisma/client';
 import { cacheGetOrSet, cacheDel } from '../../lib/cache';
+import { generateJobSEO } from '../../lib/seo';
 
 const JOB_INCLUDE = {
   employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true, verificationStatus: true } },
@@ -143,6 +144,23 @@ export class JobsService {
 
     const { tags, screeningQuestions, ...jobData } = data;
 
+    // Fetch category with parent for SEO generation
+    const category = await prisma.category.findUnique({
+      where: { id: jobData.categoryId },
+      select: { name: true, parent: { select: { name: true } } },
+    });
+    const seo = category
+      ? generateJobSEO({
+          title: jobData.title,
+          emirate: jobData.emirate,
+          employmentType: jobData.employmentType || 'FULL_TIME',
+          salaryMin: jobData.salaryMin,
+          salaryMax: jobData.salaryMax,
+          employer: { companyName: employer.companyName },
+          category,
+        })
+      : {};
+
     const job = await prisma.job.create({
       data: {
         ...jobData,
@@ -150,6 +168,7 @@ export class JobsService {
         slug: uniqueSlug,
         shortCode,
         status: requireApproval ? 'PENDING_APPROVAL' : 'DRAFT',
+        ...seo,
         tags: tags?.length
           ? {
               create: await Promise.all(
@@ -196,9 +215,34 @@ export class JobsService {
       }
     }
 
+    // Regenerate SEO if any relevant field changed
+    const seoFields = ['title', 'emirate', 'employmentType', 'salaryMin', 'salaryMax', 'categoryId'];
+    const needsSeoRegen = seoFields.some((f) => f in jobData);
+    let seo = {};
+    if (needsSeoRegen) {
+      const fullJob = await prisma.job.findUnique({
+        where: { id: jobId },
+        include: {
+          employer: { select: { companyName: true } },
+          category: { select: { name: true, parent: { select: { name: true } } } },
+        },
+      });
+      if (fullJob) {
+        seo = generateJobSEO({
+          title: (jobData.title as string | undefined) ?? fullJob.title,
+          emirate: (jobData.emirate as string | undefined) ?? fullJob.emirate,
+          employmentType: (jobData.employmentType as string | undefined) ?? fullJob.employmentType,
+          salaryMin: (jobData.salaryMin as number | undefined) ?? fullJob.salaryMin,
+          salaryMax: (jobData.salaryMax as number | undefined) ?? fullJob.salaryMax,
+          employer: fullJob.employer,
+          category: fullJob.category,
+        });
+      }
+    }
+
     const updated = await prisma.job.update({
       where: { id: jobId },
-      data: jobData,
+      data: { ...jobData, ...seo },
       include: JOB_INCLUDE,
     });
 

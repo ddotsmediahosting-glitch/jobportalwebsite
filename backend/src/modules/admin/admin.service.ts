@@ -4,6 +4,7 @@ import { UserStatus, VerificationStatus, JobStatus, ReportStatus, Prisma, Emirat
 import { auditLog } from '../../middleware/rbac';
 import bcrypt from 'bcryptjs';
 import { cacheDel } from '../../lib/cache';
+import { generateJobSEO } from '../../lib/seo';
 
 const HOME_CACHE_KEY = 'home:data';
 
@@ -250,14 +251,34 @@ export class AdminService {
   }
 
   async moderateJob(actorId: string, jobId: string, status: JobStatus, notes?: string) {
-    const existing = await prisma.job.findUnique({ where: { id: jobId } });
+    const existing = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        employer: { select: { companyName: true } },
+        category: { select: { name: true, parent: { select: { name: true } } } },
+      },
+    });
     if (!existing) throw new NotFoundError('Job');
+
+    // Auto-generate SEO when approving if not already set
+    const seo = (status === 'PUBLISHED' && !existing.metaTitle)
+      ? generateJobSEO({
+          title: existing.title,
+          emirate: existing.emirate,
+          employmentType: existing.employmentType,
+          salaryMin: existing.salaryMin,
+          salaryMax: existing.salaryMax,
+          employer: existing.employer,
+          category: existing.category,
+        })
+      : {};
 
     await prisma.job.update({
       where: { id: jobId },
       data: {
         status,
         moderationNotes: notes,
+        ...seo,
         ...(status === 'PUBLISHED' ? {
           publishedAt: existing.publishedAt || new Date(),
           expiresAt: existing.expiresAt && existing.expiresAt > new Date() ? existing.expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -491,7 +512,10 @@ export class AdminService {
 
     const employer = await prisma.employer.findUnique({ where: { id: data.employerId } });
     if (!employer) throw new AppError(404, 'Employer not found — select a valid employer from the list');
-    const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+      select: { name: true, parent: { select: { name: true } } },
+    });
     if (!category) throw new AppError(404, 'Category not found — select a valid category');
 
     const baseSlug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -504,6 +528,16 @@ export class AdminService {
     const employmentType = data.employmentType || 'FULL_TIME';
     const isFeatured = data.isFeatured ? 1 : 0;
 
+    const { metaTitle, metaDescription } = generateJobSEO({
+      title: data.title.trim(),
+      emirate: data.emirate || 'DUBAI',
+      employmentType,
+      salaryMin: data.salaryMin,
+      salaryMax: data.salaryMax,
+      employer: { companyName: employer.companyName },
+      category,
+    });
+
     // Use raw SQL so we only set columns that definitely exist in any DB version.
     // Prisma's generated client sets ALL columns with @default() in its INSERT
     // which fails if the table is missing those columns (schema not yet pushed).
@@ -512,8 +546,9 @@ export class AdminService {
         id, employerId, categoryId, title, slug, description,
         emirate, location, workMode, employmentType,
         salaryMin, salaryMax, skills,
+        metaTitle, metaDescription,
         status, isFeatured, publishedAt, expiresAt, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PUBLISHED', ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PUBLISHED', ?, ?, ?, ?, ?)`,
       id,
       data.employerId,
       data.categoryId,
@@ -527,6 +562,8 @@ export class AdminService {
       data.salaryMin ?? null,
       data.salaryMax ?? null,
       skills,
+      metaTitle,
+      metaDescription,
       isFeatured,
       now,
       expiresAt,
@@ -834,5 +871,29 @@ export class AdminService {
     ].join('\n');
 
     return rows;
+  }
+
+  // ── Backfill SEO meta for all jobs missing metaTitle ──────────────────────
+  async backfillJobSEO() {
+    const jobs = await prisma.job.findMany({
+      where: { metaTitle: null },
+      select: {
+        id: true, title: true, emirate: true, employmentType: true,
+        salaryMin: true, salaryMax: true,
+        employer: { select: { companyName: true } },
+        category: { select: { name: true, parent: { select: { name: true } } } },
+      },
+    });
+
+    let updated = 0;
+    for (const job of jobs) {
+      const { metaTitle, metaDescription } = generateJobSEO(job);
+      await prisma.job.update({
+        where: { id: job.id },
+        data: { metaTitle, metaDescription },
+      });
+      updated++;
+    }
+    return updated;
   }
 }

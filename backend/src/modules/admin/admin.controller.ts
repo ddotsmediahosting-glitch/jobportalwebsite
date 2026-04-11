@@ -198,6 +198,11 @@ export class AdminController {
     res.send(csv);
   }
 
+  async backfillJobSEO(_req: AuthRequest, res: Response) {
+    const count = await service.backfillJobSEO();
+    res.json({ success: true, data: { updated: count } });
+  }
+
   async testEmail(req: AuthRequest, res: Response) {
     const to = (req.body.to as string) || req.user!.email;
     try {

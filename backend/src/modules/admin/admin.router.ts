@@ -52,6 +52,9 @@ router.get('/audit-logs', ctrl.listAuditLogs.bind(ctrl));
 router.get('/settings', ctrl.getSettings.bind(ctrl));
 router.put('/settings/:key', ctrl.updateSetting.bind(ctrl));
 
+// SEO backfill
+router.post('/jobs/backfill-seo', ctrl.backfillJobSEO.bind(ctrl));
+
 // SMTP test
 router.post('/test-email', ctrl.testEmail.bind(ctrl));
 
