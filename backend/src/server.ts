@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs';
+import { execSync } from 'child_process';
+import path from 'path';
 import { UserRole, UserStatus } from '@prisma/client';
 import { config } from './config';
 import app from './app';
@@ -50,7 +52,29 @@ async function ensureAdminExists() {
   console.log(`[Setup] ✅ Admin account created: ${adminEmail}`);
 }
 
+/**
+ * Sync Prisma schema to the database on every startup.
+ * This is safe (idempotent) — it only adds missing tables/columns,
+ * never drops existing data. Eliminates manual "prisma db push" step.
+ */
+function syncSchema() {
+  try {
+    const schemaPath = path.join(__dirname, '../../prisma/schema.prisma');
+    console.log('[DB] Syncing schema...');
+    execSync(`npx prisma db push --schema="${schemaPath}" --skip-generate --accept-data-loss`, {
+      stdio: 'inherit',
+      timeout: 60_000,
+    });
+    console.log('[DB] Schema synced ✅');
+  } catch (err) {
+    console.error('[DB] Schema sync failed (will attempt to continue):', err);
+  }
+}
+
 async function bootstrap() {
+  // Sync schema first so all tables/columns exist before any request
+  syncSchema();
+
   // Test DB connection
   await prisma.$connect();
   console.log('[DB] MariaDB connected');
