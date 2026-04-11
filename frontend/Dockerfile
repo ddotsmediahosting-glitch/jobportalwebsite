@@ -8,16 +8,21 @@ COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 COPY shared/package.json ./shared/
 
-# Install all deps (npm ci uses lockfile — fast and deterministic)
 RUN npm ci
 
-# Copy source and build
 COPY . .
+
 ARG VITE_API_URL=""
 ARG VITE_FRONTEND_URL=https://ddotsmediajobs.com
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
-RUN npm run build -w @uaejobs/shared && npm run build -w @uaejobs/web
+
+# Give Node.js extra heap — tsc + Vite together need ~1 GB in Alpine
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+
+# Build shared types first, then frontend (skip tsc type-check — vite handles transpile)
+RUN npm run build -w @uaejobs/shared
+RUN npx vite build --config frontend/vite.config.ts
 
 # ── Production stage (nginx) ──────────────────────────────────────────────────
 FROM nginx:alpine
