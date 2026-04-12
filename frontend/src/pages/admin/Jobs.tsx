@@ -74,7 +74,7 @@ interface Job {
   description?: string;
   createdAt: string;
   publishedAt?: string;
-  employer: { id: string; companyName: string };
+  employer: { id: string; companyName: string } | null;
   category?: { name: string };
   _count?: { applications: number };
   fraudRiskLevel?: string | null;
@@ -426,7 +426,7 @@ export function AdminJobs() {
                             <button onClick={() => setPreviewJob(job)} className="font-medium text-gray-900 hover:text-brand-600 text-left truncate block max-w-[180px]">
                               {job.title}
                             </button>
-                            <p className="text-xs text-gray-400 truncate">{job.employer.companyName} {job.category && <span>· {job.category.name}</span>}</p>
+                            <p className="text-xs text-gray-400 truncate">{job.employer?.companyName} {job.category && <span>· {job.category.name}</span>}</p>
                           </div>
                         </div>
                       </td>
@@ -656,7 +656,7 @@ export function AdminJobs() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">{previewJob.title}</h2>
-                <p className="text-sm text-gray-600 mt-0.5">{previewJob.employer.companyName}</p>
+                <p className="text-sm text-gray-600 mt-0.5">{previewJob.employer?.companyName}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <JobStatusBadge status={previewJob.status} />
@@ -768,7 +768,7 @@ export function AdminJobs() {
         {editJob && (
           <div className="space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700">
-              Editing: <span className="font-semibold">{editJob.title}</span> — {editJob.employer.companyName}
+              Editing: <span className="font-semibold">{editJob.title}</span> — {editJob.employer?.companyName}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>

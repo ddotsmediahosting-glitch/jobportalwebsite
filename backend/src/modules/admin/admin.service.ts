@@ -261,7 +261,7 @@ export class AdminService {
     if (!existing) throw new NotFoundError('Job');
 
     // Auto-generate SEO when approving if not already set
-    const seo = (status === 'PUBLISHED' && !existing.metaTitle)
+    const seo = (status === 'PUBLISHED' && !existing.metaTitle && existing.employer && existing.category)
       ? generateJobSEO({
           title: existing.title,
           emirate: existing.emirate,
@@ -286,15 +286,20 @@ export class AdminService {
       },
     });
 
-    // Notify employer
-    await prisma.notification.create({
-      data: {
-        userId: (await prisma.employer.findUnique({ where: { id: existing.employerId } }))!.ownerUserId,
-        type: `JOB_${status}`,
-        title: `Job ${status === 'PUBLISHED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Updated'}`,
-        body: `Your job "${existing.title}" has been ${status.toLowerCase()}.${notes ? ` Note: ${notes}` : ''}`,
-      },
-    });
+    // Notify employer — fire-and-forget so a missing/deleted employer never blocks moderation
+    prisma.employer.findUnique({ where: { id: existing.employerId } })
+      .then((emp) => {
+        if (!emp?.ownerUserId) return;
+        return prisma.notification.create({
+          data: {
+            userId: emp.ownerUserId,
+            type: `JOB_${status}`,
+            title: `Job ${status === 'PUBLISHED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Updated'}`,
+            body: `Your job "${existing.title}" has been ${status.toLowerCase()}.${notes ? ` Note: ${notes}` : ''}`,
+          },
+        });
+      })
+      .catch((err) => console.error('[moderateJob] notification failed:', err));
 
     await auditLog(actorId, 'ADMIN', `JOB_${status}`, 'Job', jobId, { notes });
 

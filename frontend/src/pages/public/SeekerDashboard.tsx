@@ -137,7 +137,7 @@ export function SeekerDashboard() {
 
   const savedJobs: {
     id: string;
-    job: { id: string; title: string; employer?: { companyName?: string }; emirate?: string };
+    job: { id: string; slug?: string; title: string; employer?: { companyName?: string }; emirate?: string };
   }[] = savedJobsData?.items ?? savedJobsData ?? [];
 
   // Stat values — prefer dashboard endpoint data, fall back to local counts/profile
