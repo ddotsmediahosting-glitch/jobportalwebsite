@@ -22,7 +22,7 @@ ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Build shared types first, then frontend (skip tsc type-check — vite handles transpile)
 RUN npm run build -w @uaejobs/shared
-RUN npx vite build --config frontend/vite.config.ts
+RUN ./node_modules/.bin/vite build --config frontend/vite.config.ts
 
 # ── Production stage (nginx) ──────────────────────────────────────────────────
 FROM nginx:alpine
