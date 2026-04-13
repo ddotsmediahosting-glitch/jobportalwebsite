@@ -25,9 +25,12 @@ export async function checkSmtpAvailable(): Promise<boolean> {
   if (_smtpAvailable !== null) return _smtpAvailable;
 
   const { user, pass } = config.email;
-  if (!user || !pass || user.includes('your_') || pass.includes('your_')) {
+  const isPlaceholder = (s: string) =>
+    !s || s.toLowerCase().includes('your_') || s.toUpperCase().includes('YOUR_') ||
+    s.includes('CHANGE_ME') || s.includes('placeholder');
+  if (isPlaceholder(user) || isPlaceholder(pass)) {
     _smtpAvailable = false;
-    console.log('[Email] SMTP not configured — email verification disabled');
+    console.warn('[Email] ⚠️  SMTP not configured — set SMTP_USER and SMTP_PASS in .env to enable email verification');
     return false;
   }
 
