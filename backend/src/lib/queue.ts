@@ -61,7 +61,7 @@ export const jobAlertsQueue = new Queue<JobAlertsData>(QUEUE_NAMES.JOB_ALERTS, {
 // ─── Cleanup queue ─────────────────────────────────────────────────────────────
 
 export interface CleanupData {
-  task: 'expire-jobs' | 'purge-tokens' | 'purge-notifications';
+  task: 'expire-jobs' | 'purge-tokens' | 'purge-notifications' | 'purge-unverified-accounts';
 }
 
 export const cleanupQueue = new Queue<CleanupData>(QUEUE_NAMES.CLEANUP, {
@@ -81,6 +81,9 @@ export async function scheduleRecurringJobs(): Promise<void> {
 
   // Purge old refresh tokens daily
   await cleanupQueue.add('purge-tokens', { task: 'purge-tokens' }, { repeat: { pattern: '0 1 * * *' } });
+
+  // Purge unverified accounts older than 24 hours — runs every 6 hours
+  await cleanupQueue.add('purge-unverified-accounts', { task: 'purge-unverified-accounts' }, { repeat: { pattern: '0 */6 * * *' } });
 
   // Send daily job alerts
   await jobAlertsQueue.add('daily-alerts', { runAll: true }, { repeat: { pattern: '0 8 * * *' } });

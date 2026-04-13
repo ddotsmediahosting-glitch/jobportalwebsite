@@ -11,6 +11,7 @@ import {
   emailVerificationTemplate,
   passwordResetTemplate,
   sendEmail,
+  checkSmtpAvailable,
 } from '../../lib/email';
 import { config } from '../../config';
 import {
@@ -84,22 +85,31 @@ export class AuthService {
       });
     }
 
-    // Send verification email directly so failures are immediate and visible
+    // Send verification email — if SMTP is configured and delivery fails,
+    // delete the account so fake/non-existent emails cannot create ghost accounts.
+    const smtpAvailable = await checkSmtpAvailable();
     const verifyUrl = `${config.cors.frontendUrl}/verify-email?token=${otp}&email=${encodeURIComponent(email)}`;
-    let emailSent = false;
-    try {
-      await sendEmail({
-        to: email,
-        subject: 'Verify your Ddotsmedia Jobs account',
-        html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
-      });
-      emailSent = true;
-      console.log(`[Auth] Verification email sent to ${email}`);
-    } catch (err) {
-      console.error(`[Auth] Failed to send verification email to ${email}:`, (err as Error).message);
+
+    if (smtpAvailable) {
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Verify your Ddotsmedia Jobs account',
+          html: emailVerificationTemplate(firstName || email, otp, verifyUrl),
+        });
+        console.log(`[Auth] Verification email sent to ${email}`);
+      } catch (err) {
+        // Roll back: delete the user we just created so the email address isn't taken
+        await prisma.user.delete({ where: { id: user.id } }).catch(() => null);
+        console.error(`[Auth] Email delivery failed for ${email} — account rolled back:`, (err as Error).message);
+        throw new AppError(400, 'Could not send a verification email to this address. Please check the email and try again.');
+      }
+    } else {
+      // SMTP not configured — allow registration but flag it (dev/staging only)
+      console.warn(`[Auth] SMTP not configured — account created without email verification for ${email}`);
     }
 
-    return { id: user.id, email: user.email, role: user.role, verified: false, emailSent };
+    return { id: user.id, email: user.email, role: user.role, verified: false, emailSent: smtpAvailable };
   }
 
   async login(email: string, password: string) {

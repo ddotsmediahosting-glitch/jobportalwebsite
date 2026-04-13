@@ -29,6 +29,22 @@ const worker = new Worker<CleanupData>(
       });
       console.log(`[Cleanup] Purged ${result.count} old notifications`);
     }
+
+    if (task === 'purge-unverified-accounts') {
+      // Delete accounts that were registered but never verified within 24 hours.
+      // This prevents fake/invalid email addresses from occupying slots indefinitely.
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+      const result = await prisma.user.deleteMany({
+        where: {
+          status: 'PENDING_VERIFICATION',
+          verifiedAt: null,
+          createdAt: { lt: cutoff },
+        },
+      });
+      if (result.count > 0) {
+        console.log(`[Cleanup] Purged ${result.count} unverified accounts older than 24 hours`);
+      }
+    }
   },
   { connection: bullConnection, concurrency: 1 }
 );
