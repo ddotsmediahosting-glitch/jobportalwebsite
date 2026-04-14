@@ -61,6 +61,16 @@ export class JobsController {
     res.json({ success: true, data });
   }
 
+  async quickPost(req: AuthRequest, res: Response) {
+    const { title, categoryId, emirate, hints } = req.body;
+    if (!title || !categoryId || !emirate) {
+      res.status(400).json({ success: false, error: 'title, categoryId, and emirate are required' });
+      return;
+    }
+    const data = await service.quickPost(req.user!.sub, { title, categoryId, emirate, hints });
+    res.status(201).json({ success: true, data });
+  }
+
   async reportJob(req: AuthRequest, res: Response) {
     const { reason, details } = req.body;
     const data = await service.reportJob(req.user!.sub, req.params.slug, reason, details);

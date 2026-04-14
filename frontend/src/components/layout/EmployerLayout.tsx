@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Briefcase, Users, Building2, LogOut, Menu, X, Share2, Home, ExternalLink,
-  BarChart3, Search, Calendar, Sparkles,
+  BarChart3, Search, Calendar, Sparkles, Zap,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const nav = [
   { to: '/employer/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/employer/quick-post', label: 'Auto-Post a Job', icon: Zap },
   { to: '/employer/jobs', label: 'Manage Jobs', icon: Briefcase },
   { to: '/employer/applications', label: 'Applications', icon: Users },
   { to: '/employer/analytics', label: 'Analytics', icon: BarChart3 },

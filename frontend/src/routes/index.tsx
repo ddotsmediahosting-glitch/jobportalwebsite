@@ -55,6 +55,7 @@ const EmployerAIInsights = lazy(() => import('../pages/employer/AIInsights').the
 
 // Employer pages
 const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard').then((m) => ({ default: m.EmployerDashboard })));
+const QuickPost = lazy(() => import('../pages/employer/QuickPost').then((m) => ({ default: m.QuickPost })));
 const PostJob = lazy(() => import('../pages/employer/PostJob').then((m) => ({ default: m.PostJob })));
 const ManageJobs = lazy(() => import('../pages/employer/ManageJobs').then((m) => ({ default: m.ManageJobs })));
 const ApplicationsPipeline = lazy(() => import('../pages/employer/ApplicationsPipeline').then((m) => ({ default: m.ApplicationsPipeline })));
@@ -189,6 +190,7 @@ export function AppRoutes() {
         <Route path="/employer" element={<RequireAuth roles={['EMPLOYER']}><EmployerLayout /></RequireAuth>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<EmployerDashboard />} />
+          <Route path="quick-post" element={<QuickPost />} />
           <Route path="jobs" element={<ManageJobs />} />
           <Route path="jobs/new" element={<PostJob />} />
           <Route path="jobs/:id/edit" element={<PostJob />} />

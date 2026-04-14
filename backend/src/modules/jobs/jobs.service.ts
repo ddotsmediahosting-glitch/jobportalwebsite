@@ -5,6 +5,7 @@ import slugify from 'slugify';
 import { JobStatus, Prisma } from '@prisma/client';
 import { cacheGetOrSet, cacheDel } from '../../lib/cache';
 import { generateJobSEO } from '../../lib/seo';
+import { generateJobDescription } from '../../lib/ai';
 
 const JOB_INCLUDE = {
   employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true, verificationStatus: true } },
@@ -390,6 +391,149 @@ export class JobsService {
     });
 
     return report;
+  }
+
+  // ── Quick / Auto Post ───────────────────────────────────────────────────────
+  // Accepts minimal employer input, calls AI to generate full job content,
+  // then creates and immediately publishes the job in a single operation.
+
+  async quickPost(
+    userId: string,
+    data: {
+      title: string;
+      categoryId: string;
+      emirate: string;
+      hints?: string;       // brief employer notes fed to AI
+    }
+  ) {
+    // 1. Resolve employer + eligibility
+    const member = await prisma.employerMember.findFirst({
+      where: { userId },
+      include: { employer: { include: { subscription: true } } },
+    });
+    if (!member) throw new ForbiddenError('Not associated with any employer');
+
+    const { employer } = member;
+    if (!employer.isActive) throw new AppError(403, 'Employer account is not active');
+    if (employer.verificationStatus !== 'APPROVED') {
+      throw new AppError(403, 'Employer not verified. Please await approval before posting jobs.');
+    }
+
+    const sub = employer.subscription;
+    if (sub && sub.jobPostsUsed >= sub.jobPostsLimit) {
+      throw new AppError(402, `Job post limit reached (${sub.jobPostsLimit}). Please upgrade your plan.`);
+    }
+
+    // 2. Generate full job content via AI
+    const ai = await generateJobDescription(
+      data.title,
+      'General',
+      data.hints || `Standard requirements for a ${data.title} role in the UAE`,
+      employer.companyName,
+      data.emirate,
+      'On-site',
+      '2+ years'
+    );
+
+    // 3. Format long-text fields
+    const description = [
+      ai.summary,
+      '',
+      '**Key Responsibilities:**',
+      ...ai.responsibilities.map((r) => `• ${r}`),
+      '',
+      ...(ai.niceToHave.length
+        ? ['**Nice to Have:**', ...ai.niceToHave.map((n) => `• ${n}`)]
+        : []),
+    ].join('\n');
+
+    const requirements = ai.requirements.map((r) => `• ${r}`).join('\n');
+    const benefits = ai.benefits.map((b) => `• ${b}`).join('\n');
+
+    // 4. Coerce AI suggestions to valid enum values
+    const VALID_WORK_MODES = ['ONSITE', 'HYBRID', 'REMOTE'] as const;
+    const VALID_EMP_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'FREELANCE'] as const;
+
+    const workMode = (VALID_WORK_MODES as readonly string[]).includes(ai.suggestedWorkMode)
+      ? (ai.suggestedWorkMode as typeof VALID_WORK_MODES[number])
+      : 'ONSITE';
+
+    const employmentType = (VALID_EMP_TYPES as readonly string[]).includes(ai.suggestedEmploymentType)
+      ? (ai.suggestedEmploymentType as typeof VALID_EMP_TYPES[number])
+      : 'FULL_TIME';
+
+    // 5. Generate slug + short code
+    const baseSlug = slugify(ai.title || data.title, { lower: true, strict: true });
+    const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
+    const shortCode = Math.random().toString(36).slice(2, 6) + Date.now().toString(36).slice(-4);
+
+    // 6. Fetch category for SEO generation
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+      select: { name: true, parent: { select: { name: true } } },
+    });
+
+    const seo = category
+      ? generateJobSEO({
+          title: ai.title || data.title,
+          emirate: data.emirate,
+          employmentType,
+          salaryMin: ai.suggestedSalaryMin || null,
+          salaryMax: ai.suggestedSalaryMax || null,
+          employer: { companyName: employer.companyName },
+          category,
+        })
+      : {};
+
+    // 7. Upsert SEO keyword tags
+    const tagCreates = await Promise.all(
+      (ai.seoKeywords ?? []).slice(0, 8).map(async (name) => {
+        const tag = await prisma.tag.upsert({ where: { name }, update: {}, create: { name } });
+        return { tagId: tag.id };
+      })
+    );
+
+    // 8. Create and immediately publish the job
+    const job = await prisma.job.create({
+      data: {
+        employerId: employer.id,
+        categoryId: data.categoryId,
+        title: ai.title || data.title,
+        slug: uniqueSlug,
+        shortCode,
+        description,
+        requirements,
+        benefits,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        emirate: data.emirate as any,
+        workMode,
+        employmentType,
+        visaStatus: 'NOT_PROVIDED',
+        salaryMin: ai.suggestedSalaryMin || null,
+        salaryMax: ai.suggestedSalaryMax || null,
+        salaryCurrency: 'AED',
+        salaryNegotiable: false,
+        experienceMin: ai.suggestedExperienceMin || 0,
+        experienceMax: ai.suggestedExperienceMax || null,
+        level: ai.suggestedLevel || null,
+        skills: ai.skills ?? [],
+        languages: [],
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        ...seo,
+        tags: tagCreates.length ? { create: tagCreates } : undefined,
+      },
+      include: JOB_INCLUDE,
+    });
+
+    // 9. Increment subscription quota
+    await prisma.subscription.updateMany({
+      where: { employerId: employer.id },
+      data: { jobPostsUsed: { increment: 1 } },
+    });
+
+    return job;
   }
 
   async getSlugByShortCode(shortCode: string) {

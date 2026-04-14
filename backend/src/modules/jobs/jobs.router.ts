@@ -21,6 +21,7 @@ const employerJobs = Router();
 employerJobs.use(authenticate, requireRole('EMPLOYER', 'ADMIN', 'SUB_ADMIN'));
 
 employerJobs.get('/', ctrl.getEmployerJobs.bind(ctrl));
+employerJobs.post('/quick-post', jobPostLimiter, ctrl.quickPost.bind(ctrl));
 employerJobs.post('/', jobPostLimiter, validate(createJobSchema), ctrl.createJob.bind(ctrl));
 employerJobs.put('/:id', validate(updateJobSchema), ctrl.updateJob.bind(ctrl));
 employerJobs.delete('/:id', ctrl.deleteJob.bind(ctrl));
