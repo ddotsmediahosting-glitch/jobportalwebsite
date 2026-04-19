@@ -182,4 +182,31 @@ export class UsersService {
     await prisma.jobAlert.deleteMany({ where: { id: alertId, profileId: profile.id } });
     return { message: 'Alert deleted' };
   }
+
+  async getDashboard(userId: string) {
+    const [profile, totalApplications, totalSavedJobs] = await Promise.all([
+      prisma.jobSeekerProfile.findUnique({
+        where: { userId },
+        select: {
+          firstName: true, lastName: true, headline: true, bio: true,
+          emirate: true, skills: true, avatarUrl: true,
+        },
+      }),
+      prisma.application.count({ where: { userId } }),
+      prisma.savedJob.count({ where: { userId } }),
+    ]);
+
+    let profileCompleteness = 0;
+    if (profile) {
+      const fields = [
+        profile.firstName, profile.lastName, profile.headline, profile.bio,
+        profile.emirate,
+        Array.isArray(profile.skills) && (profile.skills as unknown[]).length > 0,
+        profile.avatarUrl,
+      ];
+      profileCompleteness = Math.round((fields.filter(Boolean).length / fields.length) * 100);
+    }
+
+    return { totalApplications, totalSavedJobs, profileViews: 0, profileCompleteness };
+  }
 }

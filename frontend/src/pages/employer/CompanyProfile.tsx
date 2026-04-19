@@ -139,7 +139,7 @@ export function CompanyProfile() {
     mutationFn: (file: File) => {
       const fd = new FormData();
       fd.append('logo', file);
-      return api.post('/employer/profile/logo', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return api.post('/employer/upload/logo', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employer-profile'] }); toast.success('Logo uploaded!'); },
     onError: (err) => toast.error(getApiError(err)),
@@ -149,7 +149,7 @@ export function CompanyProfile() {
     mutationFn: (file: File) => {
       const fd = new FormData();
       fd.append('cover', file);
-      return api.post('/employer/profile/cover', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return api.post('/employer/upload/cover', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employer-profile'] }); toast.success('Cover image uploaded!'); },
     onError: (err) => toast.error(getApiError(err)),
@@ -159,7 +159,7 @@ export function CompanyProfile() {
     mutationFn: (file: File) => {
       const fd = new FormData();
       fd.append('license', file);
-      return api.post('/employer/profile/license', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return api.post('/employer/upload/license', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employer-profile'] }); toast.success('Trade license uploaded! Under review.'); },
     onError: (err) => toast.error(getApiError(err)),

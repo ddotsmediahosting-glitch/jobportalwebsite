@@ -11,6 +11,9 @@ const ctrl = new UsersController();
 router.use(authenticate);
 router.use(requireRole('SEEKER'));
 
+// Dashboard summary
+router.get('/dashboard', ctrl.getDashboard.bind(ctrl));
+
 // Profile
 router.get('/profile', ctrl.getProfile.bind(ctrl));
 router.put('/profile', validate(seekerProfileSchema), ctrl.updateProfile.bind(ctrl));

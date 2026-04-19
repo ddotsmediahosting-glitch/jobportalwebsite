@@ -58,7 +58,7 @@ export function QuickPost() {
 
   const quickPostMutation = useMutation({
     mutationFn: () =>
-      api.post('/employer-jobs/quick-post', { title: title.trim(), categoryId, emirate, hints: hints.trim() || undefined })
+      api.post('/employer/jobs/quick-post', { title: title.trim(), categoryId, emirate, hints: hints.trim() || undefined })
         .then((r) => r.data.data as PostedJob),
     onSuccess: (job) => {
       setPostedJob(job);

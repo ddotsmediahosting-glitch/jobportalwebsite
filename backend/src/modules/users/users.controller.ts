@@ -78,4 +78,9 @@ export class UsersController {
     const data = await service.deleteJobAlert(req.user!.sub, req.params.alertId);
     res.json({ success: true, ...data });
   }
+
+  async getDashboard(req: AuthRequest, res: Response) {
+    const data = await service.getDashboard(req.user!.sub);
+    res.json({ success: true, data });
+  }
 }
