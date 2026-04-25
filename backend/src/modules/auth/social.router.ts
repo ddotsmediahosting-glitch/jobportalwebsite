@@ -39,11 +39,16 @@ function redirectWithError(res: Response, message: string) {
 
 // ── Google ────────────────────────────────────────────────────────────────────
 
-router.get('/google', (req: Request, res: Response) => {
-  const role = (req.query.role as string) || 'SEEKER';
-  const state = generateState(role);
-  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
-  getGoogleAuthUrl(state).then((url) => res.redirect(url));
+router.get('/google', async (req: Request, res: Response) => {
+  try {
+    const role = (req.query.role as string) || 'SEEKER';
+    const state = generateState(role);
+    res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
+    const url = await getGoogleAuthUrl(state);
+    res.redirect(url);
+  } catch (err: unknown) {
+    redirectWithError(res, err instanceof Error ? err.message : 'Google login unavailable');
+  }
 });
 
 router.get('/google/callback', async (req: Request, res: Response) => {
@@ -71,11 +76,16 @@ router.get('/google/callback', async (req: Request, res: Response) => {
 
 // ── LinkedIn ──────────────────────────────────────────────────────────────────
 
-router.get('/linkedin', (req: Request, res: Response) => {
-  const role = (req.query.role as string) || 'SEEKER';
-  const state = generateState(role);
-  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
-  getLinkedInAuthUrl(state).then((url) => res.redirect(url));
+router.get('/linkedin', async (req: Request, res: Response) => {
+  try {
+    const role = (req.query.role as string) || 'SEEKER';
+    const state = generateState(role);
+    res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
+    const url = await getLinkedInAuthUrl(state);
+    res.redirect(url);
+  } catch (err: unknown) {
+    redirectWithError(res, err instanceof Error ? err.message : 'LinkedIn login unavailable');
+  }
 });
 
 router.get('/linkedin/callback', async (req: Request, res: Response) => {
@@ -103,11 +113,16 @@ router.get('/linkedin/callback', async (req: Request, res: Response) => {
 
 // ── Facebook ──────────────────────────────────────────────────────────────────
 
-router.get('/facebook', (req: Request, res: Response) => {
-  const role = (req.query.role as string) || 'SEEKER';
-  const state = generateState(role);
-  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
-  getFacebookAuthUrl(state).then((url) => res.redirect(url));
+router.get('/facebook', async (req: Request, res: Response) => {
+  try {
+    const role = (req.query.role as string) || 'SEEKER';
+    const state = generateState(role);
+    res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600_000, sameSite: 'lax' });
+    const url = await getFacebookAuthUrl(state);
+    res.redirect(url);
+  } catch (err: unknown) {
+    redirectWithError(res, err instanceof Error ? err.message : 'Facebook login unavailable');
+  }
 });
 
 router.get('/facebook/callback', async (req: Request, res: Response) => {

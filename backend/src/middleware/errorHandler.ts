@@ -136,7 +136,9 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
 
   res.status(500).json({
     success: false,
-    error: err instanceof Error ? err.message : 'Internal server error',
-    detail: String(err),
+    error: config.isProduction
+      ? 'Internal server error'
+      : (err instanceof Error ? err.message : 'Internal server error'),
+    ...(config.isProduction ? {} : { detail: String(err) }),
   });
 }

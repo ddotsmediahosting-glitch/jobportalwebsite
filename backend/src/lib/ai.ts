@@ -32,7 +32,11 @@ export async function callClaudeJSON<T>(prompt: string, systemPrompt?: string): 
     '\n\nIMPORTANT: You MUST respond with valid JSON only. No markdown, no code blocks, no explanation — raw JSON only.';
   const raw = await callClaude(prompt, fullSystem);
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-  return JSON.parse(cleaned) as T;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    throw new AppError(502, 'AI returned an invalid response. Please try again.');
+  }
 }
 
 // ─── ATS Analysis ──────────────────────────────────────────────────────────────
