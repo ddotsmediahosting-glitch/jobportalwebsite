@@ -1,6 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParseLib = require('pdf-parse');
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = pdfParseLib.default || pdfParseLib;
+// Lazy-load pdf-parse to avoid DOMMatrix crash at startup (Node 22 / @napi-rs/canvas issue)
+async function pdfParse(buf: Buffer): Promise<{ text: string }> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const lib = require('pdf-parse');
+  const fn: (buf: Buffer) => Promise<{ text: string }> = lib.default || lib;
+  return fn(buf);
+}
 import mammoth from 'mammoth';
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';

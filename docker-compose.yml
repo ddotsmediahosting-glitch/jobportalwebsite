@@ -35,8 +35,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: mysql://uaejobs:5a859d9d62c2cf197ecc82da3ce06a73@mariadb:3306/uaejobsdb
+      REDIS_URL: redis://redis:6379
       FRONTEND_URL: ${FRONTEND_URL}
       NODE_ENV: production
     ports:
@@ -55,7 +55,6 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-    command: node backend/dist/src/server.js
 
   web:
     build:
