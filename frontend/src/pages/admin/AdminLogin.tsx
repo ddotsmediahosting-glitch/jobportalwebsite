@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 export function AdminLogin() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +25,7 @@ export function AdminLogin() {
     try {
       const userData = await login(email.trim(), password);
       if (userData.role !== 'ADMIN' && userData.role !== 'SUB_ADMIN') {
+        await logout();
         toast.error('Access denied. This login is for administrators only.');
         return;
       }

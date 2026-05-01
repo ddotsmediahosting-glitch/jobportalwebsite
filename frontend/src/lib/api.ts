@@ -33,16 +33,29 @@ api.interceptors.request.use((cfg) => {
 let isRefreshing = false;
 let pendingQueue: { resolve: (v: string) => void; reject: (e: unknown) => void }[] = [];
 
+// Routes where a 401 is a normal "wrong credentials" response — don't trigger
+// the global refresh-and-redirect flow, just let the caller handle the error.
+const AUTH_PUBLIC_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'];
+
+function loginUrlFor(pathname: string): string {
+  return pathname.startsWith('/admin') ? '/admin/login' : '/login';
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const original = error.config as typeof error.config & { _retry?: boolean };
+    const requestUrl = original?.url || '';
 
-    if (error.response?.status === 401 && !original?._retry) {
+    // Skip the 401 refresh/redirect flow for explicit auth endpoints —
+    // a wrong password should surface to the caller, not trigger a navigation.
+    const isAuthRequest = AUTH_PUBLIC_PATHS.some((p) => requestUrl.includes(p));
+
+    if (error.response?.status === 401 && !original?._retry && !isAuthRequest) {
       const refreshToken = tokenStorage.getRefresh();
       if (!refreshToken) {
         tokenStorage.clear();
-        window.location.href = '/login';
+        window.location.href = loginUrlFor(window.location.pathname);
         return Promise.reject(error);
       }
 
@@ -74,7 +87,7 @@ api.interceptors.response.use(
         pendingQueue.forEach((p) => p.reject(refreshError));
         pendingQueue = [];
         tokenStorage.clear();
-        window.location.href = '/login';
+        window.location.href = loginUrlFor(window.location.pathname);
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
