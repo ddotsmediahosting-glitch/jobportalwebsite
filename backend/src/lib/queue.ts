@@ -82,6 +82,9 @@ export async function scheduleRecurringJobs(): Promise<void> {
   // Purge old refresh tokens daily
   await cleanupQueue.add('purge-tokens', { task: 'purge-tokens' }, { repeat: { pattern: '0 1 * * *' } });
 
+  // Purge read notifications older than 90 days — weekly Sunday 2am
+  await cleanupQueue.add('purge-notifications', { task: 'purge-notifications' }, { repeat: { pattern: '0 2 * * 0' } });
+
   // Purge unverified accounts older than 24 hours — runs every 6 hours
   await cleanupQueue.add('purge-unverified-accounts', { task: 'purge-unverified-accounts' }, { repeat: { pattern: '0 */6 * * *' } });
 

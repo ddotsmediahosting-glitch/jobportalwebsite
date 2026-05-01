@@ -12,7 +12,10 @@ const worker = new Worker<JobAlertsData>(
 
     let alerts;
     if (alertId) {
-      const alert = await prisma.jobAlert.findUnique({ where: { id: alertId } });
+      const alert = await prisma.jobAlert.findUnique({
+        where: { id: alertId },
+        include: { profile: { include: { user: true } } },
+      });
       alerts = alert ? [alert] : [];
     } else if (runAll) {
       alerts = await prisma.jobAlert.findMany({

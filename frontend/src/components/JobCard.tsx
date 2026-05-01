@@ -99,7 +99,7 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
         ) : (
           <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 shadow-sm">
             <span className="text-white font-bold text-base">
-              {job.employer.companyName[0].toUpperCase()}
+              {(job.employer.companyName?.[0] || '?').toUpperCase()}
             </span>
           </div>
         )}
