@@ -2,11 +2,10 @@ services:
   mariadb:
     image: mariadb:11
     restart: always
-    environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
+    # env_file loads MARIADB_* vars directly into the container so they don't
+    # depend on compose-level ${VAR} substitution (which only reads .env, not
+    # .env.production). Blank vars caused "dependency failed to start".
+    env_file: .env.production
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
@@ -14,6 +13,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      # First-init can take 30–60s on slower hosts; give MariaDB room to come
+      # up before failed checks count against the retry budget.
+      start_period: 60s
 
   redis:
     image: redis:7-alpine
@@ -26,6 +28,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   api:
     build:
