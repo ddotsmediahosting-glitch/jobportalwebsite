@@ -10,6 +10,16 @@ COPY shared/package.json ./shared/
 
 RUN npm ci
 
+# Workaround npm bug #4828 (https://github.com/npm/cli/issues/4828):
+# npm ci sometimes fails to install platform-specific optional dependencies
+# (rollup native binaries). Install the rollup binary for the current arch so
+# vite can build. --no-save keeps package-lock.json clean.
+RUN case "$(uname -m)" in \
+      x86_64)  npm install --no-save @rollup/rollup-linux-x64-musl  ;; \
+      aarch64) npm install --no-save @rollup/rollup-linux-arm64-musl ;; \
+      *) echo "Unknown arch $(uname -m); rollup native binary not installed" >&2 ;; \
+    esac
+
 COPY . .
 
 ARG VITE_API_URL=""
