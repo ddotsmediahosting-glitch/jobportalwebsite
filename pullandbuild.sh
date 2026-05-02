@@ -171,6 +171,33 @@ for cid in $(docker ps -aq --filter "label=com.docker.compose.project=$PROJECT_N
     docker rm -f "$cid" >/dev/null 2>&1 || warn "  could not remove $name; you may need: sudo systemctl restart docker"
   }
 done
+
+# Kill orphan mariadbd processes that survived their container's removal.
+# When docker force-kills a container, the in-container mariadbd is supposed
+# to die too — but occasionally it's left running on the host and keeps file
+# locks on the volume, causing every subsequent container start to fail with
+# "Can't lock aria control file" / "Unable to lock ibdata1".
+# We only kill mariadbd processes that are NOT children of dockerd / containerd
+# (real container processes have those as ancestors).
+ORPHANS=$(pgrep -f '^mariadbd' 2>/dev/null || true)
+for pid in $ORPHANS; do
+  # Walk up the process tree; if dockerd or containerd is an ancestor, skip
+  is_orphan=1
+  cur=$pid
+  for _ in 1 2 3 4 5 6; do
+    cur=$(awk '{print $4}' /proc/"$cur"/stat 2>/dev/null) || break
+    [ -z "$cur" ] || [ "$cur" = "0" ] && break
+    cmd=$(cat /proc/"$cur"/comm 2>/dev/null || echo "")
+    case "$cmd" in
+      dockerd|containerd|containerd-shim*|runc) is_orphan=0; break ;;
+    esac
+  done
+  if [ "$is_orphan" = "1" ]; then
+    warn "killing orphan mariadbd PID $pid (holding volume locks)"
+    kill -9 "$pid" 2>/dev/null || sudo kill -9 "$pid" 2>/dev/null || true
+  fi
+done
+
 ok "containers cleaned"
 
 # ── 4. Build images (full output, no caching surprises) ───────────────────────
