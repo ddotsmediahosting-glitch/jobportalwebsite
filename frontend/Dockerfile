@@ -22,9 +22,20 @@ ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Build shared types first, then frontend (skip tsc type-check — vite handles transpile).
 # vite may be hoisted to root or kept in frontend/node_modules depending on the npm
-# version's workspace-hoisting behavior. Try root first, fall back to workspace path.
+# version's workspace-hoisting behavior. Pick whichever path exists; fail loudly with
+# a directory listing if neither is present.
 RUN npm run build -w @uaejobs/shared
-RUN VITE_BIN=$(test -f /app/node_modules/vite/bin/vite.js && echo /app/node_modules/vite/bin/vite.js || echo /app/frontend/node_modules/vite/bin/vite.js) && node "$VITE_BIN" build --config frontend/vite.config.ts
+RUN set -e; \
+    if   [ -f /app/node_modules/vite/bin/vite.js ];          then VITE_BIN=/app/node_modules/vite/bin/vite.js; \
+    elif [ -f /app/frontend/node_modules/vite/bin/vite.js ]; then VITE_BIN=/app/frontend/node_modules/vite/bin/vite.js; \
+    else \
+      echo "vite.js not found at either path. Listing for debug:"; \
+      ls -la /app/node_modules/.bin 2>/dev/null | head -5 || true; \
+      ls -la /app/frontend/node_modules/.bin 2>/dev/null | head -5 || true; \
+      exit 1; \
+    fi; \
+    echo "Using VITE_BIN=$VITE_BIN"; \
+    node "$VITE_BIN" build --config frontend/vite.config.ts
 
 # ── Production stage (nginx) ──────────────────────────────────────────────────
 FROM nginx:alpine
