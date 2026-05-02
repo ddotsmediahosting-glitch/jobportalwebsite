@@ -121,6 +121,12 @@ if [ -d .git ]; then
     STASHED=0
   fi
 
+  # Capture this script's own hash before pull so we can detect if the
+  # pull updated the script itself — if so, re-exec the new version so
+  # the user is never running stale deploy logic.
+  SELF_PATH="${BASH_SOURCE[0]}"
+  SELF_HASH_BEFORE=$(sha1sum "$SELF_PATH" 2>/dev/null | awk '{print $1}' || echo "")
+
   git fetch origin main --quiet
   LOCAL_SHA=$(git rev-parse HEAD)
   REMOTE_SHA=$(git rev-parse origin/main)
@@ -134,6 +140,15 @@ if [ -d .git ]; then
 
   if [ "${STASHED:-0}" = "1" ]; then
     git stash pop || warn "stash pop had conflicts — left in stash, run 'git stash list' to see"
+  fi
+
+  # If this script itself changed during the pull, re-exec the new copy.
+  # Set DEPLOY_SELF_REEXECED so we don't loop if the new script also tries.
+  SELF_HASH_AFTER=$(sha1sum "$SELF_PATH" 2>/dev/null | awk '{print $1}' || echo "")
+  if [ -n "$SELF_HASH_BEFORE" ] && [ "$SELF_HASH_BEFORE" != "$SELF_HASH_AFTER" ] && [ "${DEPLOY_SELF_REEXECED:-}" != "1" ]; then
+    info "deploy script was updated by the pull — re-executing latest version"
+    export DEPLOY_SELF_REEXECED=1
+    exec bash "$SELF_PATH" "$@"
   fi
 else
   warn "not a git repository — skipping pull"
