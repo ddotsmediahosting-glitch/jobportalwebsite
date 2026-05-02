@@ -36,21 +36,47 @@ cd "$PROJECT_DIR"
 DC=(docker compose -f "$COMPOSE_FILE")
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
 
+# Build output is captured to this file so we can show the real error
+# inline on failure — even when the terminal scrollback is truncated by
+# CI / deploy wrappers.
+BUILD_LOG="${BUILD_LOG:-$PROJECT_DIR/.deploy-build.log}"
+
 # ── Error trap ────────────────────────────────────────────────────────────────
-# When anything fails, print the LAST lines of every container's logs so the
-# user gets the actual error in the same output, not a truncated tail.
+# Surfaces the real error inline. Pulls from the build log first (catches the
+# 95% case of build-stage failures), then container logs (start-stage failures).
 on_error() {
   local exit_code=$?
   local line=$1
   echo
   echo -e "${RED}${BOLD}═══ DEPLOY FAILED (exit $exit_code at line $line) ═══${NC}"
-  echo -e "${YELLOW}Recent logs from each running container:${NC}"
+
+  # ── Build error excerpt ──────────────────────────────────────────────────
+  if [ -s "$BUILD_LOG" ]; then
+    echo -e "\n${YELLOW}${BOLD}Build error excerpt (full log: $BUILD_LOG):${NC}"
+    # Grep for common error markers and print 3 lines of context around each.
+    # Falls back to last 80 lines if no markers match.
+    if grep -nE -i '(error|failed|cannot find|module not found|syntaxerror|exit code:)' "$BUILD_LOG" >/dev/null 2>&1; then
+      grep -nE -i -B1 -A3 '(error|failed|cannot find|module not found|syntaxerror|exit code:)' "$BUILD_LOG" \
+        | tail -80
+    else
+      echo "(no error markers matched — showing last 80 lines)"
+      tail -80 "$BUILD_LOG"
+    fi
+  fi
+
+  # ── Container logs (only relevant if start-stage failed, not build-stage) ──
+  echo -e "\n${YELLOW}Container logs (last 30 lines each):${NC}"
   for svc in mariadb redis api web prerender; do
-    echo -e "\n${BOLD}── $svc ──${NC}"
-    "${DC[@]}" logs --tail=30 "$svc" 2>/dev/null || echo "(not running)"
+    output=$("${DC[@]}" logs --tail=30 "$svc" 2>&1 || true)
+    if [ -n "$output" ]; then
+      echo -e "\n${BOLD}── $svc ──${NC}"
+      echo "$output"
+    fi
   done
+
   echo
   echo -e "${RED}${BOLD}Deploy failed. See output above.${NC}"
+  echo -e "  Full build log:         ${BOLD}cat $BUILD_LOG${NC}"
   echo -e "  Re-run after fixing:    ${BOLD}bash $0${NC}"
   echo -e "  Watch live logs:        ${BOLD}${DC[*]} logs -f${NC}"
   echo -e "  Container status:       ${BOLD}${DC[*]} ps${NC}"
@@ -135,9 +161,15 @@ ok "containers cleaned"
 # ── 4. Build images (full output, no caching surprises) ───────────────────────
 step "4. Building images"
 info "this can take 3-5 minutes on first run; subsequent builds use cache"
+info "build log: $BUILD_LOG"
 # --progress=plain shows the FULL output of each RUN step, so a vite/tsc error
 # is visible inline instead of being truncated by buildkit's pretty printer.
-"${DC[@]}" build --pull --progress=plain
+# Tee writes the same output to a log file so the error trap can show the real
+# error inline even when the terminal scrollback is truncated.
+: > "$BUILD_LOG"   # truncate previous log
+# pipefail ensures docker compose's exit code propagates through tee.
+set -o pipefail
+"${DC[@]}" build --pull --progress=plain 2>&1 | tee "$BUILD_LOG"
 ok "all images built"
 
 # ── 5. Start services ─────────────────────────────────────────────────────────
