@@ -2,6 +2,7 @@ import prisma from '../../lib/prisma';
 import { storage } from '../../lib/storage';
 import { NotFoundError } from '../../middleware/errorHandler';
 import { SeekerProfileInput } from '@uaejobs/shared';
+import { aiQueue } from '../../lib/queue';
 
 export class UsersService {
   async getProfile(userId: string) {
@@ -52,6 +53,10 @@ export class UsersService {
         isPrimary: hasPrimary === 0,
       },
     });
+
+    // Auto-extract profile data from the CV in the background. Worker only
+    // fills fields the user hasn't already set, so manual edits are preserved.
+    await aiQueue.add('extract-resume', { task: 'extract-resume', resumeId: resume.id }).catch(() => null);
 
     return resume;
   }

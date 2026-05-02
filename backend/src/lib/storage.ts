@@ -9,6 +9,7 @@ import { config } from '../config';
 export interface StorageAdapter {
   save(fileBuffer: Buffer, fileName: string, mimeType: string, folder: string): Promise<string>;
   delete(fileUrl: string): Promise<void>;
+  read(fileUrl: string): Promise<Buffer | null>;
   getSignedUrl?(key: string, expiresIn?: number): Promise<string>;
 }
 
@@ -42,6 +43,13 @@ class LocalStorageAdapter implements StorageAdapter {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
+  }
+
+  async read(fileUrl: string): Promise<Buffer | null> {
+    const relative = fileUrl.replace(this.baseUrl, '');
+    const filePath = path.join(this.baseDir, relative);
+    if (!fs.existsSync(filePath)) return null;
+    return fs.promises.readFile(filePath);
   }
 }
 
@@ -82,6 +90,18 @@ class S3StorageAdapter implements StorageAdapter {
   async delete(fileUrl: string): Promise<void> {
     const key = new URL(fileUrl).pathname.slice(1);
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+  }
+
+  async read(fileUrl: string): Promise<Buffer | null> {
+    const key = new URL(fileUrl).pathname.slice(1);
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!result.Body) return null;
+    const chunks: Buffer[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for await (const chunk of result.Body as any) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {

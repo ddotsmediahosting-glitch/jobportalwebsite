@@ -21,6 +21,7 @@ export const QUEUE_NAMES = {
   EMAIL: 'email',
   JOB_ALERTS: 'job-alerts',
   CLEANUP: 'cleanup',
+  AI: 'ai',
 } as const;
 
 // ─── Email queue ───────────────────────────────────────────────────────────────
@@ -70,6 +71,25 @@ export const cleanupQueue = new Queue<CleanupData>(QUEUE_NAMES.CLEANUP, {
     attempts: 1,
     removeOnComplete: 10,
     removeOnFail: 50,
+  },
+});
+
+// ─── AI background queue ──────────────────────────────────────────────────────
+// Long-running AI calls run here so they don't block API responses. Each task
+// also retries on transient Anthropic errors (rate limits, 529 overloaded).
+
+export type AIJobData =
+  | { task: 'fraud-check'; jobId: string }
+  | { task: 'screen-application'; applicationId: string }
+  | { task: 'extract-resume'; resumeId: string };
+
+export const aiQueue = new Queue<AIJobData>(QUEUE_NAMES.AI, {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 30_000 },  // 30s, 60s, 120s
+    removeOnComplete: 50,
+    removeOnFail: 200,
   },
 });
 

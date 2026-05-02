@@ -11,6 +11,7 @@ import { checkSmtpAvailable } from './lib/email';
 import './workers/email.worker';
 import './workers/jobAlerts.worker';
 import './workers/cleanup.worker';
+import './workers/ai.worker';
 
 /**
  * Ensure the admin account from SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD exists.

@@ -1,7 +1,7 @@
 import prisma from '../../lib/prisma';
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../middleware/errorHandler';
 import { ApplyJobInput } from '@uaejobs/shared';
-import { emailQueue } from '../../lib/queue';
+import { emailQueue, aiQueue } from '../../lib/queue';
 import { applicationStatusTemplate } from '../../lib/email';
 import { ApplicationStatus } from '@prisma/client';
 
@@ -63,6 +63,13 @@ export class ApplicationsService {
       },
     });
 
+    // Auto-screen with AI in the background. Result is stored in
+    // AIScreeningResult so the employer's pipeline view can sort by fit score.
+    await aiQueue.add('screen-application', {
+      task: 'screen-application',
+      applicationId: application.id,
+    }).catch(() => null);
+
     return application;
   }
 
@@ -92,8 +99,12 @@ export class ApplicationsService {
             },
           },
           resume: true,
+          screeningResult: { select: { fitScore: true, fitLabel: true, priority: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { screeningResult: { fitScore: 'desc' } },
+          { createdAt: 'desc' },
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -129,8 +140,13 @@ export class ApplicationsService {
             },
           },
           resume: true,
+          screeningResult: { select: { fitScore: true, fitLabel: true, priority: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        // Default surface highest-fit candidates first; ties broken by recency.
+        orderBy: [
+          { screeningResult: { fitScore: 'desc' } },
+          { createdAt: 'desc' },
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),

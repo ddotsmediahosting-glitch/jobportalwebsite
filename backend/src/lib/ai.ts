@@ -1351,3 +1351,67 @@ Return JSON:
 
   return callClaudeJSON<InterviewDebrief>(prompt, system);
 }
+
+// ─── Resume → Profile auto-extraction ────────────────────────────────────────
+
+export interface ExtractedProfile {
+  headline?: string;
+  bio?: string;
+  yearsOfExperience?: number;
+  skills: string[];
+  education: Array<{
+    institution: string;
+    degree: string;
+    fieldOfStudy?: string;
+    startDate?: string;  // ISO date
+    endDate?: string;    // ISO date
+  }>;
+  experience: Array<{
+    company: string;
+    title: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    isCurrent?: boolean;
+  }>;
+}
+
+export async function extractProfileFromResume(resumeText: string): Promise<ExtractedProfile> {
+  const truncated = resumeText.length > 18000 ? resumeText.slice(0, 18000) : resumeText;
+
+  const system = `You are an expert resume parser. Extract structured profile data from the CV text below for a UAE job seeker. Be conservative — only include data you can clearly identify in the text. Use ISO 8601 dates (YYYY-MM-DD or YYYY-MM); if only a year is visible, use YYYY-01-01.`;
+
+  const prompt = `Extract structured profile data from this resume.
+
+RESUME:
+${truncated}
+
+Return JSON in this exact shape (omit fields you can't determine — use empty arrays for lists):
+{
+  "headline": "<one-line professional headline, e.g. 'Senior Backend Engineer · Node.js · UAE'>",
+  "bio": "<2-3 sentence professional summary in first person>",
+  "yearsOfExperience": <integer total years of professional experience>,
+  "skills": ["<10-20 distinct skills/technologies/tools>"],
+  "education": [
+    {
+      "institution": "<school name>",
+      "degree": "<degree>",
+      "fieldOfStudy": "<field>",
+      "startDate": "<YYYY-MM-DD>",
+      "endDate": "<YYYY-MM-DD or omit if ongoing>"
+    }
+  ],
+  "experience": [
+    {
+      "company": "<company>",
+      "title": "<job title>",
+      "description": "<1-2 sentence summary of role and impact>",
+      "startDate": "<YYYY-MM-DD>",
+      "endDate": "<YYYY-MM-DD or omit if current>",
+      "isCurrent": <true if this is their current role, else false>
+    }
+  ]
+}`;
+
+  return callClaudeJSON<ExtractedProfile>(prompt, system);
+}

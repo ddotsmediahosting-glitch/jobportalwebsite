@@ -6,6 +6,7 @@ import { JobStatus, Prisma } from '@prisma/client';
 import { cacheGetOrSet, cacheDel } from '../../lib/cache';
 import { generateJobSEO } from '../../lib/seo';
 import { generateJobDescription } from '../../lib/ai';
+import { aiQueue } from '../../lib/queue';
 
 const JOB_INCLUDE = {
   employer: { select: { id: true, companyName: true, slug: true, logoUrl: true, emirate: true, verificationStatus: true } },
@@ -190,6 +191,10 @@ export class JobsService {
       },
       include: JOB_INCLUDE,
     });
+
+    // Auto-fraud-check the new job in the background. High-risk jobs are
+    // auto-bumped to PENDING_APPROVAL by the worker so admins can review.
+    await aiQueue.add('fraud-check', { task: 'fraud-check', jobId: job.id }).catch(() => null);
 
     return job;
   }
@@ -532,6 +537,9 @@ export class JobsService {
       where: { employerId: employer.id },
       data: { jobPostsUsed: { increment: 1 } },
     });
+
+    // 10. Auto-fraud-check (high-risk → PENDING_APPROVAL via worker)
+    await aiQueue.add('fraud-check', { task: 'fraud-check', jobId: job.id }).catch(() => null);
 
     return job;
   }
