@@ -20,9 +20,11 @@ ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
 # Give Node.js extra heap — tsc + Vite together need ~1 GB in Alpine
 ENV NODE_OPTIONS="--max-old-space-size=1536"
 
-# Build shared types first, then frontend (skip tsc type-check — vite handles transpile)
+# Build shared types first, then frontend (skip tsc type-check — vite handles transpile).
+# vite may be hoisted to root or kept in frontend/node_modules depending on the npm
+# version's workspace-hoisting behavior. Try root first, fall back to workspace path.
 RUN npm run build -w @uaejobs/shared
-RUN node ./node_modules/vite/bin/vite.js build --config frontend/vite.config.ts
+RUN VITE_BIN=$(test -f /app/node_modules/vite/bin/vite.js && echo /app/node_modules/vite/bin/vite.js || echo /app/frontend/node_modules/vite/bin/vite.js) && node "$VITE_BIN" build --config frontend/vite.config.ts
 
 # ── Production stage (nginx) ──────────────────────────────────────────────────
 FROM nginx:alpine
