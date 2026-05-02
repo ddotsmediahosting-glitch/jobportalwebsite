@@ -73,18 +73,29 @@ Fill in **every** `CHANGE_ME` value:
 
 ## Step 5 — Deploy
 
+For the **first deploy** on a fresh server:
+
 ```bash
 bash deploy.sh
 ```
 
-This script will:
-1. Verify Docker is installed
-2. Check `.env.production` has no unfilled placeholders
-3. Pull the latest code from git
-4. Build all Docker images
-5. Start postgres, redis, api, and web containers
-6. Wait for health checks to pass
-7. Print your server IP and helpful commands
+For **every subsequent deploy** (this is what you'll run after pushing changes):
+
+```bash
+bash pullandbuild.sh
+```
+
+`pullandbuild.sh` is fail-fast and self-recovering. It:
+
+1. Verifies Docker, the compose file, and `.env.production` (rejects empty `MARIADB_*` vars and `CHANGE_ME` placeholders)
+2. Pulls latest from `origin/main` (auto-stashes any local edits, restores after)
+3. Force-removes any leftover containers from previous failed deploys (volumes are kept — your DB is safe)
+4. Builds all images with `--progress=plain` so you see the FULL error if vite/tsc fails
+5. Starts services and waits up to 3 minutes for `mariadb`, `redis`, `api` to become healthy
+6. Exits **non-zero** if any step fails (so you immediately see ❌, not a fake ✅)
+7. On failure, prints the last 30 log lines from every service so you don't have to dig
+
+If anything goes wrong, the script ends with red `✗ DEPLOY FAILED` and the actual error inline. **A green `✅ Deploy succeeded` line only prints when every service is genuinely healthy.**
 
 ---
 
@@ -132,6 +143,52 @@ ports:
 ```
 
 Rebuild the web container: `docker compose -f docker-compose.prod.yml up -d --build web`
+
+---
+
+## Troubleshooting
+
+### "cannot stop container: permission denied"
+A previous failed deploy left a container in a stuck state that even `sudo docker rm -f` can't kill. Fix:
+
+```bash
+sudo systemctl restart docker
+bash pullandbuild.sh
+```
+
+The volumes (DB data, uploads) survive a daemon restart.
+
+### "dependency failed to start: container ...mariadb-1 is unhealthy"
+Almost always one of two causes:
+
+1. **Empty `MARIADB_*` vars in `.env.production`.** The new `pullandbuild.sh` catches this before starting. If it slipped through, run `grep MARIADB .env.production` and confirm all four vars have values.
+2. **The volume has data with old credentials.** If you previously deployed with different MariaDB passwords, the existing volume won't accept the new ones. Either revert the credentials in `.env.production`, or wipe the volume (⚠ destroys DB data):
+   ```bash
+   docker compose -f docker-compose.prod.yml down
+   docker volume rm jobportalwebsite_mariadb_data
+   bash pullandbuild.sh
+   ```
+
+### "✅ Deployment completed successfully!" but the site is broken
+You're on the old `pullandbuild.sh` from before the fix. Pull latest and re-run:
+
+```bash
+git pull
+bash pullandbuild.sh
+```
+
+The new script exits non-zero on real failures.
+
+### Build fails with "Cannot find module 'vite/...'"
+The Dockerfile already handles both hoisted and workspace-local vite paths. If this still fails, paste the **full** output from `[web builder X/Y]` — buildkit normally prints the real error inline, but the trailing summary truncates it.
+
+### Need to see what's actually failing
+The new `pullandbuild.sh` prints the last 30 log lines per service on failure. For more detail:
+
+```bash
+docker compose -f docker-compose.prod.yml logs --tail=200 api
+docker compose -f docker-compose.prod.yml logs --tail=200 mariadb
+```
 
 ---
 
