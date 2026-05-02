@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  // Anchor the project root to this file's directory so vite finds index.html
+  // regardless of the cwd it's invoked from. Without this, running
+  // `node node_modules/vite/bin/vite.js build --config frontend/vite.config.ts`
+  // from /app fails with "Could not resolve entry module 'index.html'".
+  root: __dirname,
+
   plugins: [react()],
 
   resolve: {
