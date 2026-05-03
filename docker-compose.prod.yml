@@ -52,10 +52,14 @@ services:
       - uploads:/app/backend/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health 2>/dev/null | grep -q '\"status\"' || exit 1"]
-      interval: 15s
+      interval: 10s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 6
+      # First deploy on a slow host or after a network reset can take 60-90s
+      # before mariadb is reachable from the api container; the entrypoint
+      # retries up to 30 times. Give the healthcheck enough start_period to
+      # absorb that without being marked unhealthy.
+      start_period: 120s
 
   prerender:
     build:
@@ -83,8 +87,13 @@ services:
     ports:
       - "8080:80"
     depends_on:
+      # web is the static-files server (nginx). It doesn't strictly need the
+      # api to be healthy — it can serve the SPA shell and the api proxy
+      # will work once api is up. Using service_started instead of
+      # service_healthy stops compose from giving up on the deploy when
+      # api needs >60s to clear its first-time db connection retries.
       api:
-        condition: service_healthy
+        condition: service_started
 
 volumes:
   mariadb_data:
