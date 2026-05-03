@@ -36,6 +36,11 @@ services:
       dockerfile: backend/Dockerfile
     restart: always
     env_file: .env.production
+    # Hardcode internal service URLs so they always match the compose service
+    # names regardless of what's in .env.production (which can drift from
+    # .env / dev URLs and silently break inter-container connectivity).
+    environment:
+      REDIS_URL: redis://redis:6379
     expose:
       - "4000"
     depends_on:
