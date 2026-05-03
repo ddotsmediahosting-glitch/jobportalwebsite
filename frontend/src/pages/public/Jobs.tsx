@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { SlidersHorizontal, X, Briefcase } from 'lucide-react';
+import { SlidersHorizontal, X, Briefcase, Bell, BellRing } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
 import { JobCard } from '../../components/JobCard';
 import { JobFilters, CategoryNode } from '../../components/JobFilters';
@@ -74,6 +74,28 @@ export function Jobs() {
         ? api.delete(`/seeker/saved-jobs/${jobId}`)
         : api.post(`/seeker/saved-jobs/${jobId}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['saved-jobs-ids'] }); },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  // Save current search as a JobAlert — sends daily email with new matches.
+  const saveSearchMutation = useMutation({
+    mutationFn: () => {
+      const name = filters.q
+        ? `Alert: ${filters.q}`
+        : filters.emirate
+          ? `Jobs in ${EMIRATES_LABELS[filters.emirate as keyof typeof EMIRATES_LABELS] || filters.emirate}`
+          : 'My Job Alert';
+      return api.post('/seeker/alerts', {
+        name,
+        keywords: filters.q || undefined,
+        categoryId: filters.subcategoryId || filters.categoryId || undefined,
+        emirate: filters.emirate || undefined,
+        workMode: filters.workMode || undefined,
+        salaryMin: filters.salaryMin ? Number(filters.salaryMin) : undefined,
+        frequency: 'DAILY',
+      });
+    },
+    onSuccess: () => toast.success('Search saved — you\'ll get email alerts for new matching jobs'),
     onError: (err) => toast.error(getApiError(err)),
   });
 
@@ -223,6 +245,18 @@ export function Jobs() {
               >
                 Clear all
               </button>
+              {user?.role === 'SEEKER' && (
+                <button
+                  type="button"
+                  onClick={() => saveSearchMutation.mutate()}
+                  disabled={saveSearchMutation.isPending}
+                  className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+                  title="Get daily email alerts for new jobs matching this search"
+                >
+                  {saveSearchMutation.isPending ? <BellRing className="h-3.5 w-3.5 animate-pulse" /> : <Bell className="h-3.5 w-3.5" />}
+                  Save search → email me
+                </button>
+              )}
             </div>
           )}
         </div>

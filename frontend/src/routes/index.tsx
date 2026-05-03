@@ -10,6 +10,7 @@ import { PageSpinner } from '../components/ui/Spinner';
 const Home = lazy(() => import('../pages/public/Home').then((m) => ({ default: m.Home })));
 const Jobs = lazy(() => import('../pages/public/Jobs').then((m) => ({ default: m.Jobs })));
 const JobDetail = lazy(() => import('../pages/public/JobDetail').then((m) => ({ default: m.JobDetail })));
+const CompareJobs = lazy(() => import('../pages/public/CompareJobs').then((m) => ({ default: m.CompareJobs })));
 const CategoryJobs = lazy(() => import('../pages/public/CategoryJobs').then((m) => ({ default: m.CategoryJobs })));
 const BlogDetail = lazy(() => import('../pages/public/BlogDetail').then((m) => ({ default: m.BlogDetail })));
 const BlogPage = lazy(() => import('../pages/public/Blog').then((m) => ({ default: m.Blog })));
@@ -140,6 +141,7 @@ export function AppRoutes() {
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="jobs" element={<Jobs />} />
+          <Route path="compare" element={<CompareJobs />} />
           {/* /job/:slug  — canonical individual job detail URL */}
           <Route path="job/:slug" element={<JobDetail />} />
           {/* /jobs/:categorySlug  — SEO category pages like /jobs/accounting-jobs-uae

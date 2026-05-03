@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { api } from '../../lib/api';
+import toast from 'react-hot-toast';
+import { api, getApiError } from '../../lib/api';
 import { ApplicationStatusBadge } from '../../components/ui/Badge';
 import { Pagination } from '../../components/Pagination';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { EMIRATES_LABELS } from '@uaejobs/shared';
+
+const WITHDRAWABLE_STATUSES = new Set(['SUBMITTED', 'VIEWED', 'SHORTLISTED']);
 
 function ApplicationsSkeleton() {
   return (
@@ -29,11 +32,29 @@ function ApplicationsSkeleton() {
 
 export function Applications() {
   const [page, setPage] = useState(1);
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-applications', page],
     queryFn: () => api.get(`/seeker/applications?page=${page}`).then((r) => r.data.data),
   });
+
+  const withdrawMutation = useMutation({
+    mutationFn: (applicationId: string) =>
+      api.delete(`/seeker/applications/${applicationId}`).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-applications'] });
+      toast.success('Application withdrawn');
+    },
+    onError: (err) => toast.error(getApiError(err)),
+  });
+
+  const handleWithdraw = (id: string, jobTitle: string) => {
+    if (!window.confirm(`Withdraw your application for "${jobTitle}"? The employer will be notified and you cannot reapply unless they relist the role.`)) {
+      return;
+    }
+    withdrawMutation.mutate(id);
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -74,6 +95,15 @@ export function Applications() {
                 <div className="flex flex-col items-end gap-1">
                   <ApplicationStatusBadge status={app.status} />
                   <span className="text-xs text-gray-400">{new Date(app.createdAt).toLocaleDateString()}</span>
+                  {WITHDRAWABLE_STATUSES.has(app.status) && (
+                    <button
+                      onClick={() => handleWithdraw(app.id, app.job.title)}
+                      disabled={withdrawMutation.isPending}
+                      className="text-xs text-red-600 hover:text-red-700 hover:underline mt-0.5 disabled:opacity-50"
+                    >
+                      Withdraw
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

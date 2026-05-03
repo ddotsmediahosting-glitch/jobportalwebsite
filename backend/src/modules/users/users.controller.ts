@@ -59,6 +59,11 @@ export class UsersController {
     res.json({ success: true, data });
   }
 
+  async withdrawApplication(req: AuthRequest, res: Response) {
+    const data = await service.withdrawApplication(req.user!.sub, req.params.id);
+    res.json({ success: true, data });
+  }
+
   async deleteAccount(req: AuthRequest, res: Response) {
     await service.deleteAccount(req.user!.sub);
     res.json({ success: true, message: 'Account deleted' });

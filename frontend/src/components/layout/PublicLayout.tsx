@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
+import { CompareBar } from '../CompareBar';
 
 const WHATSAPP_SVG = (
   <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
@@ -358,6 +359,9 @@ export function PublicLayout() {
 
       {/* Main */}
       <main><Outlet /></main>
+
+      {/* Floating compare bar (only renders when user has selected jobs to compare) */}
+      <CompareBar />
 
       {/* Footer */}
       <footer className="bg-gray-950 text-gray-400 mt-20">

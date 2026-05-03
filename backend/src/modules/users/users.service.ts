@@ -1,6 +1,6 @@
 import prisma from '../../lib/prisma';
 import { storage } from '../../lib/storage';
-import { NotFoundError } from '../../middleware/errorHandler';
+import { AppError, NotFoundError } from '../../middleware/errorHandler';
 import { SeekerProfileInput } from '@uaejobs/shared';
 import { aiQueue } from '../../lib/queue';
 
@@ -127,6 +127,46 @@ export class UsersService {
   async unsaveJob(userId: string, jobId: string) {
     await prisma.savedJob.deleteMany({ where: { userId, jobId } });
     return { message: 'Job removed from saved' };
+  }
+
+  async withdrawApplication(userId: string, applicationId: string) {
+    const application = await prisma.application.findFirst({
+      where: { id: applicationId, userId },
+      include: { job: { select: { title: true, employer: { select: { ownerUserId: true } } } } },
+    });
+    if (!application) throw new NotFoundError('Application');
+
+    // Can only withdraw if employer hasn't moved you past early stages
+    const allowed = ['SUBMITTED', 'VIEWED', 'SHORTLISTED'];
+    if (!allowed.includes(application.status)) {
+      throw new AppError(
+        400,
+        `Cannot withdraw an application at status ${application.status}. Contact the employer directly.`,
+      );
+    }
+    if (application.status === 'WITHDRAWN') {
+      throw new AppError(400, 'Application is already withdrawn');
+    }
+
+    const updated = await prisma.application.update({
+      where: { id: applicationId },
+      data: { status: 'WITHDRAWN' },
+    });
+
+    // Notify employer (best-effort — don't fail withdrawal if notification creation fails)
+    if (application.job.employer?.ownerUserId) {
+      await prisma.notification.create({
+        data: {
+          userId: application.job.employer.ownerUserId,
+          type: 'APPLICATION_WITHDRAWN',
+          title: 'Candidate withdrew application',
+          body: `A candidate has withdrawn their application for "${application.job.title}".`,
+          payloadJson: { applicationId, jobId: application.jobId },
+        },
+      }).catch(() => null);
+    }
+
+    return updated;
   }
 
   async getMyApplications(userId: string, page = 1, limit = 20) {

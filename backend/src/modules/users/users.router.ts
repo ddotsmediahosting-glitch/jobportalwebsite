@@ -33,6 +33,7 @@ router.delete('/saved-jobs/:jobId', ctrl.unsaveJob.bind(ctrl));
 
 // Applications
 router.get('/applications', ctrl.getMyApplications.bind(ctrl));
+router.delete('/applications/:id', ctrl.withdrawApplication.bind(ctrl));
 
 // Job alerts
 router.get('/alerts', ctrl.getJobAlerts.bind(ctrl));

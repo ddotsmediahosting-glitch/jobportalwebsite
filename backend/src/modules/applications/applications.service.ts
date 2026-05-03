@@ -289,6 +289,7 @@ export class ApplicationsService {
       OFFER: [],
       HIRED: [],
       REJECTED: [],
+      WITHDRAWN: [],
     };
 
     for (const app of applications) {

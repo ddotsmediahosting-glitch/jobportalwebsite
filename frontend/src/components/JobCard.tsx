@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, Banknote, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap, Tag } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { MapPin, Briefcase, Banknote, Clock, Zap, Star, Bookmark, BookmarkCheck, ArrowUpRight, GraduationCap, Tag, GitCompare } from 'lucide-react';
 import { EMIRATES_LABELS, WORK_MODE_LABELS, EMPLOYMENT_TYPE_LABELS, JobListItem } from '@uaejobs/shared';
+import { useJobCompare } from '../hooks/useJobCompare';
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'AED', negotiable = false) {
   if (negotiable && !min && !max) return 'Negotiable';
@@ -50,6 +52,18 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryNegotiable);
   const workModeStyle = WORK_MODE_STYLE[job.workMode] ?? 'bg-gray-50 text-gray-600 border-gray-200';
   const empTypeStyle = EMP_TYPE_STYLE[job.employmentType] ?? 'bg-gray-50 text-gray-600';
+
+  const compare = useJobCompare();
+  const isComparing = compare.has(job.id);
+
+  const handleCompareToggle = () => {
+    const result = compare.toggle({ id: job.id, slug: job.slug, title: job.title });
+    if (result.full) {
+      toast.error(`You can compare up to ${compare.max} jobs at a time`);
+    } else if (result.added) {
+      toast.success('Added to comparison');
+    }
+  };
 
   return (
     <article className={`group bg-white border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-100 transition-all duration-200 relative flex flex-col shadow-card ${job.isFeatured ? 'border-gold-300/40' : 'border-gray-100'}`}>
@@ -186,12 +200,27 @@ export function JobCard({ job, onSave, isSaved }: JobCardProps) {
             <Clock size={10} /> {timeAgo(job.publishedAt)}
           </span>
         </div>
-        <Link
-          to={`/job/${job.slug}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 shadow-sm"
-        >
-          Apply Now <ArrowUpRight size={11} />
-        </Link>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleCompareToggle}
+            aria-label={isComparing ? 'Remove from comparison' : 'Add to comparison'}
+            title={isComparing ? 'Remove from comparison' : 'Compare with other jobs'}
+            className={`p-1.5 rounded-lg transition-all duration-150 ${
+              isComparing
+                ? 'bg-brand-50 text-brand-600 hover:bg-brand-100'
+                : 'text-gray-400 hover:text-brand-500 hover:bg-brand-50'
+            }`}
+          >
+            <GitCompare size={13} />
+          </button>
+          <Link
+            to={`/job/${job.slug}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 shadow-sm"
+          >
+            Apply Now <ArrowUpRight size={11} />
+          </Link>
+        </div>
       </div>
 
       {/* Hover preview panel — desktop only */}

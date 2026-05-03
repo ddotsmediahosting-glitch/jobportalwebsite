@@ -47,6 +47,7 @@ export function ApplicationStatusBadge({ status }: { status: string }) {
     OFFER: { color: 'green', label: 'Offer' },
     HIRED: { color: 'green', label: 'Hired' },
     REJECTED: { color: 'red', label: 'Rejected' },
+    WITHDRAWN: { color: 'gray', label: 'Withdrawn' },
   };
 
   const { color, label } = map[status] || { color: 'gray', label: status };
