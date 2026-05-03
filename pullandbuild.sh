@@ -200,6 +200,21 @@ done
 
 ok "containers cleaned"
 
+# Ensure docker bridge networking actually works on this host. Some Linux
+# servers (notably with ufw configured for security) leave the iptables
+# FORWARD chain at policy DROP, which breaks all inter-container traffic
+# (api can't reach mariadb / redis even though they're on the same network).
+# We force the policy to ACCEPT — Docker still manages per-container ACCEPT
+# rules in the DOCKER chain, and the host's INPUT chain still controls what
+# reaches the host itself, so this only affects forwarded packets.
+if command -v iptables >/dev/null 2>&1; then
+  current_policy=$(sudo iptables -L FORWARD -n 2>/dev/null | head -1 | awk -F'[() ]' '{print $5}')
+  if [ "$current_policy" = "DROP" ]; then
+    warn "iptables FORWARD policy is DROP — Docker bridge traffic blocked"
+    sudo iptables -P FORWARD ACCEPT && ok "iptables FORWARD set to ACCEPT (was DROP)"
+  fi
+fi
+
 # ── 4. Build images (full output, no caching surprises) ───────────────────────
 step "4. Building images"
 info "this can take 3-5 minutes on first run; subsequent builds use cache"
@@ -217,6 +232,16 @@ ok "all images built"
 # ── 5. Start services ─────────────────────────────────────────────────────────
 step "5. Starting services"
 "${DC[@]}" up -d --remove-orphans
+
+# Belt-and-suspenders: docker / ufw can reset FORWARD between cleanup and up.
+# Re-assert ACCEPT here so containers can actually talk to each other.
+if command -v iptables >/dev/null 2>&1; then
+  current_policy=$(sudo iptables -L FORWARD -n 2>/dev/null | head -1 | awk -F'[() ]' '{print $5}')
+  if [ "$current_policy" = "DROP" ]; then
+    sudo iptables -P FORWARD ACCEPT && ok "iptables FORWARD reset to ACCEPT after compose up"
+  fi
+fi
+
 ok "containers started"
 
 # ── 6. Wait for health ────────────────────────────────────────────────────────
